@@ -3251,7 +3251,7 @@ SPEC CHECKSUMS:
   FBLazyVector: 309703e71d3f2f1ed7dc7889d58309c9d77a95a4
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
-  hermes-engine: 568d2e64ce42a616e9464afde02e211ea0c0f229
+  hermes-engine: 5863f447bec5803782a240dc948699c73904be6c
   Minizip: 188cb3e39a1195c283ae03bf673d182596fefd0b
   NitroModules: 1dc73273d6e3aee937eec41ef3ed9470804b9884
   RCT-Folly: 846fda9475e61ec7bcbf8a3fe81edfcaeb090669

@@ -6,6 +6,7 @@ import RNFS from '../utils/RNFS';
 interface UseEpubFileOptions {
   epubUrl?: string;
   epubPath?: string;
+  manifestUrl?: string;
   bundledAsset?: string;
   initialLocation?: Locator;
 }
@@ -25,6 +26,7 @@ async function copyBundledAsset(
 export const useEpubFile = ({
   epubUrl,
   epubPath,
+  manifestUrl,
   bundledAsset,
   initialLocation,
 }: UseEpubFileOptions) => {
@@ -40,9 +42,9 @@ export const useEpubFile = ({
         setIsLoading(true);
         setError(null);
 
-        let url = epubUrl || '';
+        let url = manifestUrl || epubUrl || '';
 
-        if (epubPath) {
+        if (!manifestUrl && epubPath) {
           const localPath = epubPath;
           const exists = await RNFS.exists(localPath);
 
@@ -62,9 +64,7 @@ export const useEpubFile = ({
               });
               await promise;
             } else {
-              throw new Error(
-                'No source available: epubUrl or bundledAsset is required'
-              );
+              throw new Error('No source available');
             }
           } else {
             console.log('File already exists. Skipping.', localPath);
@@ -95,7 +95,7 @@ export const useEpubFile = ({
     return () => {
       cancelled = true;
     };
-  }, [epubUrl, epubPath, bundledAsset, initialLocation]);
+  }, [epubUrl, epubPath, manifestUrl, bundledAsset, initialLocation]);
 
   return { file, isLoading, error };
 };

@@ -45,12 +45,13 @@ class HybridReadiumView: HybridReadiumViewSpec {
   var onDecorationActivated: ((DecorationActivatedEvent) -> Void)? = nil
   var onSelectionChange: ((SelectionEvent) -> Void)? = nil
   var onSelectionAction: ((SelectionActionEvent) -> Void)? = nil
+  var onAudiobookPlaybackStateChange: ((AudiobookPlaybackState) -> Void)? = nil
 
   // MARK: - Private state
 
   private let hostView = UIView()
   private var readerService = ReaderService()
-  private var readerViewController: ReaderViewController?
+  private var readerViewController: PublicationReaderViewControllerType?
   private var subscriptions = Set<AnyCancellable>()
   private var pendingFileUrl: String?
   private var pendingInitialLocation: Locator?
@@ -113,7 +114,8 @@ class HybridReadiumView: HybridReadiumViewSpec {
 
   private func updatePreferences() {
     guard readerViewController != nil else { return }
-    guard let navigator = readerViewController?.navigator as? EPUBNavigatorViewController else { return }
+    guard let epubViewController = readerViewController as? EPUBViewController else { return }
+    let navigator = epubViewController.epubNavigator
     guard let prefs = preferences else { return }
 
     let epubPrefs = nitroPreferencesToEPUB(prefs)
@@ -124,7 +126,8 @@ class HybridReadiumView: HybridReadiumViewSpec {
 
   private func updateDecorations() {
     guard readerViewController != nil else { return }
-    guard let navigator = readerViewController?.navigator as? DecorableNavigator else { return }
+    guard let epubViewController = readerViewController as? EPUBViewController else { return }
+    guard let navigator = epubViewController.navigator as? DecorableNavigator else { return }
     guard let groups = decorations else { return }
 
     for group in groups {
@@ -174,7 +177,7 @@ class HybridReadiumView: HybridReadiumViewSpec {
 
   // MARK: - View lifecycle
 
-  private func addViewControllerAsSubview(_ vc: ReaderViewController) {
+  private func addViewControllerAsSubview(_ vc: PublicationReaderViewControllerType) {
     vc.publisher.sink(receiveValue: { [weak self] locator in
       guard let self = self else { return }
       let nitroLocator = readiumLocatorToNitro(locator)
@@ -183,6 +186,12 @@ class HybridReadiumView: HybridReadiumViewSpec {
     .store(in: &subscriptions)
 
     readerViewController = vc
+
+    if let audiobookVC = vc as? AudiobookViewController {
+      audiobookVC.onPlaybackStateChange = { [weak self] state in
+        self?.onAudiobookPlaybackStateChange?(state)
+      }
+    }
 
     // Apply pending state
     if preferences != nil { updatePreferences() }
@@ -246,24 +255,45 @@ class HybridReadiumView: HybridReadiumViewSpec {
   func goTo(locator: Locator) {
     Task { @MainActor [weak self] in
       guard let self else { return }
-      guard let navigator = self.readerViewController?.navigator else { return }
       guard let readiumLocator = nitroLocatorToReadium(locator) else { return }
-      _ = await navigator.go(to: readiumLocator, options: .animated)
+      await self.readerViewController?.goTo(readiumLocator)
     }
   }
 
   func goForward() {
     Task { @MainActor in
-      guard let navigator = readerViewController?.navigator else { return }
-      _ = await navigator.goForward(options: .animated)
+      await readerViewController?.goForward()
     }
   }
 
   func goBackward() {
     Task { @MainActor in
-      guard let navigator = readerViewController?.navigator else { return }
-      _ = await navigator.goBackward(options: .animated)
+      await readerViewController?.goBackward()
     }
+  }
+
+  func play() {
+    (readerViewController as? AudiobookViewController)?.play()
+  }
+
+  func pause() {
+    (readerViewController as? AudiobookViewController)?.pause()
+  }
+
+  func seekTo(position: Double) {
+    (readerViewController as? AudiobookViewController)?.seekTo(position: position)
+  }
+
+  func setPlaybackRate(rate: Double) {
+    (readerViewController as? AudiobookViewController)?.setPlaybackRate(rate)
+  }
+
+  func setVolume(volume: Double) {
+    (readerViewController as? AudiobookViewController)?.setVolume(volume)
+  }
+
+  func setSleepTimer(seconds: Double?) {
+    (readerViewController as? AudiobookViewController)?.setSleepTimer(seconds: seconds)
   }
 
   func destroy() {

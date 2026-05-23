@@ -12,6 +12,8 @@
 namespace margelo::nitro::readium { struct AccessibilityCertification; }
 // Forward declaration of `Accessibility` to properly resolve imports.
 namespace margelo::nitro::readium { struct Accessibility; }
+// Forward declaration of `AudiobookPlaybackState` to properly resolve imports.
+namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
 // Forward declaration of `BelongsTo` to properly resolve imports.
 namespace margelo::nitro::readium { struct BelongsTo; }
 // Forward declaration of `Contributor` to properly resolve imports.
@@ -64,6 +66,7 @@ namespace NitroReadium { class HybridReadiumViewSpec_cxx; }
 // Include C++ defined types
 #include "Accessibility.hpp"
 #include "AccessibilityCertification.hpp"
+#include "AudiobookPlaybackState.hpp"
 #include "BelongsTo.hpp"
 #include "Contributor.hpp"
 #include "Decoration.hpp"
@@ -707,6 +710,43 @@ namespace margelo::nitro::readium::bridge::swift {
     return optional.has_value();
   }
   inline std::function<void(const SelectionActionEvent& /* event */)> get_std__optional_std__function_void_const_SelectionActionEvent_____event______(const std::optional<std::function<void(const SelectionActionEvent& /* event */)>>& optional) noexcept {
+    return optional.value();
+  }
+  
+  // pragma MARK: std::function<void(const AudiobookPlaybackState& /* state */)>
+  /**
+   * Specialized version of `std::function<void(const AudiobookPlaybackState&)>`.
+   */
+  using Func_void_AudiobookPlaybackState = std::function<void(const AudiobookPlaybackState& /* state */)>;
+  /**
+   * Wrapper class for a `std::function<void(const AudiobookPlaybackState& / * state * /)>`, this can be used from Swift.
+   */
+  class Func_void_AudiobookPlaybackState_Wrapper final {
+  public:
+    explicit Func_void_AudiobookPlaybackState_Wrapper(std::function<void(const AudiobookPlaybackState& /* state */)>&& func): _function(std::make_unique<std::function<void(const AudiobookPlaybackState& /* state */)>>(std::move(func))) {}
+    inline void call(AudiobookPlaybackState state) const noexcept {
+      _function->operator()(state);
+    }
+  private:
+    std::unique_ptr<std::function<void(const AudiobookPlaybackState& /* state */)>> _function;
+  } SWIFT_NONCOPYABLE;
+  Func_void_AudiobookPlaybackState create_Func_void_AudiobookPlaybackState(void* NON_NULL swiftClosureWrapper) noexcept;
+  inline Func_void_AudiobookPlaybackState_Wrapper wrap_Func_void_AudiobookPlaybackState(Func_void_AudiobookPlaybackState value) noexcept {
+    return Func_void_AudiobookPlaybackState_Wrapper(std::move(value));
+  }
+  
+  // pragma MARK: std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>
+  /**
+   * Specialized version of `std::optional<std::function<void(const AudiobookPlaybackState& / * state * /)>>`.
+   */
+  using std__optional_std__function_void_const_AudiobookPlaybackState_____state______ = std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>;
+  inline std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>> create_std__optional_std__function_void_const_AudiobookPlaybackState_____state______(const std::function<void(const AudiobookPlaybackState& /* state */)>& value) noexcept {
+    return std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>(value);
+  }
+  inline bool has_value_std__optional_std__function_void_const_AudiobookPlaybackState_____state______(const std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>& optional) noexcept {
+    return optional.has_value();
+  }
+  inline std::function<void(const AudiobookPlaybackState& /* state */)> get_std__optional_std__function_void_const_AudiobookPlaybackState_____state______(const std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>& optional) noexcept {
     return optional.value();
   }
   

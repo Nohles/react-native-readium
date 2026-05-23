@@ -31,6 +31,8 @@ namespace margelo::nitro::readium { struct DecorationActivatedEvent; }
 namespace margelo::nitro::readium { struct SelectionEvent; }
 // Forward declaration of `SelectionActionEvent` to properly resolve imports.
 namespace margelo::nitro::readium { struct SelectionActionEvent; }
+// Forward declaration of `AudiobookPlaybackState` to properly resolve imports.
+namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
 
 #include "ReadiumFile.hpp"
 #include <optional>
@@ -44,6 +46,7 @@ namespace margelo::nitro::readium { struct SelectionActionEvent; }
 #include "DecorationActivatedEvent.hpp"
 #include "SelectionEvent.hpp"
 #include "SelectionActionEvent.hpp"
+#include "AudiobookPlaybackState.hpp"
 
 namespace margelo::nitro::readium {
 
@@ -90,12 +93,20 @@ namespace margelo::nitro::readium {
       virtual void setOnSelectionChange(const std::optional<std::function<void(const SelectionEvent& /* event */)>>& onSelectionChange) = 0;
       virtual std::optional<std::function<void(const SelectionActionEvent& /* event */)>> getOnSelectionAction() = 0;
       virtual void setOnSelectionAction(const std::optional<std::function<void(const SelectionActionEvent& /* event */)>>& onSelectionAction) = 0;
+      virtual std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>> getOnAudiobookPlaybackStateChange() = 0;
+      virtual void setOnAudiobookPlaybackStateChange(const std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>& onAudiobookPlaybackStateChange) = 0;
 
     public:
       // Methods
       virtual void goTo(const Locator& locator) = 0;
       virtual void goForward() = 0;
       virtual void goBackward() = 0;
+      virtual void play() = 0;
+      virtual void pause() = 0;
+      virtual void seekTo(double position) = 0;
+      virtual void setPlaybackRate(double rate) = 0;
+      virtual void setVolume(double volume) = 0;
+      virtual void setSleepTimer(std::optional<double> seconds) = 0;
       virtual void destroy() = 0;
 
     protected:

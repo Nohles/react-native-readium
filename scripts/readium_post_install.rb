@@ -60,5 +60,14 @@ def readium_post_install(installer)
         config.build_settings['OTHER_CPLUSPLUSFLAGS'] += ' -Wno-module-import-in-extern-c'
       end
     end
+
+    if target.name == 'fmt'
+      target.build_configurations.each do |config|
+        # fmt 11's C++20 consteval path fails with newer Apple clang builds
+        # used by recent Xcode/iOS simulator SDKs. React Native does not need
+        # C++20 for this pod, so keep fmt on C++17.
+        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+      end
+    end
   end
 end

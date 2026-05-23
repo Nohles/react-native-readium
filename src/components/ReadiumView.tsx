@@ -24,6 +24,7 @@ export const ReadiumView = forwardRef<ReadiumViewRef, ReadiumProps>(
       onDecorationActivated,
       onSelectionChange,
       onSelectionAction,
+      onAudiobookPlaybackStateChange,
       preferences,
       decorations,
       selectionActions,
@@ -70,6 +71,12 @@ export const ReadiumView = forwardRef<ReadiumViewRef, ReadiumProps>(
         goTo: (locator) => hybridRef.current?.goTo(locator),
         goForward: () => hybridRef.current?.goForward(),
         goBackward: () => hybridRef.current?.goBackward(),
+        play: () => hybridRef.current?.play(),
+        pause: () => hybridRef.current?.pause(),
+        seekTo: (position) => hybridRef.current?.seekTo(position),
+        setPlaybackRate: (rate) => hybridRef.current?.setPlaybackRate(rate),
+        setVolume: (volume) => hybridRef.current?.setVolume(volume),
+        setSleepTimer: (seconds) => hybridRef.current?.setSleepTimer(seconds),
       }),
       []
     );
@@ -96,6 +103,9 @@ export const ReadiumView = forwardRef<ReadiumViewRef, ReadiumProps>(
             onDecorationActivated={callback(onDecorationActivated ?? noop)}
             onSelectionChange={callback(onSelectionChange ?? noop)}
             onSelectionAction={callback(onSelectionAction ?? noop)}
+            onAudiobookPlaybackStateChange={callback(
+              onAudiobookPlaybackStateChange ?? noop
+            )}
             hybridRef={callback((ref: any) => {
               hybridRef.current = ref;
             })}

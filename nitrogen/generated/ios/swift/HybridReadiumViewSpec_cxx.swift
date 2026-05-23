@@ -374,6 +374,38 @@ open class HybridReadiumViewSpec_cxx {
       }()
     }
   }
+  
+  public final var onAudiobookPlaybackStateChange: bridge.std__optional_std__function_void_const_AudiobookPlaybackState_____state______ {
+    @inline(__always)
+    get {
+      return { () -> bridge.std__optional_std__function_void_const_AudiobookPlaybackState_____state______ in
+        if let __unwrappedValue = self.__implementation.onAudiobookPlaybackStateChange {
+          return bridge.create_std__optional_std__function_void_const_AudiobookPlaybackState_____state______({ () -> bridge.Func_void_AudiobookPlaybackState in
+            let __closureWrapper = Func_void_AudiobookPlaybackState(__unwrappedValue)
+            return bridge.create_Func_void_AudiobookPlaybackState(__closureWrapper.toUnsafe())
+          }())
+        } else {
+          return .init()
+        }
+      }()
+    }
+    @inline(__always)
+    set {
+      self.__implementation.onAudiobookPlaybackStateChange = { () -> ((_ state: AudiobookPlaybackState) -> Void)? in
+        if bridge.has_value_std__optional_std__function_void_const_AudiobookPlaybackState_____state______(newValue) {
+          let __unwrapped = bridge.get_std__optional_std__function_void_const_AudiobookPlaybackState_____state______(newValue)
+          return { () -> (AudiobookPlaybackState) -> Void in
+            let __wrappedFunction = bridge.wrap_Func_void_AudiobookPlaybackState(__unwrapped)
+            return { (__state: AudiobookPlaybackState) -> Void in
+              __wrappedFunction.call(__state)
+            }
+          }()
+        } else {
+          return nil
+        }
+      }()
+    }
+  }
 
   // Methods
   @inline(__always)
@@ -402,6 +434,79 @@ open class HybridReadiumViewSpec_cxx {
   public final func goBackward() -> bridge.Result_void_ {
     do {
       try self.__implementation.goBackward()
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func play() -> bridge.Result_void_ {
+    do {
+      try self.__implementation.play()
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func pause() -> bridge.Result_void_ {
+    do {
+      try self.__implementation.pause()
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func seekTo(position: Double) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.seekTo(position: position)
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func setPlaybackRate(rate: Double) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.setPlaybackRate(rate: rate)
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func setVolume(volume: Double) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.setVolume(volume: volume)
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func setSleepTimer(seconds: bridge.std__optional_double_) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.setSleepTimer(seconds: { () -> Double? in
+        if bridge.has_value_std__optional_double_(seconds) {
+          let __unwrapped = bridge.get_std__optional_double_(seconds)
+          return __unwrapped
+        } else {
+          return nil
+        }
+      }())
       return bridge.create_Result_void_()
     } catch (let __error) {
       let __exceptionPtr = __error.toCpp()

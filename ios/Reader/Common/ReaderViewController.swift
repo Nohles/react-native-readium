@@ -248,6 +248,23 @@ class ReaderViewController: UIViewController, Loggable {
 
 }
 
+extension ReaderViewController: PublicationReaderViewController {
+  @MainActor
+  func goTo(_ locator: ReadiumShared.Locator) async {
+    _ = await navigator.go(to: locator, options: .animated)
+  }
+
+  @MainActor
+  func goForward() async {
+    _ = await navigator.goForward(options: .animated)
+  }
+
+  @MainActor
+  func goBackward() async {
+    _ = await navigator.goBackward(options: .animated)
+  }
+}
+
 extension ReaderViewController: NavigatorDelegate {
   func navigator(_ navigator: Navigator, locationDidChange locator: ReadiumShared.Locator) {
     subject.send(locator)

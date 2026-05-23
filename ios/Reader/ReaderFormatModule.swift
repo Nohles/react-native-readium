@@ -16,7 +16,7 @@ protocol ReaderFormatModule {
     locator: ReadiumShared.Locator?,
     bookId: String,
     selectionActions: [SelectionActionData]?
-  ) throws -> ReaderViewController
+  ) throws -> PublicationReaderViewControllerType
 
 }
 

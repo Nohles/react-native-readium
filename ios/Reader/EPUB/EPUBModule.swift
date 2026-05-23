@@ -16,11 +16,11 @@ final class EPUBModule: ReaderFormatModule {
     }
 
     func makeReaderViewController(
-      for publication: Publication,
-      locator: ReadiumShared.Locator?,
-      bookId: String,
-      selectionActions: [SelectionActionData]?
-    ) throws -> ReaderViewController {
+    for publication: Publication,
+    locator: ReadiumShared.Locator?,
+    bookId: String,
+    selectionActions: [SelectionActionData]?
+    ) throws -> PublicationReaderViewControllerType {
         guard publication.metadata.identifier != nil else {
             throw ReaderError.epubNotValid
         }

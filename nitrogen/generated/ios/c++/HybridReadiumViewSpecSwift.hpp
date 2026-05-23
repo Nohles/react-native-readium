@@ -58,6 +58,8 @@ namespace margelo::nitro::readium { struct Point; }
 namespace margelo::nitro::readium { struct SelectionEvent; }
 // Forward declaration of `SelectionActionEvent` to properly resolve imports.
 namespace margelo::nitro::readium { struct SelectionActionEvent; }
+// Forward declaration of `AudiobookPlaybackState` to properly resolve imports.
+namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
 
 #include "ReadiumFile.hpp"
 #include <optional>
@@ -87,6 +89,7 @@ namespace margelo::nitro::readium { struct SelectionActionEvent; }
 #include "Point.hpp"
 #include "SelectionEvent.hpp"
 #include "SelectionActionEvent.hpp"
+#include "AudiobookPlaybackState.hpp"
 
 #include "NitroReadium-Swift-Cxx-Umbrella.hpp"
 
@@ -197,6 +200,13 @@ namespace margelo::nitro::readium {
     inline void setOnSelectionAction(const std::optional<std::function<void(const SelectionActionEvent& /* event */)>>& onSelectionAction) noexcept override {
       _swiftPart.setOnSelectionAction(onSelectionAction);
     }
+    inline std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>> getOnAudiobookPlaybackStateChange() noexcept override {
+      auto __result = _swiftPart.getOnAudiobookPlaybackStateChange();
+      return __result;
+    }
+    inline void setOnAudiobookPlaybackStateChange(const std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>& onAudiobookPlaybackStateChange) noexcept override {
+      _swiftPart.setOnAudiobookPlaybackStateChange(onAudiobookPlaybackStateChange);
+    }
 
   public:
     // Methods
@@ -214,6 +224,42 @@ namespace margelo::nitro::readium {
     }
     inline void goBackward() override {
       auto __result = _swiftPart.goBackward();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void play() override {
+      auto __result = _swiftPart.play();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void pause() override {
+      auto __result = _swiftPart.pause();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void seekTo(double position) override {
+      auto __result = _swiftPart.seekTo(std::forward<decltype(position)>(position));
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void setPlaybackRate(double rate) override {
+      auto __result = _swiftPart.setPlaybackRate(std::forward<decltype(rate)>(rate));
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void setVolume(double volume) override {
+      auto __result = _swiftPart.setVolume(std::forward<decltype(volume)>(volume));
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void setSleepTimer(std::optional<double> seconds) override {
+      auto __result = _swiftPart.setSleepTimer(seconds);
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }

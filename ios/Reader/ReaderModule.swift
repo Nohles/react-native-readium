@@ -12,7 +12,7 @@ protocol ReaderModuleAPI {
     bookId: String,
     locator: ReadiumShared.Locator?,
     selectionActions: [SelectionActionData]?
-  ) -> ReaderViewController?
+  ) -> PublicationReaderViewControllerType?
 }
 
 protocol ReaderModuleDelegate: ModuleDelegate {}
@@ -30,6 +30,7 @@ final class ReaderModule: ReaderModuleAPI {
     self.delegate = delegate
 
     formatModules = [
+      AudiobookModule(delegate: self),
       // CBZModule(delegate: self),
       EPUBModule(delegate: self),
     ]
@@ -45,7 +46,7 @@ final class ReaderModule: ReaderModuleAPI {
     bookId: String,
     locator: ReadiumShared.Locator?,
     selectionActions: [SelectionActionData]?
-  ) -> ReaderViewController? {
+  ) -> PublicationReaderViewControllerType? {
     guard let module = self.formatModules.first(
       where:{ $0.supports(publication) }
     ) else {
