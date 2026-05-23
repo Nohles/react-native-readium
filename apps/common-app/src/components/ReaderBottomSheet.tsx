@@ -127,6 +127,7 @@ export const ReaderBottomSheet: React.FC<ReaderBottomSheetProps> = ({
                   manifestUrl={book.manifestUrl}
                   format={book.format}
                   epubPath={book.epubPath}
+                  manifestUrl={book.manifestUrl}
                   bundledAsset={book.bundledAsset}
                   onReaderReady={handleReaderReady}
                   initialPreferences={initialPreferences}

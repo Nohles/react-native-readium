@@ -53,6 +53,8 @@ namespace margelo::nitro::readium { struct Point; }
 namespace margelo::nitro::readium { struct SelectionEvent; }
 // Forward declaration of `SelectionActionEvent` to properly resolve imports.
 namespace margelo::nitro::readium { struct SelectionActionEvent; }
+// Forward declaration of `AudiobookPlaybackState` to properly resolve imports.
+namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
 
 #include "ReadiumFile.hpp"
 #include <optional>
@@ -111,6 +113,9 @@ namespace margelo::nitro::readium { struct SelectionActionEvent; }
 #include "SelectionActionEvent.hpp"
 #include "JFunc_void_SelectionActionEvent.hpp"
 #include "JSelectionActionEvent.hpp"
+#include "AudiobookPlaybackState.hpp"
+#include "JFunc_void_AudiobookPlaybackState.hpp"
+#include "JAudiobookPlaybackState.hpp"
 
 namespace margelo::nitro::readium {
 
@@ -299,6 +304,23 @@ namespace margelo::nitro::readium {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<JFunc_void_SelectionActionEvent::javaobject> /* onSelectionAction */)>("setOnSelectionAction_cxx");
     method(_javaPart, onSelectionAction.has_value() ? JFunc_void_SelectionActionEvent_cxx::fromCpp(onSelectionAction.value()) : nullptr);
   }
+  std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>> JHybridReadiumViewSpec::getOnAudiobookPlaybackStateChange() {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<JFunc_void_AudiobookPlaybackState::javaobject>()>("getOnAudiobookPlaybackStateChange_cxx");
+    auto __result = method(_javaPart);
+    return __result != nullptr ? std::make_optional([&]() -> std::function<void(const AudiobookPlaybackState& /* state */)> {
+      if (__result->isInstanceOf(JFunc_void_AudiobookPlaybackState_cxx::javaClassStatic())) [[likely]] {
+        auto downcast = jni::static_ref_cast<JFunc_void_AudiobookPlaybackState_cxx::javaobject>(__result);
+        return downcast->cthis()->getFunction();
+      } else {
+        auto __resultRef = jni::make_global(__result);
+        return JNICallable<JFunc_void_AudiobookPlaybackState, void(AudiobookPlaybackState)>(std::move(__resultRef));
+      }
+    }()) : std::nullopt;
+  }
+  void JHybridReadiumViewSpec::setOnAudiobookPlaybackStateChange(const std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>& onAudiobookPlaybackStateChange) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<JFunc_void_AudiobookPlaybackState::javaobject> /* onAudiobookPlaybackStateChange */)>("setOnAudiobookPlaybackStateChange_cxx");
+    method(_javaPart, onAudiobookPlaybackStateChange.has_value() ? JFunc_void_AudiobookPlaybackState_cxx::fromCpp(onAudiobookPlaybackStateChange.value()) : nullptr);
+  }
 
   // Methods
   void JHybridReadiumViewSpec::goTo(const Locator& locator) {
@@ -312,6 +334,30 @@ namespace margelo::nitro::readium {
   void JHybridReadiumViewSpec::goBackward() {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void()>("goBackward");
     method(_javaPart);
+  }
+  void JHybridReadiumViewSpec::play() {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void()>("play");
+    method(_javaPart);
+  }
+  void JHybridReadiumViewSpec::pause() {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void()>("pause");
+    method(_javaPart);
+  }
+  void JHybridReadiumViewSpec::seekTo(double position) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(double /* position */)>("seekTo");
+    method(_javaPart, position);
+  }
+  void JHybridReadiumViewSpec::setPlaybackRate(double rate) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(double /* rate */)>("setPlaybackRate");
+    method(_javaPart, rate);
+  }
+  void JHybridReadiumViewSpec::setVolume(double volume) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(double /* volume */)>("setVolume");
+    method(_javaPart, volume);
+  }
+  void JHybridReadiumViewSpec::setSleepTimer(std::optional<double> seconds) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JDouble> /* seconds */)>("setSleepTimer");
+    method(_javaPart, seconds.has_value() ? jni::JDouble::valueOf(seconds.value()) : nullptr);
   }
   void JHybridReadiumViewSpec::destroy() {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void()>("destroy");

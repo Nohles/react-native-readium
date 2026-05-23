@@ -32,9 +32,17 @@ namespace margelo::nitro::readium {
       prototype.registerHybridSetter("onSelectionChange", &HybridReadiumViewSpec::setOnSelectionChange);
       prototype.registerHybridGetter("onSelectionAction", &HybridReadiumViewSpec::getOnSelectionAction);
       prototype.registerHybridSetter("onSelectionAction", &HybridReadiumViewSpec::setOnSelectionAction);
+      prototype.registerHybridGetter("onAudiobookPlaybackStateChange", &HybridReadiumViewSpec::getOnAudiobookPlaybackStateChange);
+      prototype.registerHybridSetter("onAudiobookPlaybackStateChange", &HybridReadiumViewSpec::setOnAudiobookPlaybackStateChange);
       prototype.registerHybridMethod("goTo", &HybridReadiumViewSpec::goTo);
       prototype.registerHybridMethod("goForward", &HybridReadiumViewSpec::goForward);
       prototype.registerHybridMethod("goBackward", &HybridReadiumViewSpec::goBackward);
+      prototype.registerHybridMethod("play", &HybridReadiumViewSpec::play);
+      prototype.registerHybridMethod("pause", &HybridReadiumViewSpec::pause);
+      prototype.registerHybridMethod("seekTo", &HybridReadiumViewSpec::seekTo);
+      prototype.registerHybridMethod("setPlaybackRate", &HybridReadiumViewSpec::setPlaybackRate);
+      prototype.registerHybridMethod("setVolume", &HybridReadiumViewSpec::setVolume);
+      prototype.registerHybridMethod("setSleepTimer", &HybridReadiumViewSpec::setSleepTimer);
       prototype.registerHybridMethod("destroy", &HybridReadiumViewSpec::destroy);
     });
   }

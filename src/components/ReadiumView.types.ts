@@ -8,12 +8,19 @@ import type {
   DecorationActivatedEvent,
   SelectionEvent,
   SelectionActionEvent,
+  AudiobookPlaybackState,
 } from '../interfaces';
 
 export type ReadiumViewRef = {
   goTo: (locator: Locator) => void;
   goForward: () => void;
   goBackward: () => void;
+  play: () => void;
+  pause: () => void;
+  seekTo: (position: number) => void;
+  setPlaybackRate: (rate: number) => void;
+  setVolume: (volume: number) => void;
+  setSleepTimer: (seconds?: number) => void;
 };
 
 export type ReadiumProps = {
@@ -27,4 +34,5 @@ export type ReadiumProps = {
   onDecorationActivated?: (event: DecorationActivatedEvent) => void;
   onSelectionChange?: (event: SelectionEvent) => void;
   onSelectionAction?: (event: SelectionActionEvent) => void;
+  onAudiobookPlaybackStateChange?: (state: AudiobookPlaybackState) => void;
 };

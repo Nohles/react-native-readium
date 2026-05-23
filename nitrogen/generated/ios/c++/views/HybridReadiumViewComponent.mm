@@ -117,6 +117,11 @@ using namespace margelo::nitro::readium::views;
     swiftPart.setOnSelectionAction(newViewProps.onSelectionAction.value);
     newViewProps.onSelectionAction.isDirty = false;
   }
+  // onAudiobookPlaybackStateChange: optional
+  if (newViewProps.onAudiobookPlaybackStateChange.isDirty) {
+    swiftPart.setOnAudiobookPlaybackStateChange(newViewProps.onAudiobookPlaybackStateChange.value);
+    newViewProps.onAudiobookPlaybackStateChange.isDirty = false;
+  }
 
   swiftPart.afterUpdate();
 

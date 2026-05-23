@@ -70,6 +70,12 @@ export const ReadiumView = React.forwardRef<ReadiumViewRef, ReadiumProps>(
         goBackward: () => {
           navigator?.goBackward(true, () => {});
         },
+        play: () => {},
+        pause: () => {},
+        seekTo: () => {},
+        setPlaybackRate: () => {},
+        setVolume: () => {},
+        setSleepTimer: () => {},
         /** @deprecated Use goForward() */
         nextPage: () => {
           navigator?.goForward(true, () => {});

@@ -73,6 +73,10 @@ void JHybridReadiumViewStateUpdater::updateViewProps(jni::alias_ref<jni::JClass>
     hybridView->setOnSelectionAction(props->onSelectionAction.value);
     props->onSelectionAction.isDirty = false;
   }
+  if (props->onAudiobookPlaybackStateChange.isDirty) {
+    hybridView->setOnAudiobookPlaybackStateChange(props->onAudiobookPlaybackStateChange.value);
+    props->onAudiobookPlaybackStateChange.isDirty = false;
+  }
 
   // Update hybridRef if it changed
   if (props->hybridRef.isDirty) {

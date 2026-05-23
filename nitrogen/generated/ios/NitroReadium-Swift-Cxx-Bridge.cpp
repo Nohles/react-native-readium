@@ -54,6 +54,14 @@ namespace margelo::nitro::readium::bridge::swift {
     };
   }
   
+  // pragma MARK: std::function<void(const AudiobookPlaybackState& /* state */)>
+  Func_void_AudiobookPlaybackState create_Func_void_AudiobookPlaybackState(void* NON_NULL swiftClosureWrapper) noexcept {
+    auto swiftClosure = NitroReadium::Func_void_AudiobookPlaybackState::fromUnsafe(swiftClosureWrapper);
+    return [swiftClosure = std::move(swiftClosure)](const AudiobookPlaybackState& state) mutable -> void {
+      swiftClosure.call(state);
+    };
+  }
+  
   // pragma MARK: std::shared_ptr<HybridReadiumViewSpec>
   std::shared_ptr<HybridReadiumViewSpec> create_std__shared_ptr_HybridReadiumViewSpec_(void* NON_NULL swiftUnsafePointer) noexcept {
     NitroReadium::HybridReadiumViewSpec_cxx swiftPart = NitroReadium::HybridReadiumViewSpec_cxx::fromUnsafe(swiftUnsafePointer);

@@ -217,6 +217,17 @@ export interface SelectionActionEvent {
   actionId: string;
 }
 
+export interface AudiobookPlaybackState {
+  isPlaying: boolean;
+  position: number;
+  duration: number;
+  rate: number;
+  volume: number;
+  currentHref?: string;
+  currentTitle?: string;
+  sleepTimerRemaining?: number;
+}
+
 // ── File ─────────────────────────────────────────────────────────────────────
 
 export interface ReadiumFile {
@@ -236,12 +247,19 @@ export interface ReadiumViewProps extends HybridViewProps {
   onDecorationActivated?: (event: DecorationActivatedEvent) => void;
   onSelectionChange?: (event: SelectionEvent) => void;
   onSelectionAction?: (event: SelectionActionEvent) => void;
+  onAudiobookPlaybackStateChange?: (state: AudiobookPlaybackState) => void;
 }
 
 export interface ReadiumViewMethods extends HybridViewMethods {
   goTo(locator: Locator): void;
   goForward(): void;
   goBackward(): void;
+  play(): void;
+  pause(): void;
+  seekTo(position: number): void;
+  setPlaybackRate(rate: number): void;
+  setVolume(volume: number): void;
+  setSleepTimer(seconds?: number): void;
   destroy(): void;
 }
 

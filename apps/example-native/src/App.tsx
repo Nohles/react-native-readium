@@ -7,6 +7,14 @@ import type { BookOption } from 'common-app';
 
 const books: BookOption[] = [
   {
+    id: 'flatland-audiobook',
+    title: 'Flatland',
+    author: 'Edwin Abbott Abbott',
+    manifestUrl:
+      'https://readium.org/webpub-manifest/examples/Flatland/manifest.json',
+    type: 'audiobook',
+  },
+  {
     id: 'moby-dick',
     title: 'Moby Dick',
     author: 'Herman Melville',

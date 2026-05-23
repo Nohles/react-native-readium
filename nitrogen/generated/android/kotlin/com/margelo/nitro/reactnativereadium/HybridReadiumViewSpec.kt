@@ -119,6 +119,20 @@ abstract class HybridReadiumViewSpec: HybridView() {
     set(value) {
       onSelectionAction = value?.let { it }
     }
+  
+  abstract var onAudiobookPlaybackStateChange: ((state: AudiobookPlaybackState) -> Unit)?
+  
+  private var onAudiobookPlaybackStateChange_cxx: Func_void_AudiobookPlaybackState?
+    @Keep
+    @DoNotStrip
+    get() {
+      return onAudiobookPlaybackStateChange?.let { Func_void_AudiobookPlaybackState_java(it) }
+    }
+    @Keep
+    @DoNotStrip
+    set(value) {
+      onAudiobookPlaybackStateChange = value?.let { it }
+    }
 
   // Methods
   @DoNotStrip
@@ -132,6 +146,30 @@ abstract class HybridReadiumViewSpec: HybridView() {
   @DoNotStrip
   @Keep
   abstract fun goBackward(): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun play(): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun pause(): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun seekTo(position: Double): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun setPlaybackRate(rate: Double): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun setVolume(volume: Double): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun setSleepTimer(seconds: Double?): Unit
   
   @DoNotStrip
   @Keep

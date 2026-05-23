@@ -12,6 +12,8 @@
 namespace margelo::nitro::readium { struct AccessibilityCertification; }
 // Forward declaration of `Accessibility` to properly resolve imports.
 namespace margelo::nitro::readium { struct Accessibility; }
+// Forward declaration of `AudiobookPlaybackState` to properly resolve imports.
+namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
 // Forward declaration of `BelongsTo` to properly resolve imports.
 namespace margelo::nitro::readium { struct BelongsTo; }
 // Forward declaration of `Contributor` to properly resolve imports.
@@ -60,6 +62,7 @@ namespace margelo::nitro::readium { struct Subject; }
 // Include C++ defined types
 #include "Accessibility.hpp"
 #include "AccessibilityCertification.hpp"
+#include "AudiobookPlaybackState.hpp"
 #include "BelongsTo.hpp"
 #include "Contributor.hpp"
 #include "Decoration.hpp"

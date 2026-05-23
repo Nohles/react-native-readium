@@ -28,6 +28,7 @@
 #include "DecorationActivatedEvent.hpp"
 #include "SelectionEvent.hpp"
 #include "SelectionActionEvent.hpp"
+#include "AudiobookPlaybackState.hpp"
 #include <memory>
 #include "HybridReadiumViewSpec.hpp"
 
@@ -60,6 +61,7 @@ namespace margelo::nitro::readium::views {
     CachedProp<std::optional<std::function<void(const DecorationActivatedEvent& /* event */)>>> onDecorationActivated;
     CachedProp<std::optional<std::function<void(const SelectionEvent& /* event */)>>> onSelectionChange;
     CachedProp<std::optional<std::function<void(const SelectionActionEvent& /* event */)>>> onSelectionAction;
+    CachedProp<std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>> onAudiobookPlaybackStateChange;
     CachedProp<std::optional<std::function<void(const std::shared_ptr<HybridReadiumViewSpec>& /* ref */)>>> hybridRef;
 
   private:

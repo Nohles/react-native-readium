@@ -52,6 +52,7 @@ export const Reader: React.FC<ReaderProps> = ({
   manifestUrl,
   format = 'epub',
   epubPath,
+  manifestUrl,
   bundledAsset,
   initialLocation,
   onReaderReady,
@@ -64,6 +65,7 @@ export const Reader: React.FC<ReaderProps> = ({
     epubUrl,
     manifestUrl,
     epubPath,
+    manifestUrl,
     bundledAsset,
     initialLocation,
   });

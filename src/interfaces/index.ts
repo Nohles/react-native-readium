@@ -8,4 +8,5 @@ export * from './PublicationMetadata';
 export * from './PublicationReady';
 export * from './Selection';
 export * from './SelectionAction';
+export * from './AudiobookPlaybackState';
 export type { Rect, Point } from '../specs/ReadiumView.nitro';

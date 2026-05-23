@@ -68,12 +68,20 @@ namespace margelo::nitro::readium {
     void setOnSelectionChange(const std::optional<std::function<void(const SelectionEvent& /* event */)>>& onSelectionChange) override;
     std::optional<std::function<void(const SelectionActionEvent& /* event */)>> getOnSelectionAction() override;
     void setOnSelectionAction(const std::optional<std::function<void(const SelectionActionEvent& /* event */)>>& onSelectionAction) override;
+    std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>> getOnAudiobookPlaybackStateChange() override;
+    void setOnAudiobookPlaybackStateChange(const std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>& onAudiobookPlaybackStateChange) override;
 
   public:
     // Methods
     void goTo(const Locator& locator) override;
     void goForward() override;
     void goBackward() override;
+    void play() override;
+    void pause() override;
+    void seekTo(double position) override;
+    void setPlaybackRate(double rate) override;
+    void setVolume(double volume) override;
+    void setSleepTimer(std::optional<double> seconds) override;
     void destroy() override;
 
   private:

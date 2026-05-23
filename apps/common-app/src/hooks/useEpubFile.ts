@@ -7,6 +7,7 @@ interface UseEpubFileOptions {
   epubUrl?: string;
   manifestUrl?: string;
   epubPath?: string;
+  manifestUrl?: string;
   bundledAsset?: string;
   initialLocation?: Locator;
 }
@@ -27,6 +28,7 @@ export const useEpubFile = ({
   epubUrl,
   manifestUrl,
   epubPath,
+  manifestUrl,
   bundledAsset,
   initialLocation,
 }: UseEpubFileOptions) => {
@@ -44,7 +46,7 @@ export const useEpubFile = ({
 
         let url = manifestUrl || epubUrl || '';
 
-        if (epubPath) {
+        if (!manifestUrl && epubPath) {
           const localPath = epubPath;
           const exists = await RNFS.exists(localPath);
 
@@ -64,9 +66,7 @@ export const useEpubFile = ({
               });
               await promise;
             } else {
-              throw new Error(
-                'No source available: epubUrl or bundledAsset is required'
-              );
+              throw new Error('No source available');
             }
           } else {
             console.log('File already exists. Skipping.', localPath);
