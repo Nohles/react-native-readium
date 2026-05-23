@@ -23,7 +23,7 @@ import { useHighlights } from '../hooks/useHighlights';
 
 import { styles } from '../styles/reader';
 import type { ReaderProps as BaseReaderProps } from '../types/reader.types';
-export type { BookOption } from '../types/reader.types';
+export type { BookOption, PublicationFormat } from '../types/reader.types';
 
 const selectionActions: SelectionAction[] = [
   { id: 'highlight', label: '📑 Highlight' },
@@ -49,6 +49,8 @@ interface ReaderProps extends BaseReaderProps {
 
 export const Reader: React.FC<ReaderProps> = ({
   epubUrl,
+  manifestUrl,
+  format = 'epub',
   epubPath,
   bundledAsset,
   initialLocation,
@@ -60,6 +62,7 @@ export const Reader: React.FC<ReaderProps> = ({
 
   const { file, isLoading, error } = useEpubFile({
     epubUrl,
+    manifestUrl,
     epubPath,
     bundledAsset,
     initialLocation,
@@ -78,16 +81,21 @@ export const Reader: React.FC<ReaderProps> = ({
     ref.current?.goTo(locator);
   }, []);
 
-  const navigateToTocItem = useCallback((item: Link) => {
-    ref.current?.goTo({
-      href: item.href,
-      type: item.type || 'application/xhtml+xml',
-      title: item.title || '',
-      locations: {
-        progression: 0,
-      },
-    });
-  }, []);
+  const navigateToTocItem = useCallback(
+    (item: Link) => {
+      ref.current?.goTo({
+        href: item.href,
+        type:
+          item.type ||
+          (format === 'audiobook' ? 'audio/mpeg' : 'application/xhtml+xml'),
+        title: item.title || '',
+        locations: {
+          progression: 0,
+        },
+      });
+    },
+    [format]
+  );
 
   const {
     decorations,
@@ -143,10 +151,12 @@ export const Reader: React.FC<ReaderProps> = ({
     handleEditHighlight,
   ]);
 
+  const loadingLabel = format === 'audiobook' ? 'audiobook' : 'EPUB';
+
   if (isLoading || !file) {
     return (
       <View style={styles.loadingContainer}>
-        <Text>Loading EPUB...</Text>
+        <Text>Loading {loadingLabel}...</Text>
       </View>
     );
   }
@@ -154,7 +164,9 @@ export const Reader: React.FC<ReaderProps> = ({
   if (error) {
     return (
       <View style={styles.loadingContainer}>
-        <Text>Error loading EPUB: {error.message}</Text>
+        <Text>
+          Error loading {loadingLabel}: {error.message}
+        </Text>
       </View>
     );
   }

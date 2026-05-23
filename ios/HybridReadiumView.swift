@@ -50,7 +50,7 @@ class HybridReadiumView: HybridReadiumViewSpec {
 
   private let hostView = UIView()
   private var readerService = ReaderService()
-  private var readerViewController: ReaderViewController?
+  private var readerHost: ReadiumReaderHosting?
   private var subscriptions = Set<AnyCancellable>()
   private var pendingFileUrl: String?
   private var pendingInitialLocation: Locator?
@@ -104,7 +104,7 @@ class HybridReadiumView: HybridReadiumViewSpec {
           epubVC.selectionActionDelegate = self
         }
 
-        self.addViewControllerAsSubview(vc)
+        self.addViewControllerAsSubview(host: vc)
       }
     )
   }
@@ -112,8 +112,8 @@ class HybridReadiumView: HybridReadiumViewSpec {
   // MARK: - Preferences
 
   private func updatePreferences() {
-    guard readerViewController != nil else { return }
-    guard let navigator = readerViewController?.navigator as? EPUBNavigatorViewController else { return }
+    guard readerHost != nil else { return }
+    guard let navigator = (readerHost as? ReaderViewController)?.navigator as? EPUBNavigatorViewController else { return }
     guard let prefs = preferences else { return }
 
     let epubPrefs = nitroPreferencesToEPUB(prefs)
@@ -123,8 +123,8 @@ class HybridReadiumView: HybridReadiumViewSpec {
   // MARK: - Decorations
 
   private func updateDecorations() {
-    guard readerViewController != nil else { return }
-    guard let navigator = readerViewController?.navigator as? DecorableNavigator else { return }
+    guard readerHost != nil else { return }
+    guard let navigator = (readerHost as? ReaderViewController)?.navigator as? DecorableNavigator else { return }
     guard let groups = decorations else { return }
 
     for group in groups {
@@ -174,7 +174,7 @@ class HybridReadiumView: HybridReadiumViewSpec {
 
   // MARK: - View lifecycle
 
-  private func addViewControllerAsSubview(_ vc: ReaderViewController) {
+  private func addViewControllerAsSubview(host vc: ReadiumReaderHosting) {
     vc.publisher.sink(receiveValue: { [weak self] locator in
       guard let self = self else { return }
       let nitroLocator = readiumLocatorToNitro(locator)
@@ -182,24 +182,26 @@ class HybridReadiumView: HybridReadiumViewSpec {
     })
     .store(in: &subscriptions)
 
-    readerViewController = vc
+    readerHost = vc
 
     // Apply pending state
     if preferences != nil { updatePreferences() }
     if decorations != nil { updateDecorations() }
 
+    let readerVC = vc.viewController
+
     guard
-      readerViewController != nil,
+      readerHost != nil,
       hostView.superview?.frame != nil,
       viewController != nil
     else { return }
 
-    readerViewController!.view.frame = hostView.superview!.frame
-    viewController!.addChild(readerViewController!)
-    let rootView = readerViewController!.view!
+    readerVC.view.frame = hostView.superview!.frame
+    viewController!.addChild(readerVC)
+    let rootView = readerVC.view!
     hostView.addSubview(rootView)
-    viewController!.addChild(readerViewController!)
-    readerViewController!.didMove(toParent: viewController!)
+    viewController!.addChild(readerVC)
+    readerVC.didMove(toParent: viewController!)
 
     rootView.translatesAutoresizingMaskIntoConstraints = false
     rootView.topAnchor.constraint(equalTo: hostView.topAnchor).isActive = true
@@ -246,7 +248,7 @@ class HybridReadiumView: HybridReadiumViewSpec {
   func goTo(locator: Locator) {
     Task { @MainActor [weak self] in
       guard let self else { return }
-      guard let navigator = self.readerViewController?.navigator else { return }
+      guard let navigator = self.readerHost?.readiumNavigator else { return }
       guard let readiumLocator = nitroLocatorToReadium(locator) else { return }
       _ = await navigator.go(to: readiumLocator, options: .animated)
     }
@@ -254,14 +256,14 @@ class HybridReadiumView: HybridReadiumViewSpec {
 
   func goForward() {
     Task { @MainActor in
-      guard let navigator = readerViewController?.navigator else { return }
+      guard let navigator = readerHost?.readiumNavigator else { return }
       _ = await navigator.goForward(options: .animated)
     }
   }
 
   func goBackward() {
     Task { @MainActor in
-      guard let navigator = readerViewController?.navigator else { return }
+      guard let navigator = readerHost?.readiumNavigator else { return }
       _ = await navigator.goBackward(options: .animated)
     }
   }
@@ -278,9 +280,10 @@ class HybridReadiumView: HybridReadiumViewSpec {
 
   // Cleanup
   func cleanup() {
-    guard let vc = readerViewController else { return }
-    readerViewController = nil
+    guard let host = readerHost else { return }
+    readerHost = nil
 
+    let vc = host.viewController
     vc.willMove(toParent: nil)
     if vc.view.superview != nil {
       vc.view.removeFromSuperview()

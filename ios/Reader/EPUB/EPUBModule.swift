@@ -20,7 +20,7 @@ final class EPUBModule: ReaderFormatModule {
       locator: ReadiumShared.Locator?,
       bookId: String,
       selectionActions: [SelectionActionData]?
-    ) throws -> ReaderViewController {
+    ) throws -> ReadiumReaderHosting {
         guard publication.metadata.identifier != nil else {
             throw ReaderError.epubNotValid
         }

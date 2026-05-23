@@ -27,6 +27,14 @@ const books: BookOption[] = [
     bundledAsset: 'the-brothers-karamazov.epub',
     epubPath: `${RNFS.DocumentDirectoryPath}/the-brothers-karamazov.epub`,
   },
+  {
+    id: 'flatland-audiobook',
+    title: 'Flatland (Audiobook)',
+    author: 'E. A. Abbott · narrated by Ruth Golding',
+    format: 'audiobook',
+    manifestUrl:
+      'https://readium.org/webpub-manifest/examples/Flatland/manifest.json',
+  },
 ];
 
 export default function App() {

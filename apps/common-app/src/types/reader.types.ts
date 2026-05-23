@@ -1,5 +1,7 @@
 import type { Locator } from 'react-native-readium';
 
+export type PublicationFormat = 'epub' | 'audiobook';
+
 export interface BookOption {
   id: string;
   title: string;
@@ -8,6 +10,9 @@ export interface BookOption {
   epubPath?: string;
   /** Filename of an epub bundled in the app assets (e.g. 'book.epub') */
   bundledAsset?: string;
+  /** Readium Web Publication manifest URL (e.g. audiobook JSON). */
+  manifestUrl?: string;
+  format?: PublicationFormat;
 }
 
 export interface ReaderProps {
@@ -17,6 +22,9 @@ export interface ReaderProps {
   epubPath?: string;
   /** Filename of an epub bundled in the app assets (e.g. 'book.epub') */
   bundledAsset?: string;
+  /** Readium Web Publication manifest URL (e.g. audiobook JSON). */
+  manifestUrl?: string;
+  format?: PublicationFormat;
   /** Initial location to open the book at */
   initialLocation?: Locator;
 }

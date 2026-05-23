@@ -35,7 +35,7 @@ final class ReaderService: Loggable {
     locator: ReadiumShared.Locator?,
     selectionActions: [SelectionActionData]?,
     sender: UIViewController?,
-    completion: @escaping (ReaderViewController) -> Void
+    completion: @escaping (ReadiumReaderHosting) -> Void
   ) {
     guard let reader = self.app?.reader else { return }
     self.url(path: url)

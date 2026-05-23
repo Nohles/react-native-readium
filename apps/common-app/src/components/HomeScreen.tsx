@@ -28,7 +28,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       activeOpacity={0.7}
     >
       <View style={styles.iconContainer}>
-        <MaterialIcons name="menu-book" size={32} color="#007AFF" />
+        <MaterialIcons
+          name={item.format === 'audiobook' ? 'headphones' : 'menu-book'}
+          size={32}
+          color="#007AFF"
+        />
       </View>
       <View style={styles.cardContent}>
         <Text style={styles.title} numberOfLines={2}>

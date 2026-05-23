@@ -5,6 +5,7 @@ import RNFS from '../utils/RNFS';
 
 interface UseEpubFileOptions {
   epubUrl?: string;
+  manifestUrl?: string;
   epubPath?: string;
   bundledAsset?: string;
   initialLocation?: Locator;
@@ -24,6 +25,7 @@ async function copyBundledAsset(
 
 export const useEpubFile = ({
   epubUrl,
+  manifestUrl,
   epubPath,
   bundledAsset,
   initialLocation,
@@ -40,7 +42,7 @@ export const useEpubFile = ({
         setIsLoading(true);
         setError(null);
 
-        let url = epubUrl || '';
+        let url = manifestUrl || epubUrl || '';
 
         if (epubPath) {
           const localPath = epubPath;
@@ -95,7 +97,7 @@ export const useEpubFile = ({
     return () => {
       cancelled = true;
     };
-  }, [epubUrl, epubPath, bundledAsset, initialLocation]);
+  }, [epubUrl, manifestUrl, epubPath, bundledAsset, initialLocation]);
 
   return { file, isLoading, error };
 };
