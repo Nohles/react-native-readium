@@ -7,7 +7,6 @@ interface UseEpubFileOptions {
   epubUrl?: string;
   manifestUrl?: string;
   epubPath?: string;
-  manifestUrl?: string;
   bundledAsset?: string;
   initialLocation?: Locator;
 }
@@ -28,7 +27,6 @@ export const useEpubFile = ({
   epubUrl,
   manifestUrl,
   epubPath,
-  manifestUrl,
   bundledAsset,
   initialLocation,
 }: UseEpubFileOptions) => {

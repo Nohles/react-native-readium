@@ -21,7 +21,7 @@ final class AudiobookModule: ReaderFormatModule {
     locator: ReadiumShared.Locator?,
     bookId: String,
     selectionActions: [SelectionActionData]?
-  ) throws -> PublicationReaderViewControllerType {
+  ) throws -> ReadiumReaderHosting {
     let audiobookViewController = AudiobookViewController(
       publication: publication,
       locator: locator,

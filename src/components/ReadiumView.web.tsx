@@ -8,7 +8,10 @@ import {
   useDecorationsObserver,
 } from '../../web/hooks';
 import { convertToNavigatorLocator } from '../../web/utils/locationNormalizer';
-import type { ReadiumProps as BaseReadiumProps, ReadiumViewRef as BaseReadiumViewRef } from './ReadiumView.types';
+import type {
+  ReadiumProps as BaseReadiumProps,
+  ReadiumViewRef as BaseReadiumViewRef,
+} from './ReadiumView.types';
 
 export type ReadiumProps = BaseReadiumProps & {
   height?: number;

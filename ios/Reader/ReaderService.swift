@@ -76,7 +76,12 @@ final class ReaderService: Loggable {
       return .just(URL(fileURLWithPath: path))
     }
 
-    return .fail(ReaderError.fileNotFound(fatalError("Unable to locate file: " + path)))
+    let error = NSError(
+      domain: "ReadiumReader",
+      code: NSFileNoSuchFileError,
+      userInfo: [NSLocalizedDescriptionKey: "Unable to locate file: \(path)"]
+    )
+    return .fail(ReaderError.fileNotFound(error))
   }
 
   private func openPublication(

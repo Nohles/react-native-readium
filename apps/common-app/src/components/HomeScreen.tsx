@@ -1,4 +1,5 @@
 import React from 'react';
+import type { ReactNode } from 'react';
 import {
   View,
   Text,
@@ -13,11 +14,13 @@ import type { BookOption } from '../types/reader.types';
 interface HomeScreenProps {
   books: BookOption[];
   onSelectBook: (book: BookOption) => void;
+  miniPlayer?: ReactNode;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   books,
   onSelectBook,
+  miniPlayer,
 }) => {
   const insets = useSafeAreaInsets();
 
@@ -29,7 +32,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     >
       <View style={styles.iconContainer}>
         <MaterialIcons
-          name={item.format === 'audiobook' ? 'headphones' : 'menu-book'}
+          name={
+            item.format === 'audiobook' || item.type === 'audiobook'
+              ? 'headphones'
+              : 'menu-book'
+          }
           size={32}
           color="#007AFF"
         />
@@ -55,8 +62,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         data={books}
         keyExtractor={(item) => item.id}
         renderItem={renderBook}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[
+          styles.list,
+          miniPlayer ? styles.listWithMiniPlayer : null,
+        ]}
       />
+      {miniPlayer ? <View style={styles.miniPlayer}>{miniPlayer}</View> : null}
     </View>
   );
 };
@@ -80,6 +91,15 @@ const styles = StyleSheet.create({
   },
   list: {
     padding: 16,
+  },
+  listWithMiniPlayer: {
+    paddingBottom: 104,
+  },
+  miniPlayer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   card: {
     flexDirection: 'row',

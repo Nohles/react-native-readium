@@ -19,5 +19,5 @@ export interface PublicationMetadata extends SpecPublicationMetadata {
   '@type'?: string;
 
   /** Profile(s) this publication conforms to */
-  conformsTo?: string[];
+  'conformsTo'?: string[];
 }

@@ -257,7 +257,7 @@ class HybridReadiumView: HybridReadiumViewSpec {
       guard let self else { return }
       guard let navigator = self.readerHost?.readiumNavigator else { return }
       guard let readiumLocator = nitroLocatorToReadium(locator) else { return }
-      await self.readerViewController?.goTo(readiumLocator)
+      _ = await navigator.go(to: readiumLocator, options: .animated)
     }
   }
 
@@ -276,27 +276,27 @@ class HybridReadiumView: HybridReadiumViewSpec {
   }
 
   func play() {
-    (readerViewController as? AudiobookViewController)?.play()
+    (readerHost as? AudiobookViewController)?.play()
   }
 
   func pause() {
-    (readerViewController as? AudiobookViewController)?.pause()
+    (readerHost as? AudiobookViewController)?.pause()
   }
 
   func seekTo(position: Double) {
-    (readerViewController as? AudiobookViewController)?.seekTo(position: position)
+    (readerHost as? AudiobookViewController)?.seekTo(position: position)
   }
 
   func setPlaybackRate(rate: Double) {
-    (readerViewController as? AudiobookViewController)?.setPlaybackRate(rate)
+    (readerHost as? AudiobookViewController)?.setPlaybackRate(rate)
   }
 
   func setVolume(volume: Double) {
-    (readerViewController as? AudiobookViewController)?.setVolume(volume)
+    (readerHost as? AudiobookViewController)?.setVolume(volume)
   }
 
   func setSleepTimer(seconds: Double?) {
-    (readerViewController as? AudiobookViewController)?.setSleepTimer(seconds: seconds)
+    (readerHost as? AudiobookViewController)?.setSleepTimer(seconds: seconds)
   }
 
   func destroy() {

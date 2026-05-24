@@ -52,16 +52,20 @@ export default function ReaderApp() {
   const [sheetOpen, setSheetOpen] = useState(() => {
     try {
       return !!localStorage.getItem(SELECTED_BOOK_KEY);
-    } catch { return false; }
+    } catch {
+      return false;
+    }
   });
   const [selectedBook, setSelectedBook] = useState<BookOption | null>(() => {
     try {
       const id = localStorage.getItem(SELECTED_BOOK_KEY);
       return id ? books.find((b) => b.id === id) ?? null : null;
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   });
-  const { initialPreferences, handlePreferencesChange } = usePersistedPreferences();
-
+  const { initialPreferences, handlePreferencesChange } =
+    usePersistedPreferences();
 
   useEffect(() => {
     const setup = async () => {
@@ -75,18 +79,24 @@ export default function ReaderApp() {
   const handleSelectBook = useCallback((book: BookOption) => {
     setSelectedBook(book);
     setSheetOpen(true);
-    try { localStorage.setItem(SELECTED_BOOK_KEY, book.id); } catch {}
+    try {
+      localStorage.setItem(SELECTED_BOOK_KEY, book.id);
+    } catch {}
   }, []);
 
   const handleClearBook = useCallback(() => {
     setSelectedBook(null);
-    try { localStorage.removeItem(SELECTED_BOOK_KEY); } catch {}
+    try {
+      localStorage.removeItem(SELECTED_BOOK_KEY);
+    } catch {}
   }, []);
 
   const handleCloseSheet = useCallback(() => {
     setSheetOpen(false);
     setSelectedBook(null);
-    try { localStorage.removeItem(SELECTED_BOOK_KEY); } catch {}
+    try {
+      localStorage.removeItem(SELECTED_BOOK_KEY);
+    } catch {}
   }, []);
 
   if (!isMounted) {

@@ -2,8 +2,14 @@ import React, { useState, useCallback } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { HomeScreen, ReaderBottomSheet, RNFS } from 'common-app';
-import type { BookOption } from 'common-app';
+import {
+  AudiobookMiniPlayer,
+  HomeScreen,
+  ReaderBottomSheet,
+  RNFS,
+} from 'common-app';
+import type { BookOption, ReaderHandle } from 'common-app';
+import type { AudiobookPlaybackState } from 'react-native-readium';
 
 const books: BookOption[] = [
   {
@@ -35,22 +41,25 @@ const books: BookOption[] = [
     bundledAsset: 'the-brothers-karamazov.epub',
     epubPath: `${RNFS.DocumentDirectoryPath}/the-brothers-karamazov.epub`,
   },
-  {
-    id: 'flatland-audiobook',
-    title: 'Flatland (Audiobook)',
-    author: 'E. A. Abbott · narrated by Ruth Golding',
-    format: 'audiobook',
-    manifestUrl:
-      'https://readium.org/webpub-manifest/examples/Flatland/manifest.json',
-  },
 ];
 
 export default function App() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState<BookOption | null>(null);
+  const [activeAudiobook, setActiveAudiobook] = useState<BookOption | null>(
+    null
+  );
+  const [readerHandle, setReaderHandle] = useState<ReaderHandle | null>(null);
+  const [audiobookPlaybackState, setAudiobookPlaybackState] =
+    useState<AudiobookPlaybackState | null>(null);
+  const [audiobookTitle, setAudiobookTitle] = useState('Audiobook');
 
   const handleSelectBook = useCallback((book: BookOption) => {
     setSelectedBook(book);
+    if (book.type === 'audiobook' || book.format === 'audiobook') {
+      setActiveAudiobook(book);
+      setAudiobookTitle(book.title);
+    }
     setSheetOpen(true);
   }, []);
 
@@ -61,18 +70,55 @@ export default function App() {
   const handleCloseSheet = useCallback(() => {
     setSheetOpen(false);
     setSelectedBook(null);
+    setAudiobookPlaybackState((state) =>
+      state ? { ...state, isPlaying: false } : state
+    );
   }, []);
+
+  const handleOpenActiveAudiobook = useCallback(() => {
+    if (!activeAudiobook) {
+      return;
+    }
+
+    setSelectedBook(activeAudiobook);
+    setSheetOpen(true);
+  }, [activeAudiobook]);
+
+  const homeMiniPlayer =
+    activeAudiobook && audiobookPlaybackState && !sheetOpen ? (
+      <AudiobookMiniPlayer
+        playbackState={audiobookPlaybackState}
+        title={audiobookTitle}
+        onPress={handleOpenActiveAudiobook}
+        onPlay={() => {
+          if (readerHandle) {
+            readerHandle.play();
+          } else {
+            handleOpenActiveAudiobook();
+          }
+        }}
+        onPause={() => readerHandle?.pause()}
+        onNext={() => readerHandle?.goForward()}
+      />
+    ) : null;
 
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <HomeScreen books={books} onSelectBook={handleSelectBook} />
+        <HomeScreen
+          books={books}
+          onSelectBook={handleSelectBook}
+          miniPlayer={homeMiniPlayer}
+        />
         {sheetOpen && (
           <ReaderBottomSheet
             key={selectedBook?.id ?? 'empty'}
             book={selectedBook}
             onClearBook={handleClearBook}
             onClose={handleCloseSheet}
+            onReaderReady={setReaderHandle}
+            onAudiobookPlaybackStateChange={setAudiobookPlaybackState}
+            onPublicationTitleChange={setAudiobookTitle}
           />
         )}
       </GestureHandlerRootView>

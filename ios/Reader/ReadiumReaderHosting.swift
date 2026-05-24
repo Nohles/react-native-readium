@@ -21,3 +21,8 @@ extension AudioViewController: ReadiumReaderHosting {
   var readiumNavigator: Navigator { navigator }
   var viewController: UIViewController { self }
 }
+
+extension AudiobookViewController: ReadiumReaderHosting {
+  var readiumNavigator: Navigator { audioNavigator }
+  var viewController: UIViewController { self }
+}

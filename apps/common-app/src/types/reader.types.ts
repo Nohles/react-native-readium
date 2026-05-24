@@ -9,7 +9,6 @@ export interface BookOption {
   type?: 'epub' | 'audiobook';
   epubUrl?: string;
   epubPath?: string;
-  manifestUrl?: string;
   /** Filename of an epub bundled in the app assets (e.g. 'book.epub') */
   bundledAsset?: string;
   /** Readium Web Publication manifest URL (e.g. audiobook JSON). */
@@ -22,8 +21,6 @@ export interface ReaderProps {
   epubUrl?: string;
   /** Local file path for the EPUB (used on native platforms after download) */
   epubPath?: string;
-  /** Remote Readium Web Publication Manifest URL for audiobooks. */
-  manifestUrl?: string;
   /** Filename of an epub bundled in the app assets (e.g. 'book.epub') */
   bundledAsset?: string;
   /** Readium Web Publication manifest URL (e.g. audiobook JSON). */

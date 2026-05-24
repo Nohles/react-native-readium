@@ -1,4 +1,6 @@
 import Combine
+import AVFoundation
+import MediaPlayer
 import ReadiumNavigator
 import ReadiumShared
 import UIKit
@@ -43,6 +45,7 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
   private var continuousPlay = true
   private var sleepTimerMode: SleepTimerMode = .off
   private var sleepTimer: Timer?
+  private var nowPlayingArtwork: MPMediaItemArtwork?
 
   private let backgroundColor = UIColor(red: 0.957, green: 0.945, blue: 0.925, alpha: 1)
   private let borderColor = UIColor(red: 0.63, green: 0.60, blue: 0.50, alpha: 1)
@@ -74,6 +77,15 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
 
   deinit {
     sleepTimer?.invalidate()
+    MPRemoteCommandCenter.shared().playCommand.removeTarget(self)
+    MPRemoteCommandCenter.shared().pauseCommand.removeTarget(self)
+    MPRemoteCommandCenter.shared().togglePlayPauseCommand.removeTarget(self)
+    MPRemoteCommandCenter.shared().skipBackwardCommand.removeTarget(self)
+    MPRemoteCommandCenter.shared().skipForwardCommand.removeTarget(self)
+    MPRemoteCommandCenter.shared().previousTrackCommand.removeTarget(self)
+    MPRemoteCommandCenter.shared().nextTrackCommand.removeTarget(self)
+    MPRemoteCommandCenter.shared().changePlaybackPositionCommand.removeTarget(self)
+    MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
     audioNavigator.pause()
   }
 
@@ -82,6 +94,8 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     view.backgroundColor = backgroundColor
     buildUI()
     loadCover()
+    configureSystemAudio()
+    configureRemoteCommandCenter()
     updatePlaybackUI()
     emitPlaybackState()
   }
@@ -102,6 +116,7 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
   }
 
   func play() {
+    activateAudioSession()
     audioNavigator.play()
   }
 
@@ -177,17 +192,17 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     subtitleLabel.numberOfLines = 2
     subtitleLabel.text = publication.metadata.subtitle
 
-    let previousButton = iconButton("backward.end.fill", action: #selector(previousChapterTapped))
-    let rewindButton = iconButton("gobackward.10", action: #selector(rewindTapped))
+    let previousButton = iconButton("backward.end.fill", action: #selector(previousChapterTapped), pointSize: 34, size: 58)
+    let rewindButton = iconButton("gobackward.10", action: #selector(rewindTapped), pointSize: 34, size: 58)
     configurePlayButton()
-    let forwardButton = iconButton("goforward.10", action: #selector(forwardTapped))
-    let nextButton = iconButton("forward.end.fill", action: #selector(nextChapterTapped))
+    let forwardButton = iconButton("goforward.10", action: #selector(forwardTapped), pointSize: 34, size: 58)
+    let nextButton = iconButton("forward.end.fill", action: #selector(nextChapterTapped), pointSize: 34, size: 58)
 
     let controls = UIStackView(arrangedSubviews: [previousButton, rewindButton, playButton, forwardButton, nextButton])
     controls.axis = .horizontal
-    controls.spacing = 28
+    controls.spacing = 16
     controls.alignment = .center
-    controls.distribution = .equalCentering
+    controls.distribution = .equalSpacing
 
     chapterLabel.font = .systemFont(ofSize: 18)
     chapterLabel.textAlignment = .center
@@ -207,20 +222,19 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     timeRow.axis = .horizontal
     timeRow.distribution = .fillEqually
 
-    let volumeButton = bottomButton("speaker.wave.2.fill", title: nil, action: #selector(volumeTapped))
     let rateButton = bottomButton("speedometer", title: nil, action: #selector(rateTapped))
-    rateCaptionLabel.font = .boldSystemFont(ofSize: 12)
+    rateCaptionLabel.font = .boldSystemFont(ofSize: 18)
     rateCaptionLabel.textAlignment = .center
     let rateStack = UIStackView(arrangedSubviews: [rateButton, rateCaptionLabel])
     rateStack.axis = .vertical
-    rateStack.spacing = 0
+    rateStack.spacing = 4
     let tocButton = bottomButton("list.bullet", title: nil, action: #selector(tocTapped))
     let sleepButton = bottomButton("alarm.fill", title: nil, action: #selector(sleepTapped))
-    let bottomControls = UIStackView(arrangedSubviews: [volumeButton, rateStack, tocButton, sleepButton])
+    let bottomControls = UIStackView(arrangedSubviews: [rateStack, tocButton, sleepButton])
     bottomControls.axis = .horizontal
-    bottomControls.spacing = 34
+    bottomControls.spacing = 44
     bottomControls.alignment = .center
-    bottomControls.distribution = .equalCentering
+    bottomControls.distribution = .equalSpacing
 
     let mainStack = UIStackView(arrangedSubviews: [
       coverImageView,
@@ -255,30 +269,49 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
       placeholderLabel.centerXAnchor.constraint(equalTo: coverImageView.centerXAnchor),
       placeholderLabel.centerYAnchor.constraint(equalTo: coverImageView.centerYAnchor),
 
-      controls.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, constant: -160),
+      controls.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.84),
+      controls.widthAnchor.constraint(lessThanOrEqualToConstant: 380),
       timelineSlider.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.78),
       timeRow.widthAnchor.constraint(equalTo: timelineSlider.widthAnchor),
-      bottomControls.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, constant: -260)
+      bottomControls.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.70),
+      bottomControls.widthAnchor.constraint(lessThanOrEqualToConstant: 300)
     ])
   }
 
   private func configurePlayButton() {
     playButton.tintColor = .black
-    playButton.setPreferredSymbolConfiguration(.init(pointSize: 34, weight: .bold), forImageIn: .normal)
+    playButton.imageView?.contentMode = .scaleAspectFit
+    playButton.setPreferredSymbolConfiguration(.init(pointSize: 44, weight: .bold), forImageIn: .normal)
     playButton.addTarget(self, action: #selector(playPauseTapped), for: .touchUpInside)
+    constrainButton(playButton, size: 72)
   }
 
-  private func iconButton(_ systemName: String, action: Selector) -> UIButton {
+  private func iconButton(
+    _ systemName: String,
+    action: Selector,
+    pointSize: CGFloat = 26,
+    size: CGFloat = 44
+  ) -> UIButton {
     let button = UIButton(type: .system)
     button.tintColor = .black
+    button.imageView?.contentMode = .scaleAspectFit
     button.setImage(UIImage(systemName: systemName), for: .normal)
-    button.setPreferredSymbolConfiguration(.init(pointSize: 26, weight: .bold), forImageIn: .normal)
+    button.setPreferredSymbolConfiguration(.init(pointSize: pointSize, weight: .bold), forImageIn: .normal)
     button.addTarget(self, action: action, for: .touchUpInside)
+    constrainButton(button, size: size)
     return button
   }
 
+  private func constrainButton(_ button: UIButton, size: CGFloat) {
+    button.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      button.widthAnchor.constraint(equalToConstant: size),
+      button.heightAnchor.constraint(equalToConstant: size)
+    ])
+  }
+
   private func bottomButton(_ systemName: String, title: String?, action: Selector) -> UIButton {
-    let button = iconButton(systemName, action: action)
+    let button = iconButton(systemName, action: action, pointSize: 28, size: 54)
     if let title = title {
       button.setTitle(title, for: .normal)
     }
@@ -344,8 +377,56 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
       DispatchQueue.main.async {
         self?.placeholderLabel.text = nil
         self?.coverImageView.image = image
+        self?.nowPlayingArtwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+        self?.updateNowPlayingInfo()
       }
     }.resume()
+  }
+
+  private func configureSystemAudio() {
+    do {
+      try AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio, options: [])
+    } catch {
+      log(.error, "Failed to configure audiobook audio session: \(error)")
+    }
+  }
+
+  private func activateAudioSession() {
+    do {
+      try AVAudioSession.sharedInstance().setActive(true)
+    } catch {
+      log(.error, "Failed to activate audiobook audio session: \(error)")
+    }
+  }
+
+  private func configureRemoteCommandCenter() {
+    let commandCenter = MPRemoteCommandCenter.shared()
+
+    commandCenter.playCommand.isEnabled = true
+    commandCenter.playCommand.addTarget(self, action: #selector(remotePlay(_:)))
+
+    commandCenter.pauseCommand.isEnabled = true
+    commandCenter.pauseCommand.addTarget(self, action: #selector(remotePause(_:)))
+
+    commandCenter.togglePlayPauseCommand.isEnabled = true
+    commandCenter.togglePlayPauseCommand.addTarget(self, action: #selector(remoteTogglePlayPause(_:)))
+
+    commandCenter.skipBackwardCommand.isEnabled = true
+    commandCenter.skipBackwardCommand.preferredIntervals = [NSNumber(value: skipBackwardInterval)]
+    commandCenter.skipBackwardCommand.addTarget(self, action: #selector(remoteSkipBackward(_:)))
+
+    commandCenter.skipForwardCommand.isEnabled = true
+    commandCenter.skipForwardCommand.preferredIntervals = [NSNumber(value: skipForwardInterval)]
+    commandCenter.skipForwardCommand.addTarget(self, action: #selector(remoteSkipForward(_:)))
+
+    commandCenter.previousTrackCommand.isEnabled = true
+    commandCenter.previousTrackCommand.addTarget(self, action: #selector(remotePreviousChapter(_:)))
+
+    commandCenter.nextTrackCommand.isEnabled = true
+    commandCenter.nextTrackCommand.addTarget(self, action: #selector(remoteNextChapter(_:)))
+
+    commandCenter.changePlaybackPositionCommand.isEnabled = true
+    commandCenter.changePlaybackPositionCommand.addTarget(self, action: #selector(remoteChangePlaybackPosition(_:)))
   }
 
   private func seekToAbsoluteTime(_ absoluteTime: Double) {
@@ -382,6 +463,7 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     isPlaying = info.state == .playing
     duration = publication.metadata.duration ?? audioNavigator.totalDuration ?? max(duration, currentPosition + (info.duration ?? 0))
     updatePlaybackUI()
+    updateNowPlayingInfo()
     evaluateSleepTimer()
     emitPlaybackState()
   }
@@ -395,6 +477,32 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     chapterLabel.text = currentChapter()?.title ?? publication.metadata.title
     let imageName = isPlaying ? "pause.fill" : "play.fill"
     playButton.setImage(UIImage(systemName: imageName), for: .normal)
+  }
+
+  private func updateNowPlayingInfo() {
+    var info: [String: Any] = [
+      MPMediaItemPropertyTitle: publication.metadata.title ?? "Audiobook",
+      MPMediaItemPropertyPlaybackDuration: duration,
+      MPNowPlayingInfoPropertyElapsedPlaybackTime: currentPosition,
+      MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? playbackRate : 0,
+      MPNowPlayingInfoPropertyDefaultPlaybackRate: playbackRate,
+      MPNowPlayingInfoPropertyMediaType: MPNowPlayingInfoMediaType.audio.rawValue
+    ]
+
+    let authors = publication.metadata.authors.map(\.name).joined(separator: ", ")
+    if !authors.isEmpty {
+      info[MPMediaItemPropertyArtist] = authors
+    }
+
+    if let chapterTitle = currentChapter()?.title {
+      info[MPMediaItemPropertyAlbumTitle] = chapterTitle
+    }
+
+    if let artwork = nowPlayingArtwork {
+      info[MPMediaItemPropertyArtwork] = artwork
+    }
+
+    MPNowPlayingInfoCenter.default().nowPlayingInfo = info
   }
 
   private func emitPlaybackState() {
@@ -515,6 +623,8 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
       self.skipBackwardInterval = settings.skipBackward
       self.skipForwardInterval = settings.skipForward
       self.continuousPlay = settings.continuousPlay
+      MPRemoteCommandCenter.shared().skipBackwardCommand.preferredIntervals = [NSNumber(value: settings.skipBackward)]
+      MPRemoteCommandCenter.shared().skipForwardCommand.preferredIntervals = [NSNumber(value: settings.skipForward)]
       self.applyTheme(settings.theme)
     }
     presentSheet(vc)
@@ -542,13 +652,6 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
 
   @objc private func timelineChanged() {
     seekToAbsoluteTime(Double(timelineSlider.value))
-  }
-
-  @objc private func volumeTapped() {
-    let vc = SliderSheetViewController(title: "Volume", value: Float(volume), range: 0...1) { [weak self] value in
-      self?.setVolume(Double(value))
-    }
-    presentSheet(vc)
   }
 
   @objc private func rateTapped() {
@@ -601,6 +704,46 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
       sheet.prefersGrabberVisible = true
     }
     present(vc, animated: true)
+  }
+
+  @objc private func remotePlay(_ event: MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus {
+    play()
+    return .success
+  }
+
+  @objc private func remotePause(_ event: MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus {
+    pause()
+    return .success
+  }
+
+  @objc private func remoteTogglePlayPause(_ event: MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus {
+    isPlaying ? pause() : play()
+    return .success
+  }
+
+  @objc private func remoteSkipBackward(_ event: MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus {
+    seekToAbsoluteTime(currentPosition - skipBackwardInterval)
+    return .success
+  }
+
+  @objc private func remoteSkipForward(_ event: MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus {
+    seekToAbsoluteTime(currentPosition + skipForwardInterval)
+    return .success
+  }
+
+  @objc private func remotePreviousChapter(_ event: MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus {
+    seekToPreviousChapter()
+    return .success
+  }
+
+  @objc private func remoteNextChapter(_ event: MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus {
+    seekToNextChapter()
+    return .success
+  }
+
+  @objc private func remoteChangePlaybackPosition(_ event: MPChangePlaybackPositionCommandEvent) -> MPRemoteCommandHandlerStatus {
+    seekToAbsoluteTime(event.positionTime)
+    return .success
   }
 }
 

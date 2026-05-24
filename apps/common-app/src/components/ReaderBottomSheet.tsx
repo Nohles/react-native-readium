@@ -1,5 +1,12 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+  ScrollView,
+} from 'react-native';
 import BottomSheet from '@gorhom/bottom-sheet';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,7 +15,10 @@ import { Reader } from './Reader';
 import type { ReaderHandle } from './Reader';
 import { ControlBar } from './ControlBar';
 import type { BookOption } from '../types/reader.types';
-import type { ReadiumProps } from 'react-native-readium';
+import type {
+  AudiobookPlaybackState,
+  ReadiumProps,
+} from 'react-native-readium';
 
 type ContentMode = 'reader' | 'details';
 
@@ -18,6 +28,9 @@ interface ReaderBottomSheetProps {
   onClose: () => void;
   initialPreferences?: ReadiumProps['preferences'];
   onPreferencesChange?: (preferences: ReadiumProps['preferences']) => void;
+  onReaderReady?: (handle: ReaderHandle | null) => void;
+  onAudiobookPlaybackStateChange?: (state: AudiobookPlaybackState) => void;
+  onPublicationTitleChange?: (title: string) => void;
 }
 
 const snapPoints = ['100%'];
@@ -41,10 +54,10 @@ const BookDetails: React.FC<{
       <Text style={styles.detailsAuthor}>{book.author}</Text>
 
       <Text style={styles.detailsDescription}>
-        This view demonstrates that the ReadiumView native Fragment is
-        properly removed when React unmounts the Reader component. If the
-        Fragment cleanup is broken, this view will be covered by the stale
-        WebView and the button below will not be pressable.
+        This view demonstrates that the ReadiumView native Fragment is properly
+        removed when React unmounts the Reader component. If the Fragment
+        cleanup is broken, this view will be covered by the stale WebView and
+        the button below will not be pressable.
       </Text>
 
       <TouchableOpacity style={styles.openReaderButton} onPress={onOpenReader}>
@@ -61,11 +74,17 @@ export const ReaderBottomSheet: React.FC<ReaderBottomSheetProps> = ({
   onClose,
   initialPreferences,
   onPreferencesChange,
+  onReaderReady,
+  onAudiobookPlaybackStateChange,
+  onPublicationTitleChange,
 }) => {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [readerHandle, setReaderHandle] = useState<ReaderHandle | null>(null);
   const [contentMode, setContentMode] = useState<ContentMode>('reader');
   const wasOpen = useRef(false);
+  const isAudiobook =
+    book?.format === 'audiobook' || book?.type === 'audiobook';
+  const publicationFormat = isAudiobook ? 'audiobook' : book?.format;
 
   const handleSheetChange = useCallback(
     (index: number) => {
@@ -83,9 +102,17 @@ export const ReaderBottomSheet: React.FC<ReaderBottomSheetProps> = ({
     bottomSheetRef.current?.close();
   }, []);
 
-  const handleReaderReady = useCallback((handle: ReaderHandle) => {
-    setReaderHandle(handle);
-  }, []);
+  const handleReaderReady = useCallback(
+    (handle: ReaderHandle) => {
+      setReaderHandle(handle);
+      onReaderReady?.(handle);
+    },
+    [onReaderReady]
+  );
+
+  React.useEffect(() => {
+    return () => onReaderReady?.(null);
+  }, [onReaderReady]);
 
   return (
     <BottomSheet
@@ -102,7 +129,7 @@ export const ReaderBottomSheet: React.FC<ReaderBottomSheetProps> = ({
       <View style={styles.content}>
         {contentMode === 'reader' ? (
           <>
-            {book && readerHandle ? (
+            {book && readerHandle && !isAudiobook ? (
               <ControlBar
                 preferences={readerHandle.preferences}
                 onPreferencesChange={readerHandle.setPreferences}
@@ -115,9 +142,9 @@ export const ReaderBottomSheet: React.FC<ReaderBottomSheetProps> = ({
                 onClearBook={onClearBook}
                 onClose={handleClose}
               />
-            ) : (
+            ) : !book || !isAudiobook ? (
               <EmptyBar onClose={handleClose} />
-            )}
+            ) : null}
 
             {book ? (
               <View style={styles.readerContainer}>
@@ -125,13 +152,16 @@ export const ReaderBottomSheet: React.FC<ReaderBottomSheetProps> = ({
                   key={book.id}
                   epubUrl={book.epubUrl}
                   manifestUrl={book.manifestUrl}
-                  format={book.format}
+                  format={publicationFormat}
                   epubPath={book.epubPath}
-                  manifestUrl={book.manifestUrl}
                   bundledAsset={book.bundledAsset}
                   onReaderReady={handleReaderReady}
                   initialPreferences={initialPreferences}
                   onPreferencesChange={onPreferencesChange}
+                  onAudiobookPlaybackStateChange={
+                    onAudiobookPlaybackStateChange
+                  }
+                  onPublicationTitleChange={onPublicationTitleChange}
                 />
                 <TouchableOpacity
                   style={styles.detailsFab}

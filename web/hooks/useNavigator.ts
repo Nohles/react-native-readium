@@ -104,9 +104,10 @@ export const useNavigator = ({
       let positionsArray: Locator[];
       try {
         const manifestPositions = await publication.positionsFromManifest();
-        positionsArray = manifestPositions.length > 0
-          ? manifestPositions
-          : createPositions(publication);
+        positionsArray =
+          manifestPositions.length > 0
+            ? manifestPositions
+            : createPositions(publication);
       } catch {
         positionsArray = createPositions(publication);
       }

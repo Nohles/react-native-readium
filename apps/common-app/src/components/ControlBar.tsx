@@ -1,6 +1,11 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import type { ReadiumProps, Link, Decoration, Locator } from 'react-native-readium';
+import type {
+  ReadiumProps,
+  Link,
+  Decoration,
+  Locator,
+} from 'react-native-readium';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 

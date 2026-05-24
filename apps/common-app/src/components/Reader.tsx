@@ -9,13 +9,11 @@ import type {
   Decoration,
   SelectionAction,
   PublicationReadyEvent,
+  AudiobookPlaybackState,
 } from 'react-native-readium';
 
 import { ReaderButton } from './ReaderButton';
-import {
-  HighlightColorPicker,
-  HighlightEditDialog,
-} from './highlights';
+import { HighlightColorPicker, HighlightEditDialog } from './highlights';
 
 import { useEpubFile } from '../hooks/useEpubFile';
 import { useReaderState } from '../hooks/useReaderState';
@@ -36,6 +34,10 @@ export interface ReaderHandle {
   setPreferences: (prefs: ReadiumProps['preferences']) => void;
   navigateToLocator: (locator: Locator) => void;
   navigateToTocItem: (item: Link) => void;
+  play: () => void;
+  pause: () => void;
+  goForward: () => void;
+  goBackward: () => void;
   highlights: Decoration[];
   deleteHighlight: (id: string) => void;
   editHighlight: (highlight: Decoration) => void;
@@ -45,6 +47,8 @@ interface ReaderProps extends BaseReaderProps {
   onReaderReady?: (handle: ReaderHandle) => void;
   initialPreferences?: ReadiumProps['preferences'];
   onPreferencesChange?: (preferences: ReadiumProps['preferences']) => void;
+  onAudiobookPlaybackStateChange?: (state: AudiobookPlaybackState) => void;
+  onPublicationTitleChange?: (title: string) => void;
 }
 
 export const Reader: React.FC<ReaderProps> = ({
@@ -52,12 +56,13 @@ export const Reader: React.FC<ReaderProps> = ({
   manifestUrl,
   format = 'epub',
   epubPath,
-  manifestUrl,
   bundledAsset,
   initialLocation,
   onReaderReady,
   initialPreferences,
   onPreferencesChange,
+  onAudiobookPlaybackStateChange,
+  onPublicationTitleChange,
 }) => {
   const ref = useRef<ReadiumViewRef>(null);
 
@@ -65,7 +70,6 @@ export const Reader: React.FC<ReaderProps> = ({
     epubUrl,
     manifestUrl,
     epubPath,
-    manifestUrl,
     bundledAsset,
     initialLocation,
   });
@@ -99,6 +103,22 @@ export const Reader: React.FC<ReaderProps> = ({
     [format]
   );
 
+  const play = useCallback(() => {
+    ref.current?.play();
+  }, []);
+
+  const pause = useCallback(() => {
+    ref.current?.pause();
+  }, []);
+
+  const goForward = useCallback(() => {
+    ref.current?.goForward();
+  }, []);
+
+  const goBackward = useCallback(() => {
+    ref.current?.goBackward();
+  }, []);
+
   const {
     decorations,
     highlights,
@@ -121,8 +141,9 @@ export const Reader: React.FC<ReaderProps> = ({
   const handlePublicationReady = React.useCallback(
     (event: PublicationReadyEvent) => {
       baseHandlePublicationReady(event);
+      onPublicationTitleChange?.(event.metadata.title || 'Audiobook');
     },
-    [baseHandlePublicationReady]
+    [baseHandlePublicationReady, onPublicationTitleChange]
   );
 
   // Expose reader state to parent via callback
@@ -135,6 +156,10 @@ export const Reader: React.FC<ReaderProps> = ({
         setPreferences,
         navigateToLocator,
         navigateToTocItem,
+        play,
+        pause,
+        goForward,
+        goBackward,
         highlights,
         deleteHighlight: handleDeleteHighlight,
         editHighlight: handleEditHighlight,
@@ -149,6 +174,10 @@ export const Reader: React.FC<ReaderProps> = ({
     setPreferences,
     navigateToLocator,
     navigateToTocItem,
+    play,
+    pause,
+    goForward,
+    goBackward,
     handleDeleteHighlight,
     handleEditHighlight,
   ]);
@@ -196,6 +225,7 @@ export const Reader: React.FC<ReaderProps> = ({
             onDecorationActivated={handleDecorationActivated}
             onSelectionChange={handleSelectionChange}
             onSelectionAction={handleSelectionAction}
+            onAudiobookPlaybackStateChange={onAudiobookPlaybackStateChange}
           />
         </View>
 
