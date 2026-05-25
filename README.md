@@ -50,7 +50,7 @@ allows you to do things like:
 
 #### Prerequisites
 
-1. **iOS**: Requires an iOS target >= `13.0` (see the iOS section for more details).
+1. **iOS**: Requires an iOS target >= `16.4` (see the iOS section for more details).
 2. **Android**: Requires `compileSdkVersion` >= `31` (see the Android section for more details).
 
 This library uses [Nitro Modules](https://nitro.margelo.com/) and supports both the old and new React Native architectures.
@@ -73,7 +73,7 @@ yarn add react-native-readium react-native-nitro-modules
 
 Requirements:
 
-- Minimum iOS deployment target: iOS 13.4
+- Minimum iOS deployment target: iOS 16.4
 - Swift compiler: Swift 6.0
 - Xcode: Xcode 16.2 (or newer)
 
@@ -93,7 +93,7 @@ source 'https://cdn.cocoapods.org/'
 
 ...
 
-platform :ios, '13.4'
+platform :ios, '16.4'
 
 ...
 
@@ -163,6 +163,30 @@ If your app uses Expo managed workflow (native `android/` is generated via `preb
 apply the desugaring settings through an Expo config plugin (or `expo-build-properties`) so
 they persist across builds.
 
+#### Expo SDK 56 / development builds
+
+This package contains native Readium and Nitro code and therefore does **not** run in Expo Go.
+Use an Expo development build or an EAS build. Expo SDK 56 apps must target iOS 16.4 or newer.
+
+The package exports a config plugin that installs the Readium CocoaPods source/helpers and
+Android EPUB desugaring setup during `expo prebuild`:
+
+```json
+{
+  "expo": {
+    "plugins": [
+      [
+        "expo-build-properties",
+        { "ios": { "deploymentTarget": "16.4" } }
+      ],
+      "react-native-readium"
+    ]
+  }
+}
+```
+
+See `apps/example-expo` for an Expo SDK 56 development-build consumer.
+
 ## Usage
 
 ### Basic Example
@@ -211,6 +235,29 @@ const MyComponent: React.FC = () => {
   );
 };
 ```
+
+### Persistent Audiobook Playback (iOS)
+
+Use `ReadiumAudio` for audiobook playback that continues when the full reader view is
+unmounted, such as a mini-player displayed elsewhere in an Expo app:
+
+```tsx
+import { ReadiumAudio } from 'react-native-readium';
+
+const unsubscribe = ReadiumAudio.subscribe((state) => {
+  console.log(state.status, state.position);
+});
+
+await ReadiumAudio.open({ url: audiobookManifestUrl });
+ReadiumAudio.play();
+
+// Later:
+ReadiumAudio.pause();
+unsubscribe();
+```
+
+`ReadiumAudio`, audiobook rendering, PDF, and CBZ are iOS-only for this release.
+Android continues to support EPUB reading; non-EPUB Android support is deferred.
 
 ### Highlights & Note Taking
 
@@ -307,12 +354,12 @@ Key concepts:
 
 #### Format Support
 
-| Format | Support            | Notes                                                          |
-| ------ | ------------------ | -------------------------------------------------------------- |
-| Epub 2 | :white_check_mark: |                                                                |
-| Epub 3 | :white_check_mark: |                                                                |
-| PDF    | :x:                | On the roadmap, feel free to submit a PR or ask for direction. |
-| CBZ    | :x:                | On the roadmap, feel free to submit a PR or ask for direction. |
+| Format     | Platforms    | Notes                                                          |
+| ---------- | ------------ | -------------------------------------------------------------- |
+| EPUB 2 / 3 | iOS, Android | Rendering, navigation, preferences, highlights, and selection actions. |
+| Audiobook  | iOS          | Playback and persistent `ReadiumAudio` session; Android is deferred. |
+| PDF        | iOS          | Rendering and navigation; Android is deferred. |
+| CBZ        | iOS          | Rendering and navigation through Readium's EPUB navigator; Android is deferred. |
 
 **Missing a format you need?** Reach out and see if it can be added to the roadmap.
 

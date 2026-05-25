@@ -15,6 +15,8 @@
 #include <fbjni/fbjni.h>
 #include <NitroModules/HybridObjectRegistry.hpp>
 
+#include "JHybridReadiumAudioSpec.hpp"
+#include "JFunc_void_AudiobookSessionState.hpp"
 #include "JHybridReadiumViewSpec.hpp"
 #include "JFunc_void_Locator.hpp"
 #include "JFunc_void_PublicationReadyEvent.hpp"
@@ -41,12 +43,22 @@ struct JHybridReadiumViewSpecImpl: public jni::JavaClass<JHybridReadiumViewSpecI
     return javaPart->getJHybridReadiumViewSpec();
   }
 };
+struct JHybridReadiumAudioSpecImpl: public jni::JavaClass<JHybridReadiumAudioSpecImpl, JHybridReadiumAudioSpec::JavaPart> {
+  static auto constexpr kJavaDescriptor = "Lcom/margelo/nitro/reactnativereadium/HybridReadiumAudio;";
+  static std::shared_ptr<JHybridReadiumAudioSpec> create() {
+    static auto constructorFn = javaClassStatic()->getConstructor<JHybridReadiumAudioSpecImpl::javaobject()>();
+    jni::local_ref<JHybridReadiumAudioSpec::JavaPart> javaPart = javaClassStatic()->newObject(constructorFn);
+    return javaPart->getJHybridReadiumAudioSpec();
+  }
+};
 
 void registerAllNatives() {
   using namespace margelo::nitro;
   using namespace margelo::nitro::readium;
 
   // Register native JNI methods
+  margelo::nitro::readium::JHybridReadiumAudioSpec::CxxPart::registerNatives();
+  margelo::nitro::readium::JFunc_void_AudiobookSessionState_cxx::registerNatives();
   margelo::nitro::readium::JHybridReadiumViewSpec::CxxPart::registerNatives();
   margelo::nitro::readium::JFunc_void_Locator_cxx::registerNatives();
   margelo::nitro::readium::JFunc_void_PublicationReadyEvent_cxx::registerNatives();
@@ -61,6 +73,12 @@ void registerAllNatives() {
     "ReadiumView",
     []() -> std::shared_ptr<HybridObject> {
       return JHybridReadiumViewSpecImpl::create();
+    }
+  );
+  HybridObjectRegistry::registerHybridObjectConstructor(
+    "ReadiumAudio",
+    []() -> std::shared_ptr<HybridObject> {
+      return JHybridReadiumAudioSpecImpl::create();
     }
   );
 }

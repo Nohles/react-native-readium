@@ -14,6 +14,10 @@ namespace margelo::nitro::readium { struct AccessibilityCertification; }
 namespace margelo::nitro::readium { struct Accessibility; }
 // Forward declaration of `AudiobookPlaybackState` to properly resolve imports.
 namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
+// Forward declaration of `AudiobookSessionState` to properly resolve imports.
+namespace margelo::nitro::readium { struct AudiobookSessionState; }
+// Forward declaration of `AudiobookSessionStatus` to properly resolve imports.
+namespace margelo::nitro::readium { enum class AudiobookSessionStatus; }
 // Forward declaration of `BelongsTo` to properly resolve imports.
 namespace margelo::nitro::readium { struct BelongsTo; }
 // Forward declaration of `Contributor` to properly resolve imports.
@@ -26,6 +30,8 @@ namespace margelo::nitro::readium { struct DecorationGroup; }
 namespace margelo::nitro::readium { struct DecorationStyle; }
 // Forward declaration of `Decoration` to properly resolve imports.
 namespace margelo::nitro::readium { struct Decoration; }
+// Forward declaration of `HybridReadiumAudioSpec` to properly resolve imports.
+namespace margelo::nitro::readium { class HybridReadiumAudioSpec; }
 // Forward declaration of `HybridReadiumViewSpec` to properly resolve imports.
 namespace margelo::nitro::readium { class HybridReadiumViewSpec; }
 // Forward declaration of `Link` to properly resolve imports.
@@ -63,12 +69,15 @@ namespace margelo::nitro::readium { struct Subject; }
 #include "Accessibility.hpp"
 #include "AccessibilityCertification.hpp"
 #include "AudiobookPlaybackState.hpp"
+#include "AudiobookSessionState.hpp"
+#include "AudiobookSessionStatus.hpp"
 #include "BelongsTo.hpp"
 #include "Contributor.hpp"
 #include "Decoration.hpp"
 #include "DecorationActivatedEvent.hpp"
 #include "DecorationGroup.hpp"
 #include "DecorationStyle.hpp"
+#include "HybridReadiumAudioSpec.hpp"
 #include "HybridReadiumViewSpec.hpp"
 #include "Link.hpp"
 #include "Locator.hpp"
@@ -104,6 +113,8 @@ namespace margelo::nitro::readium { struct Subject; }
 #include <NitroModules/DateToChronoDate.hpp>
 
 // Forward declarations of Swift defined types
+// Forward declaration of `HybridReadiumAudioSpec_cxx` to properly resolve imports.
+namespace NitroReadium { class HybridReadiumAudioSpec_cxx; }
 // Forward declaration of `HybridReadiumViewSpec_cxx` to properly resolve imports.
 namespace NitroReadium { class HybridReadiumViewSpec_cxx; }
 

@@ -33,9 +33,11 @@ target_sources(
   # Autolinking Setup
   ../nitrogen/generated/android/NitroReadiumOnLoad.cpp
   # Shared Nitrogen C++ sources
+  ../nitrogen/generated/shared/c++/HybridReadiumAudioSpec.cpp
   ../nitrogen/generated/shared/c++/HybridReadiumViewSpec.cpp
   ../nitrogen/generated/shared/c++/views/HybridReadiumViewComponent.cpp
   # Android-specific Nitrogen C++ sources
+  ../nitrogen/generated/android/c++/JHybridReadiumAudioSpec.cpp
   ../nitrogen/generated/android/c++/JHybridReadiumViewSpec.cpp
   ../nitrogen/generated/android/c++/views/JHybridReadiumViewStateUpdater.cpp
 )

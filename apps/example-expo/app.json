@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Readium Expo Example",
+    "slug": "readium-expo-example",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "ios": {
+      "bundleIdentifier": "com.example.readiumexpo",
+      "deploymentTarget": "16.4",
+      "infoPlist": {
+        "UIBackgroundModes": ["audio"]
+      }
+    },
+    "android": {
+      "package": "com.example.readiumexpo"
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.4"
+          }
+        }
+      ],
+      "../../app.plugin.js"
+    ]
+  }
+}

@@ -11,6 +11,10 @@
     "ReadiumView": {
       "swift": "HybridReadiumView",
       "kotlin": "HybridReadiumView"
+    },
+    "ReadiumAudio": {
+      "swift": "HybridReadiumAudio",
+      "kotlin": "HybridReadiumAudio"
     }
   }
 }

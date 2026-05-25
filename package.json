@@ -19,6 +19,8 @@
     "nitrogen/generated",
     "nitro.json",
     "scripts/*.rb",
+    "app.plugin.js",
+    "plugin",
     "react-native-readium.podspec",
     "!lib/typescript/example",
     "!ios/build",
@@ -39,14 +41,15 @@
     "prepare": "rimraf lib && tsc",
     "release": "release-it",
     "example": "yarn workspace example-native",
+    "example:expo": "yarn workspace example-expo start",
     "example:nextjs": "yarn workspace example-nextjs",
-    "nitrogen": "npx nitrogen",
+    "nitrogen": "npx nitrogen ./src/specs --config ./nitro.json --out ./nitrogen/generated",
     "pods": "cd apps/example-native && pod-install --quiet",
     "bootstrap": "yarn example && yarn && yarn pods",
     "version": "yarn changelog && git add CHANGELOG.md",
     "postversion": "npm run publish:git && npm run publish:npm",
-    "publish:git": "git push && git push --tags",
-    "publish:npm": "npm run prepare && npm publish --access public",
+    
+    "publish:npm": "npm run prepare && npm publish --registry http://192.168.1.202:4873/",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0"
   },
   "keywords": [
@@ -60,15 +63,15 @@
     "e-reader",
     "read"
   ],
-  "repository": "http://github.com/5-stones/react-native-readium",
-  "author": "Jacob Spizziri <jspizziri@weare5stones.com> (https://github.com/jspizziri)",
+  "repository": "http://github.com/nohles/react-native-readium",
+  "author": "Nohles <nohles@gmail.com> (https://github.com/nohles)",
   "license": "MIT",
   "bugs": {
-    "url": "http://github.com/5-stones/react-native-readium/issues"
+    "url": "http://github.com/nohles/react-native-readium/issues"
   },
-  "homepage": "http://github.com/5-stones/react-native-readium#readme",
+  "homepage": "http://github.com/nohles/react-native-readium#readme",
   "publishConfig": {
-    "registry": "https://registry.npmjs.org/"
+    "registry": "http://192.168.1.202:4873/"
   },
   "devDependencies": {
     "@commitlint/config-conventional": "^17.0.2",
@@ -121,10 +124,10 @@
       "tagName": "v${version}"
     },
     "npm": {
-      "publish": true
+      "publish": false
     },
     "github": {
-      "release": true
+      "release": false
     },
     "plugins": {
       "@release-it/conventional-changelog": {

@@ -11,6 +11,7 @@
 #import <type_traits>
 
 #include "HybridReadiumViewSpecSwift.hpp"
+#include "HybridReadiumAudioSpecSwift.hpp"
 
 @interface NitroReadiumAutolinking : NSObject
 @end
@@ -25,6 +26,13 @@
     "ReadiumView",
     []() -> std::shared_ptr<HybridObject> {
       std::shared_ptr<HybridReadiumViewSpec> hybridObject = NitroReadium::NitroReadiumAutolinking::createReadiumView();
+      return hybridObject;
+    }
+  );
+  HybridObjectRegistry::registerHybridObjectConstructor(
+    "ReadiumAudio",
+    []() -> std::shared_ptr<HybridObject> {
+      std::shared_ptr<HybridReadiumAudioSpec> hybridObject = NitroReadium::NitroReadiumAutolinking::createReadiumAudio();
       return hybridObject;
     }
   );

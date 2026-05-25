@@ -59,9 +59,14 @@ class HybridReadiumView: HybridReadiumViewSpec {
   private var selectionActionsReceived = false
   private var activeDecorationGroups = Set<String>()
 
-  private var viewController: UIViewController? {
-    let vc = sequence(first: hostView, next: { $0.next }).first(where: { $0 is UIViewController })
-    return vc as? UIViewController
+  /// Resolves the parent view controller for embedding reader children.
+  /// Falls back to the app root controller when the responder chain does not
+  /// include a UIViewController (common in Expo / Fabric-hosted Nitro views).
+  private var parentViewController: UIViewController? {
+    if let vc = sequence(first: hostView, next: { $0.next }).first(where: { $0 is UIViewController }) as? UIViewController {
+      return vc
+    }
+    return UIApplication.shared.delegate?.window??.rootViewController
   }
 
   // MARK: - Book loading
@@ -82,7 +87,12 @@ class HybridReadiumView: HybridReadiumViewSpec {
   }
 
   private func loadBook(url: String, location: Locator?) {
-    guard let rootViewController = UIApplication.shared.delegate?.window??.rootViewController else { return }
+    guard let rootViewController = parentViewController else { return }
+
+    if let activeAudiobook = AudiobookSession.shared.host(for: url) {
+      addViewControllerAsSubview(host: activeAudiobook)
+      return
+    }
 
     // Convert Nitro Locator directly to Readium Locator
     let readiumLocator: RLocator? = location.flatMap { nitroLocatorToReadium($0) }
@@ -186,8 +196,10 @@ class HybridReadiumView: HybridReadiumViewSpec {
     readerHost = vc
 
     if let audiobookVC = vc as? AudiobookViewController {
+      AudiobookSession.shared.adopt(audiobookVC, url: audiobookVC.bookId)
       audiobookVC.onPlaybackStateChange = { [weak self] state in
         self?.onAudiobookPlaybackStateChange?(state)
+        AudiobookSession.shared.receivePlayback(state)
       }
     }
 
@@ -200,15 +212,17 @@ class HybridReadiumView: HybridReadiumViewSpec {
     guard
       readerHost != nil,
       hostView.superview?.frame != nil,
-      viewController != nil
+      let containerViewController = parentViewController
     else { return }
 
+    readerVC.willMove(toParent: nil)
+    readerVC.view.removeFromSuperview()
+    readerVC.removeFromParent()
     readerVC.view.frame = hostView.superview!.frame
-    viewController!.addChild(readerVC)
+    containerViewController.addChild(readerVC)
     let rootView = readerVC.view!
     hostView.addSubview(rootView)
-    viewController!.addChild(readerVC)
-    readerVC.didMove(toParent: viewController!)
+    readerVC.didMove(toParent: containerViewController)
 
     rootView.translatesAutoresizingMaskIntoConstraints = false
     rootView.topAnchor.constraint(equalTo: hostView.topAnchor).isActive = true
@@ -276,27 +290,39 @@ class HybridReadiumView: HybridReadiumViewSpec {
   }
 
   func play() {
-    (readerHost as? AudiobookViewController)?.play()
+    if readerHost is AudiobookViewController {
+      AudiobookSession.shared.play()
+    }
   }
 
   func pause() {
-    (readerHost as? AudiobookViewController)?.pause()
+    if readerHost is AudiobookViewController {
+      AudiobookSession.shared.pause()
+    }
   }
 
   func seekTo(position: Double) {
-    (readerHost as? AudiobookViewController)?.seekTo(position: position)
+    if readerHost is AudiobookViewController {
+      AudiobookSession.shared.seekTo(position)
+    }
   }
 
   func setPlaybackRate(rate: Double) {
-    (readerHost as? AudiobookViewController)?.setPlaybackRate(rate)
+    if readerHost is AudiobookViewController {
+      AudiobookSession.shared.setPlaybackRate(rate)
+    }
   }
 
   func setVolume(volume: Double) {
-    (readerHost as? AudiobookViewController)?.setVolume(volume)
+    if readerHost is AudiobookViewController {
+      AudiobookSession.shared.setVolume(volume)
+    }
   }
 
   func setSleepTimer(seconds: Double?) {
-    (readerHost as? AudiobookViewController)?.setSleepTimer(seconds: seconds)
+    if readerHost is AudiobookViewController {
+      AudiobookSession.shared.setSleepTimer(seconds)
+    }
   }
 
   func destroy() {

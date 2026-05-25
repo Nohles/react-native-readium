@@ -19,8 +19,20 @@ public final class NitroReadiumAutolinking {
       return __cxxWrapped.getCxxPart()
     }()
   }
-  
+
   public static func isReadiumViewRecyclable() -> Bool {
     return HybridReadiumView.self is any RecyclableView.Type
+  }
+
+  public static func createReadiumAudio() -> bridge.std__shared_ptr_HybridReadiumAudioSpec_ {
+    let hybridObject = HybridReadiumAudio()
+    return { () -> bridge.std__shared_ptr_HybridReadiumAudioSpec_ in
+      let __cxxWrapped = hybridObject.getCxxWrapper()
+      return __cxxWrapped.getCxxPart()
+    }()
+  }
+
+  public static func isReadiumAudioRecyclable() -> Bool {
+    return HybridReadiumAudio.self is any RecyclableView.Type
   }
 }

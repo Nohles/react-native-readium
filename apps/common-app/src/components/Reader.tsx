@@ -187,6 +187,8 @@ export const Reader: React.FC<ReaderProps> = ({
       ? 'audiobook'
       : format === 'comic'
       ? 'comic'
+      : format === 'pdf'
+      ? 'PDF'
       : 'EPUB';
 
   if (isLoading || !file) {

@@ -31,15 +31,11 @@ final class ReaderModule: ReaderModuleAPI {
 
     formatModules = [
       AudiobookModule(delegate: self),
-      // CBZModule(delegate: self),
+      CBZModule(delegate: self),
+      PDFModule(delegate: self),
       EPUBModule(delegate: self),
       AudioModule(delegate: self),
     ]
-
-    // TODO: add PDF reader later
-    // if #available(iOS 11.0, *) {
-    //   formatModules.append(PDFModule(delegate: self))
-    // }
   }
 
   func getViewController(

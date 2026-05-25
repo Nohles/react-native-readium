@@ -3290,7 +3290,7 @@ SPEC CHECKSUMS:
   React-logger: b8483fa08e0d62e430c76d864309d90576ca2f68
   React-Mapbuffer: 7b72a669e94662359dad4f42b5af005eb24b4e83
   React-microtasksnativemodule: cdc02da075f2857803ed63f24f5f72fc40e094c0
-  react-native-readium: 3630ce9349623e5e739501790ea7fd546fe049da
+  react-native-readium: 710e1b2c8c2387719cc021ee61afe57de36ad38d
   react-native-safe-area-context: c00143b4823773bba23f2f19f85663ae89ceb460
   react-native-slider: 34064ca1a6864d7b263e44dd76a2d794e8d26744
   React-NativeModulesApple: a2c3d2cbec893956a5b3e4060322db2984fff75b
@@ -3342,6 +3342,6 @@ SPEC CHECKSUMS:
   SwiftSoup: 959c9ac70d7053fbf476341bfac90ab228523f2a
   Yoga: 5456bb010373068fc92221140921b09d126b116e
 
-PODFILE CHECKSUM: 35be29bf8be2dd376be2748843422b9b8ae1a0c5
+PODFILE CHECKSUM: 92992de1d3970e63677c265c38a277cc19439bfb
 
 COCOAPODS: 1.16.2
