@@ -53,6 +53,10 @@ apps/example-native/ios/Pods
 #
 apps/example-native/android/.kotlin
 
+# Large example assets (obtain locally)
+apps/example-native/resources/harry-potter-chamber-of-secrets.m4b
+apps/example-native/resources/one-piece-v01.cbz
+
 # node.js
 #
 node_modules/
