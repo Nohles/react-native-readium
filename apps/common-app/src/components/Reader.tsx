@@ -182,7 +182,12 @@ export const Reader: React.FC<ReaderProps> = ({
     handleEditHighlight,
   ]);
 
-  const loadingLabel = format === 'audiobook' ? 'audiobook' : 'EPUB';
+  const loadingLabel =
+    format === 'audiobook'
+      ? 'audiobook'
+      : format === 'comic'
+      ? 'comic'
+      : 'EPUB';
 
   if (isLoading || !file) {
     return (

@@ -28,6 +28,7 @@ func nitroPreferencesToEPUB(_ prefs: Preferences) -> EPUBPreferences {
   return EPUBPreferences(
     backgroundColor: bgColor,
     columnCount: prefs.columnCount.flatMap { ColumnCount(rawValue: $0) },
+    fit: prefs.fit.flatMap { Fit(rawValue: $0) },
     fontFamily: prefs.fontFamily.map { FontFamily(rawValue: $0) },
     fontSize: prefs.fontSize,
     fontWeight: prefs.fontWeight,

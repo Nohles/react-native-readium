@@ -24,6 +24,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
 
+  const iconForBook = (item: BookOption): string => {
+    if (item.format === 'audiobook' || item.type === 'audiobook') {
+      return 'headphones';
+    }
+    if (item.format === 'comic' || item.type === 'comic') {
+      return 'collections-bookmark';
+    }
+    return 'menu-book';
+  };
+
   const renderBook = ({ item }: { item: BookOption }) => (
     <TouchableOpacity
       style={styles.card}
@@ -31,15 +41,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       activeOpacity={0.7}
     >
       <View style={styles.iconContainer}>
-        <MaterialIcons
-          name={
-            item.format === 'audiobook' || item.type === 'audiobook'
-              ? 'headphones'
-              : 'menu-book'
-          }
-          size={32}
-          color="#007AFF"
-        />
+        <MaterialIcons name={iconForBook(item)} size={32} color="#007AFF" />
       </View>
       <View style={styles.cardContent}>
         <Text style={styles.title} numberOfLines={2}>

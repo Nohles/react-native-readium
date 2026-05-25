@@ -83,6 +83,12 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
+    sourceSets {
+        main {
+            assets.srcDirs += ["../../resources"]
+        }
+    }
+
     namespace "com.example.reactnativereadium"
     defaultConfig {
         applicationId "com.example.reactnativereadium"

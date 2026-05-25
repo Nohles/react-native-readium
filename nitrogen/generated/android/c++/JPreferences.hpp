@@ -36,6 +36,8 @@ namespace margelo::nitro::readium {
       jni::local_ref<jni::JString> backgroundColor = this->getFieldValue(fieldBackgroundColor);
       static const auto fieldColumnCount = clazz->getField<jni::JString>("columnCount");
       jni::local_ref<jni::JString> columnCount = this->getFieldValue(fieldColumnCount);
+      static const auto fieldFit = clazz->getField<jni::JString>("fit");
+      jni::local_ref<jni::JString> fit = this->getFieldValue(fieldFit);
       static const auto fieldFontFamily = clazz->getField<jni::JString>("fontFamily");
       jni::local_ref<jni::JString> fontFamily = this->getFieldValue(fieldFontFamily);
       static const auto fieldFontSize = clazz->getField<jni::JDouble>("fontSize");
@@ -87,6 +89,7 @@ namespace margelo::nitro::readium {
       return Preferences(
         backgroundColor != nullptr ? std::make_optional(backgroundColor->toStdString()) : std::nullopt,
         columnCount != nullptr ? std::make_optional(columnCount->toStdString()) : std::nullopt,
+        fit != nullptr ? std::make_optional(fit->toStdString()) : std::nullopt,
         fontFamily != nullptr ? std::make_optional(fontFamily->toStdString()) : std::nullopt,
         fontSize != nullptr ? std::make_optional(fontSize->value()) : std::nullopt,
         fontWeight != nullptr ? std::make_optional(fontWeight->value()) : std::nullopt,
@@ -120,13 +123,14 @@ namespace margelo::nitro::readium {
      */
     [[maybe_unused]]
     static jni::local_ref<JPreferences::javaobject> fromCpp(const Preferences& value) {
-      using JSignature = JPreferences(jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>);
+      using JSignature = JPreferences(jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>);
       static const auto clazz = javaClassStatic();
       static const auto create = clazz->getStaticMethod<JSignature>("fromCpp");
       return create(
         clazz,
         value.backgroundColor.has_value() ? jni::make_jstring(value.backgroundColor.value()) : nullptr,
         value.columnCount.has_value() ? jni::make_jstring(value.columnCount.value()) : nullptr,
+        value.fit.has_value() ? jni::make_jstring(value.fit.value()) : nullptr,
         value.fontFamily.has_value() ? jni::make_jstring(value.fontFamily.value()) : nullptr,
         value.fontSize.has_value() ? jni::JDouble::valueOf(value.fontSize.value()) : nullptr,
         value.fontWeight.has_value() ? jni::JDouble::valueOf(value.fontWeight.value()) : nullptr,

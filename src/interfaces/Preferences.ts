@@ -7,6 +7,7 @@ export interface Preferences
   extends Omit<
     SpecPreferences,
     | 'columnCount'
+    | 'fit'
     | 'fontFamily'
     | 'imageFilter'
     | 'readingProgression'
@@ -15,6 +16,7 @@ export interface Preferences
     | 'theme'
   > {
   columnCount?: 'auto' | '1' | '2';
+  fit?: 'auto' | 'page' | 'width';
   fontFamily?:
     | 'serif'
     | 'sans-serif'

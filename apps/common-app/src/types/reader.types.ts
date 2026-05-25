@@ -1,12 +1,12 @@
 import type { Locator } from 'react-native-readium';
 
-export type PublicationFormat = 'epub' | 'audiobook';
+export type PublicationFormat = 'epub' | 'audiobook' | 'comic';
 
 export interface BookOption {
   id: string;
   title: string;
   author: string;
-  type?: 'epub' | 'audiobook';
+  type?: PublicationFormat;
   epubUrl?: string;
   epubPath?: string;
   /** Filename of an epub bundled in the app assets (e.g. 'book.epub') */

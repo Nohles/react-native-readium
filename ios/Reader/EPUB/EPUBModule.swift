@@ -12,6 +12,7 @@ final class EPUBModule: ReaderFormatModule {
 
     func supports(_ publication: Publication) -> Bool {
       publication.conforms(to: .epub)
+        || publication.conforms(to: .divina)
         || publication.readingOrder.allAreHTML
     }
 
@@ -21,10 +22,6 @@ final class EPUBModule: ReaderFormatModule {
       bookId: String,
       selectionActions: [SelectionActionData]?
     ) throws -> ReadiumReaderHosting {
-        guard publication.metadata.identifier != nil else {
-            throw ReaderError.epubNotValid
-        }
-
         let epubViewController = try EPUBViewController(
             publication: publication,
             locator: locator,

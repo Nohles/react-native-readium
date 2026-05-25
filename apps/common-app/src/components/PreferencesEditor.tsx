@@ -13,12 +13,70 @@ interface Props {
 }
 
 type Theme = NonNullable<ReadiumProps['preferences']['theme']>;
+type ReadingProgression = NonNullable<
+  ReadiumProps['preferences']['readingProgression']
+>;
+type Fit = NonNullable<ReadiumProps['preferences']['fit']>;
+type Spread = NonNullable<ReadiumProps['preferences']['spread']>;
 
 const THEME_LABELS: Record<Theme, string> = {
   light: 'Light',
   dark: 'Dark',
   sepia: 'Sepia',
 };
+
+const READING_PROGRESSION_LABELS: Record<ReadingProgression, string> = {
+  ltr: 'LTR',
+  rtl: 'RTL',
+};
+
+const FIT_LABELS: Record<Fit, string> = {
+  auto: 'Auto',
+  page: 'Page',
+  width: 'Width',
+};
+
+const SPREAD_LABELS: Record<Spread, string> = {
+  auto: 'Auto',
+  never: 'Never',
+  always: 'Always',
+};
+
+const OptionRow = <T extends string>({
+  value,
+  options,
+  labels,
+  onChange,
+}: {
+  value: T;
+  options: T[];
+  labels: Record<T, string>;
+  onChange: (value: T) => void;
+}) => (
+  <View style={styles.optionRow}>
+    {options.map((option) => {
+      const isActive = value === option;
+
+      return (
+        <TouchableOpacity
+          key={option}
+          style={[styles.optionButton, isActive && styles.optionButtonActive]}
+          onPress={() => onChange(option)}
+          activeOpacity={0.7}
+        >
+          <Text
+            style={[
+              styles.optionButtonText,
+              isActive && styles.optionButtonTextActive,
+            ]}
+          >
+            {labels[option]}
+          </Text>
+        </TouchableOpacity>
+      );
+    })}
+  </View>
+);
 
 export const PreferencesEditor = ({ preferences, onChange }: Props) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -52,6 +110,44 @@ export const PreferencesEditor = ({ preferences, onChange }: Props) => {
     onChange({
       ...preferences,
       pageMargins,
+    });
+  };
+
+  const handleReadingProgressionChange = (
+    readingProgression: ReadingProgression
+  ) => {
+    onChange({
+      ...preferences,
+      readingProgression,
+    });
+  };
+
+  const handleScrollChange = (scroll: boolean) => {
+    onChange({
+      ...preferences,
+      scroll,
+    });
+  };
+
+  const handleFitChange = (fit: Fit) => {
+    onChange({
+      ...preferences,
+      fit,
+    });
+  };
+
+  const handleSpreadChange = (spread: Spread) => {
+    onChange({
+      ...preferences,
+      spread,
+    });
+  };
+
+  const handleVerticalTextChange = (verticalText: boolean) => {
+    onChange({
+      ...preferences,
+      verticalText,
+      scroll: verticalText ? true : preferences.scroll,
     });
   };
 
@@ -109,7 +205,7 @@ export const PreferencesEditor = ({ preferences, onChange }: Props) => {
         </View>
 
         {/* Page Margin Setting */}
-        <View style={[modalStyles.cardItem, modalStyles.cardItemLast]}>
+        <View style={modalStyles.cardItem}>
           <View style={styles.settingHeader}>
             <Text style={styles.settingLabel}>Page Margin</Text>
             <Text style={styles.settingValue}>
@@ -131,6 +227,77 @@ export const PreferencesEditor = ({ preferences, onChange }: Props) => {
             <Text style={styles.rangeLabel}>Narrow</Text>
             <Text style={styles.rangeLabel}>Wide</Text>
           </View>
+        </View>
+
+        <View style={modalStyles.cardItem}>
+          <View style={styles.settingHeader}>
+            <Text style={styles.settingLabel}>Reading Direction</Text>
+          </View>
+          <OptionRow
+            value={preferences.readingProgression || 'ltr'}
+            options={['ltr', 'rtl']}
+            labels={READING_PROGRESSION_LABELS}
+            onChange={handleReadingProgressionChange}
+          />
+        </View>
+
+        <View style={modalStyles.cardItem}>
+          <View style={styles.settingHeader}>
+            <Text style={styles.settingLabel}>Page Mode</Text>
+          </View>
+          <OptionRow
+            value={preferences.scroll ? 'scroll' : 'paged'}
+            options={['paged', 'scroll']}
+            labels={{ paged: 'Paged', scroll: 'Scroll' }}
+            onChange={(mode) => handleScrollChange(mode === 'scroll')}
+          />
+        </View>
+
+        <View style={modalStyles.cardItem}>
+          <View style={styles.settingHeader}>
+            <Text style={styles.settingLabel}>Fit</Text>
+          </View>
+          <OptionRow
+            value={preferences.fit || 'page'}
+            options={['page', 'width', 'auto']}
+            labels={FIT_LABELS}
+            onChange={handleFitChange}
+          />
+        </View>
+
+        <View style={modalStyles.cardItem}>
+          <View style={styles.settingHeader}>
+            <Text style={styles.settingLabel}>Spread</Text>
+          </View>
+          <OptionRow
+            value={preferences.spread || 'auto'}
+            options={['auto', 'never', 'always']}
+            labels={SPREAD_LABELS}
+            onChange={handleSpreadChange}
+          />
+        </View>
+
+        <View style={[modalStyles.cardItem, modalStyles.cardItemLast]}>
+          <View style={styles.settingHeader}>
+            <Text style={styles.settingLabel}>Vertical Mode</Text>
+            <TouchableOpacity
+              style={[
+                styles.themeButton,
+                preferences.verticalText && styles.optionButtonActive,
+              ]}
+              onPress={() =>
+                handleVerticalTextChange(!Boolean(preferences.verticalText))
+              }
+              activeOpacity={0.7}
+            >
+              <Text style={styles.themeButtonText}>
+                {preferences.verticalText ? 'On' : 'Off'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.settingDescription}>
+            Use vertical text flow where the native reader supports it
+          </Text>
         </View>
       </BaseModal>
     </>
@@ -185,5 +352,32 @@ const styles = StyleSheet.create({
   rangeLabel: {
     fontSize: 12,
     color: colors.text.tertiary,
+  },
+  optionRow: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  optionButton: {
+    minWidth: 72,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.border.secondary,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+  },
+  optionButtonActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary,
+  },
+  optionButtonText: {
+    color: colors.text.primary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  optionButtonTextActive: {
+    color: '#FFFFFF',
   },
 });

@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 import type { File, Locator } from 'react-native-readium';
 import RNFS from '../utils/RNFS';
 
-interface UseEpubFileOptions {
+interface UsePublicationFileOptions {
   epubUrl?: string;
   manifestUrl?: string;
   epubPath?: string;
@@ -29,7 +29,7 @@ export const useEpubFile = ({
   epubPath,
   bundledAsset,
   initialLocation,
-}: UseEpubFileOptions) => {
+}: UsePublicationFileOptions) => {
   const [file, setFile] = useState<File>();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);

@@ -45,10 +45,16 @@ const BookDetails: React.FC<{
   book: BookOption;
   onOpenReader: () => void;
 }> = ({ book, onOpenReader }) => {
+  const isComic = book.format === 'comic' || book.type === 'comic';
+
   return (
     <ScrollView contentContainerStyle={styles.detailsContent}>
       <View style={styles.detailsCover}>
-        <MaterialIcons name="menu-book" size={100} color="#888" />
+        <MaterialIcons
+          name={isComic ? 'collections-bookmark' : 'menu-book'}
+          size={100}
+          color="#888"
+        />
       </View>
       <Text style={styles.detailsTitle}>{book.title}</Text>
       <Text style={styles.detailsAuthor}>{book.author}</Text>
@@ -84,7 +90,22 @@ export const ReaderBottomSheet: React.FC<ReaderBottomSheetProps> = ({
   const wasOpen = useRef(false);
   const isAudiobook =
     book?.format === 'audiobook' || book?.type === 'audiobook';
-  const publicationFormat = isAudiobook ? 'audiobook' : book?.format;
+  const isComic = book?.format === 'comic' || book?.type === 'comic';
+  const publicationFormat = isAudiobook
+    ? 'audiobook'
+    : isComic
+    ? 'comic'
+    : book?.format;
+  const readerInitialPreferences = isComic
+    ? {
+        theme: 'dark' as const,
+        fit: 'page' as const,
+        spread: 'auto' as const,
+        scroll: false,
+        readingProgression: 'ltr' as const,
+        ...initialPreferences,
+      }
+    : initialPreferences;
 
   const handleSheetChange = useCallback(
     (index: number) => {
@@ -156,7 +177,7 @@ export const ReaderBottomSheet: React.FC<ReaderBottomSheetProps> = ({
                   epubPath={book.epubPath}
                   bundledAsset={book.bundledAsset}
                   onReaderReady={handleReaderReady}
-                  initialPreferences={initialPreferences}
+                  initialPreferences={readerInitialPreferences}
                   onPreferencesChange={onPreferencesChange}
                   onAudiobookPlaybackStateChange={
                     onAudiobookPlaybackStateChange

@@ -42,6 +42,7 @@ namespace margelo::nitro::readium {
   public:
     std::optional<std::string> backgroundColor     SWIFT_PRIVATE;
     std::optional<std::string> columnCount     SWIFT_PRIVATE;
+    std::optional<std::string> fit     SWIFT_PRIVATE;
     std::optional<std::string> fontFamily     SWIFT_PRIVATE;
     std::optional<double> fontSize     SWIFT_PRIVATE;
     std::optional<double> fontWeight     SWIFT_PRIVATE;
@@ -69,7 +70,7 @@ namespace margelo::nitro::readium {
 
   public:
     Preferences() = default;
-    explicit Preferences(std::optional<std::string> backgroundColor, std::optional<std::string> columnCount, std::optional<std::string> fontFamily, std::optional<double> fontSize, std::optional<double> fontWeight, std::optional<bool> hyphens, std::optional<std::string> imageFilter, std::optional<std::string> language, std::optional<double> letterSpacing, std::optional<bool> ligatures, std::optional<double> lineHeight, std::optional<double> pageMargins, std::optional<double> paragraphIndent, std::optional<double> paragraphSpacing, std::optional<bool> publisherStyles, std::optional<std::string> readingProgression, std::optional<bool> scroll, std::optional<std::string> spread, std::optional<std::string> textAlign, std::optional<std::string> textColor, std::optional<bool> textNormalization, std::optional<std::string> theme, std::optional<double> typeScale, std::optional<bool> verticalText, std::optional<double> wordSpacing, std::optional<bool> merging): backgroundColor(backgroundColor), columnCount(columnCount), fontFamily(fontFamily), fontSize(fontSize), fontWeight(fontWeight), hyphens(hyphens), imageFilter(imageFilter), language(language), letterSpacing(letterSpacing), ligatures(ligatures), lineHeight(lineHeight), pageMargins(pageMargins), paragraphIndent(paragraphIndent), paragraphSpacing(paragraphSpacing), publisherStyles(publisherStyles), readingProgression(readingProgression), scroll(scroll), spread(spread), textAlign(textAlign), textColor(textColor), textNormalization(textNormalization), theme(theme), typeScale(typeScale), verticalText(verticalText), wordSpacing(wordSpacing), merging(merging) {}
+    explicit Preferences(std::optional<std::string> backgroundColor, std::optional<std::string> columnCount, std::optional<std::string> fit, std::optional<std::string> fontFamily, std::optional<double> fontSize, std::optional<double> fontWeight, std::optional<bool> hyphens, std::optional<std::string> imageFilter, std::optional<std::string> language, std::optional<double> letterSpacing, std::optional<bool> ligatures, std::optional<double> lineHeight, std::optional<double> pageMargins, std::optional<double> paragraphIndent, std::optional<double> paragraphSpacing, std::optional<bool> publisherStyles, std::optional<std::string> readingProgression, std::optional<bool> scroll, std::optional<std::string> spread, std::optional<std::string> textAlign, std::optional<std::string> textColor, std::optional<bool> textNormalization, std::optional<std::string> theme, std::optional<double> typeScale, std::optional<bool> verticalText, std::optional<double> wordSpacing, std::optional<bool> merging): backgroundColor(backgroundColor), columnCount(columnCount), fit(fit), fontFamily(fontFamily), fontSize(fontSize), fontWeight(fontWeight), hyphens(hyphens), imageFilter(imageFilter), language(language), letterSpacing(letterSpacing), ligatures(ligatures), lineHeight(lineHeight), pageMargins(pageMargins), paragraphIndent(paragraphIndent), paragraphSpacing(paragraphSpacing), publisherStyles(publisherStyles), readingProgression(readingProgression), scroll(scroll), spread(spread), textAlign(textAlign), textColor(textColor), textNormalization(textNormalization), theme(theme), typeScale(typeScale), verticalText(verticalText), wordSpacing(wordSpacing), merging(merging) {}
 
   public:
     friend bool operator==(const Preferences& lhs, const Preferences& rhs) = default;
@@ -87,6 +88,7 @@ namespace margelo::nitro {
       return margelo::nitro::readium::Preferences(
         JSIConverter<std::optional<std::string>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "backgroundColor"))),
         JSIConverter<std::optional<std::string>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "columnCount"))),
+        JSIConverter<std::optional<std::string>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "fit"))),
         JSIConverter<std::optional<std::string>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "fontFamily"))),
         JSIConverter<std::optional<double>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "fontSize"))),
         JSIConverter<std::optional<double>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "fontWeight"))),
@@ -117,6 +119,7 @@ namespace margelo::nitro {
       jsi::Object obj(runtime);
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "backgroundColor"), JSIConverter<std::optional<std::string>>::toJSI(runtime, arg.backgroundColor));
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "columnCount"), JSIConverter<std::optional<std::string>>::toJSI(runtime, arg.columnCount));
+      obj.setProperty(runtime, PropNameIDCache::get(runtime, "fit"), JSIConverter<std::optional<std::string>>::toJSI(runtime, arg.fit));
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "fontFamily"), JSIConverter<std::optional<std::string>>::toJSI(runtime, arg.fontFamily));
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "fontSize"), JSIConverter<std::optional<double>>::toJSI(runtime, arg.fontSize));
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "fontWeight"), JSIConverter<std::optional<double>>::toJSI(runtime, arg.fontWeight));
@@ -153,6 +156,7 @@ namespace margelo::nitro {
       }
       if (!JSIConverter<std::optional<std::string>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "backgroundColor")))) return false;
       if (!JSIConverter<std::optional<std::string>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "columnCount")))) return false;
+      if (!JSIConverter<std::optional<std::string>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "fit")))) return false;
       if (!JSIConverter<std::optional<std::string>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "fontFamily")))) return false;
       if (!JSIConverter<std::optional<double>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "fontSize")))) return false;
       if (!JSIConverter<std::optional<double>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "fontWeight")))) return false;

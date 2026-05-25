@@ -41,6 +41,25 @@ const books: BookOption[] = [
     bundledAsset: 'the-brothers-karamazov.epub',
     epubPath: `${RNFS.DocumentDirectoryPath}/the-brothers-karamazov.epub`,
   },
+
+  {
+    id: 'one-piece-v01',
+    title: 'One Piece v01',
+    author: 'Eiichiro Oda',
+    type: 'comic',
+    format: 'comic',
+    bundledAsset: 'one-piece-v01.cbz',
+    epubPath: `${RNFS.DocumentDirectoryPath}/one-piece-v01.cbz`,
+  },
+  {
+    id: 'harry-potter-chamber-of-secrets',
+    title: 'Harry Potter and the Chamber of Secrets',
+    author: 'Full-Cast Edition',
+    type: 'audiobook',
+    format: 'audiobook',
+    bundledAsset: 'harry-potter-chamber-of-secrets.m4b',
+    epubPath: `${RNFS.DocumentDirectoryPath}/harry-potter-chamber-of-secrets.m4b`,
+  },
 ];
 
 export default function App() {

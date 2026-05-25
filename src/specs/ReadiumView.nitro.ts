@@ -45,6 +45,7 @@ export interface Link {
 export interface Preferences {
   backgroundColor?: string;
   columnCount?: string;
+  fit?: string;
   fontFamily?: string;
   fontSize?: number;
   fontWeight?: number;
