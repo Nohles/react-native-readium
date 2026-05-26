@@ -1,6 +1,6 @@
 {
-  "name": "react-native-readium",
-  "version": "5.0.0-rc.17",
+  "name": "@nohles/react-native-readium",
+  "version": "5.0.0-rc.18",
   "description": "A react-native wrapper for https://readium.org/",
   "main": "lib/src/index",
   "types": "lib/src/index.d.ts",
@@ -48,8 +48,7 @@
     "bootstrap": "yarn example && yarn && yarn pods",
     "version": "yarn changelog && git add CHANGELOG.md",
     "postversion": "npm run publish:git && npm run publish:npm",
-    
-    "publish:npm": "npm run prepare && npm publish --registry http://192.168.1.202:4873/",
+    "publish:npm": "npm run prepare && npm publish",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0"
   },
   "keywords": [
@@ -64,7 +63,7 @@
     "read"
   ],
   "repository": "http://github.com/nohles/react-native-readium",
-  "author": "Nohles <nohles@gmail.com> (https://github.com/nohles)",
+  "author": "Nohles <richienohles@gmail.com> (https://github.com/nohles)",
   "license": "MIT",
   "bugs": {
     "url": "http://github.com/nohles/react-native-readium/issues"

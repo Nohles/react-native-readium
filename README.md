@@ -88,7 +88,7 @@ Podfile to add the Readium spec repo `source` and the `readium_pods` /
 
 ```rb
 # ./ios/Podfile
-source 'https://github.com/readium/podspecs'
+source 'https://github.com/Nohles/podspecs'
 source 'https://cdn.cocoapods.org/'
 
 ...

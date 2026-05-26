@@ -23,17 +23,17 @@ Pod::Spec.new do |s|
   s.platforms    = { :ios => "16.4" }
   s.ios.deployment_target = "16.4"
 
-  s.source       = { :git => "http://github.com/5-stones/react-native-readium.git", :tag => "#{s.version}" }
+  s.source       = { :git => "http://github.com/nohles/react-native-readium.git", :tag => "#{s.version}" }
   s.source_files = "ios/**/*.{h,m,mm,swift}"
   s.public_header_files = ["ios/**/*.h"]
 
   s.swift_version = "5.0"
   s.module_name   = "NitroReadium"
 
-  s.dependency 'ReadiumShared',   '~> 3.9.0'
-  s.dependency 'ReadiumStreamer', '~> 3.9.0'
-  s.dependency 'ReadiumNavigator','~> 3.9.0'
-  s.dependency 'ReadiumInternal'
+  s.dependency 'ReadiumShared',    '3.9.1-nohles.1'
+  s.dependency 'ReadiumStreamer',  '3.9.1-nohles.1'
+  s.dependency 'ReadiumNavigator', '3.9.1-nohles.1'
+  s.dependency 'ReadiumInternal',  '3.9.1-nohles.1'
 
   # Adds React Native dependencies, framework header search paths, and
   # folly/compiler flags needed for use_frameworks!(:linkage => :static)
