@@ -1929,7 +1929,7 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - SocketRocket
-  - react-native-readium (5.0.0-rc.17):
+  - react-native-readium (5.0.0-rc.18):
     - boost
     - DoubleConversion
     - fast_float
@@ -1956,10 +1956,10 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - ReadiumInternal
-    - ReadiumNavigator (~> 3.9.0)
-    - ReadiumShared (~> 3.9.0)
-    - ReadiumStreamer (~> 3.9.0)
+    - ReadiumInternal (= 3.9.1-nohles.1)
+    - ReadiumNavigator (= 3.9.1-nohles.1)
+    - ReadiumShared (= 3.9.1-nohles.1)
+    - ReadiumStreamer (= 3.9.1-nohles.1)
     - SocketRocket
     - Yoga
   - react-native-safe-area-context (5.6.2):
@@ -2664,23 +2664,23 @@ PODS:
     - React-utils (= 0.83.1)
     - SocketRocket
   - ReadiumFuzi (4.0.0)
-  - ReadiumInternal (3.9.0)
-  - ReadiumNavigator (3.9.0):
+  - ReadiumInternal (3.9.1-nohles.1)
+  - ReadiumNavigator (3.9.1-nohles.1):
     - DifferenceKit (~> 1.0)
-    - ReadiumInternal (~> 3.9.0)
-    - ReadiumShared (~> 3.9.0)
+    - ReadiumInternal (~> 3.9.1-nohles.1)
+    - ReadiumShared (~> 3.9.1-nohles.1)
     - SwiftSoup (~> 2.11.0)
-  - ReadiumShared (3.9.0):
+  - ReadiumShared (3.9.1-nohles.1):
     - Minizip (~> 1.0.0)
     - ReadiumFuzi (~> 4.0.0)
-    - ReadiumInternal (~> 3.9.0)
+    - ReadiumInternal (~> 3.9.1-nohles.1)
     - ReadiumZIPFoundation (~> 3.0.1)
     - SwiftSoup (~> 2.11.0)
-  - ReadiumStreamer (3.9.0):
+  - ReadiumStreamer (3.9.1-nohles.1):
     - CryptoSwift (~> 1.8.0)
     - ReadiumFuzi (~> 4.0.0)
-    - ReadiumInternal (~> 3.9.0)
-    - ReadiumShared (~> 3.9.0)
+    - ReadiumInternal (~> 3.9.1-nohles.1)
+    - ReadiumShared (~> 3.9.1-nohles.1)
   - ReadiumZIPFoundation (3.0.1)
   - RNFS (2.20.0):
     - React-Core
@@ -3051,7 +3051,7 @@ DEPENDENCIES:
   - Yoga (from `../../../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
-  https://github.com/readium/podspecs.git:
+  https://github.com/Nohles/podspecs:
     - ReadiumFuzi
     - ReadiumInternal
     - ReadiumNavigator
@@ -3290,7 +3290,7 @@ SPEC CHECKSUMS:
   React-logger: b8483fa08e0d62e430c76d864309d90576ca2f68
   React-Mapbuffer: 7b72a669e94662359dad4f42b5af005eb24b4e83
   React-microtasksnativemodule: cdc02da075f2857803ed63f24f5f72fc40e094c0
-  react-native-readium: 710e1b2c8c2387719cc021ee61afe57de36ad38d
+  react-native-readium: 98ff8431cae2e5c5ca6c702d94b3d6daa761b12c
   react-native-safe-area-context: c00143b4823773bba23f2f19f85663ae89ceb460
   react-native-slider: 34064ca1a6864d7b263e44dd76a2d794e8d26744
   React-NativeModulesApple: a2c3d2cbec893956a5b3e4060322db2984fff75b
@@ -3327,10 +3327,10 @@ SPEC CHECKSUMS:
   ReactCodegen: b8e56b780fffe6edd6405be0af4a1e3049a937f7
   ReactCommon: ac934cb340aee91282ecd6f273a26d24d4c55cae
   ReadiumFuzi: fb19b82ff8f089b27c735c216c877666cd84d70f
-  ReadiumInternal: d8bc76e0305f9db2b7c95088214c5b4839597c5c
-  ReadiumNavigator: f625f4001d34fd5a9731b2a0a7ebf63c0b32a15e
-  ReadiumShared: 822f70c5690e6f87bea7bc0b4c42f31482f639f7
-  ReadiumStreamer: 919eecd09e1ec130ca023fd70a65d6cdd2be6db3
+  ReadiumInternal: 401e71c2b54d7ff5733d627f05a0a78e56904bc6
+  ReadiumNavigator: 1f9e17fa2903300fb54f2983f52276e8856c973e
+  ReadiumShared: d5d701b03adce7c406da692e71ebdd6ccede160b
+  ReadiumStreamer: fd7a5568a5da21f1be924e6397969262c255b267
   ReadiumZIPFoundation: 4009f635ebc718cc113a388ecb33c773f00639ca
   RNFS: 89de7d7f4c0f6bafa05343c578f61118c8282ed8
   RNGestureHandler: cd4be101cfa17ea6bbd438710caa02e286a84381
@@ -3342,6 +3342,6 @@ SPEC CHECKSUMS:
   SwiftSoup: 959c9ac70d7053fbf476341bfac90ab228523f2a
   Yoga: 5456bb010373068fc92221140921b09d126b116e
 
-PODFILE CHECKSUM: 92992de1d3970e63677c265c38a277cc19439bfb
+PODFILE CHECKSUM: ca675083e6b8935944b5dd41f9ad13ffae5d7899
 
 COCOAPODS: 1.16.2
