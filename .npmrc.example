@@ -1,0 +1,14 @@
+# Yarn (committed in .npmrc)
+node-linker=hoisted
+auto-install-peers=true
+
+# Private registry for @nohles scoped packages (safe to commit)
+@nohles:registry=http://192.168.1.202:4873/
+
+# Auth: do not commit tokens. Use one of:
+#   npm login --registry http://192.168.1.202:4873
+# Or in ~/.npmrc:
+#   //192.168.1.202:4873/:_authToken=${NPM_TOKEN}
+#
+# If npm refuses HTTP for this registry:
+#   npm config set strict-ssl false --location=user

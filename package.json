@@ -39,6 +39,7 @@
     "prettier": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "prettier:fix": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "prepare": "rimraf lib && tsc",
+    "prepublishOnly": "npm run typescript",
     "release": "release-it",
     "example": "yarn workspace example-native",
     "example:expo": "yarn workspace example-expo start",
@@ -47,8 +48,9 @@
     "pods": "cd apps/example-native && pod-install --quiet",
     "bootstrap": "yarn example && yarn && yarn pods",
     "version": "yarn changelog && git add CHANGELOG.md",
-    "postversion": "npm run publish:git && npm run publish:npm",
-    "publish:npm": "npm run prepare && npm publish",
+    "postversion": "npm run publish:registry",
+    "publish:registry": "npm run prepare && npm publish --access public --tag rc",
+    "publish:npm": "npm run publish:registry",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0"
   },
   "keywords": [

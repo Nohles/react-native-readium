@@ -23,6 +23,7 @@ A react-native wrapper for https://readium.org/. At a high level this package
 allows you to do things like:
 
 - Render an ebook view.
+- Open streamed [Readium Web Publications](https://readium.org/webpub-manifest/) via a remote `manifest.json` URL (web and iOS).
 - Register for location changes (as the user pages through the book).
 - Access publication metadata including table of contents, positions, and more via the `onPublicationReady` callback
 - Control settings of the Reader. Things like:
@@ -36,6 +37,7 @@ allows you to do things like:
 
 - [Installation](#installation)
 - [Usage](#usage)
+  - [Streamed Web Publications (manifest.json)](#streamed-web-publications-manifestjson)
 - [Supported Formats & DRM](#supported-formats--drm)
 - [API](#api)
 - [Contributing](#contributing)
@@ -236,6 +238,53 @@ const MyComponent: React.FC = () => {
 };
 ```
 
+### Streamed Web Publications (manifest.json)
+
+A [Readium Web Publication](https://readium.org/webpub-manifest/) is an unpacked EPUB or audiobook served over HTTP. Pass the full URL to `manifest.json` as `File.url` — not the `.epub` file itself.
+
+```tsx
+import { ReadiumView } from 'react-native-readium';
+import type { File } from 'react-native-readium';
+
+const file: File = {
+  url: 'https://readium.org/webpub-manifest/examples/MobyDick/manifest.json',
+};
+
+export function WebPubReader() {
+  return <ReadiumView file={file} />;
+}
+```
+
+**Platform behavior**
+
+- **Web** — `File.url` must be an HTTPS `manifest.json` URL. The reader fetches the manifest and resources from its base URL. The server must allow your origin via CORS.
+- **iOS** — `File.url` can be a remote `manifest.json` URL (streamed WebPub) or a local path to a packaged EPUB, CBZ, PDF, or audiobook file.
+- **Android** — `File.url` must be a local path to a packaged EPUB on disk. Streamed manifest URLs are not supported yet; download the EPUB first if needed.
+
+**Self-hosting**
+
+Many samples below come from the [Readium publication server](https://publication-server.readium.org/). To host your own unpacked publications, see the [dita-streamer server example](https://github.com/d-i-t-a/R2D2BC/blob/production/examples/server.ts) (built on the Readium [r2-\*-js](https://github.com/readium?q=js) libraries).
+
+#### Sample manifest URLs
+
+Copy any of these into `File.url` for quick testing:
+
+| Category | Title | Manifest URL |
+| -------- | ----- | ------------ |
+| Streamed EPUB | Moby Dick | `https://publication-server.readium.org/webpub/Z3M6Ly9yZWFkaXVtLXBsYXlncm91bmQtZmlsZXMvZGVtby9tb2J5LWRpY2suZXB1Yg/manifest.json` |
+| Official example | Moby Dick (Readium) | `https://readium.org/webpub-manifest/examples/MobyDick/manifest.json` |
+| Audiobook | Flatland | `https://readium.org/webpub-manifest/examples/Flatland/manifest.json` |
+| Accessibility | DAISY Basic Functionality v2.0.0 | `https://publication-server.readium.org/webpub/aHR0cHM6Ly9naXRodWIuY29tL2RhaXN5L2VwdWItYWNjZXNzaWJpbGl0eS10ZXN0cy9yZWxlYXNlcy9kb3dubG9hZC9mdW5kYW1lbnRhbC0yLjAvRnVuZGFtZW50YWwtQWNjZXNzaWJpbGl0eS1UZXN0cy1CYXNpYy1GdW5jdGlvbmFsaXR5LXYyLjAuMC5lcHVi/manifest.json` |
+| RTL / CJK | Haruko | `https://publication-server.readium.org/webpub/aHR0cHM6Ly9naXRodWIuY29tL0lEUEYvZXB1YjMtc2FtcGxlcy9yZWxlYXNlcy9kb3dubG9hZC8yMDIzMDcwNC9oYXJ1a28taHRtbC1qcGVnLmVwdWI/manifest.json` |
+
+The example apps maintain longer lists of sample URLs:
+
+- [`apps/example-expo/types.ts`](apps/example-expo/types.ts) — Expo SDK 56 development build
+- [`apps/example-native/src/App.tsx`](apps/example-native/src/App.tsx) — native example
+- [`apps/example-nextjs/components/ReaderApp.tsx`](apps/example-nextjs/components/ReaderApp.tsx) — web (CDN-hosted manifests)
+
+For a proxied audiobook sample (The Martian), see [`apps/example-expo/README.md`](apps/example-expo/README.md).
+
 ### Persistent Audiobook Playback (iOS)
 
 Use `ReadiumAudio` for audiobook playback that continues when the full reader view is
@@ -356,7 +405,7 @@ Key concepts:
 
 | Format     | Platforms    | Notes                                                          |
 | ---------- | ------------ | -------------------------------------------------------------- |
-| EPUB 2 / 3 | iOS, Android | Rendering, navigation, preferences, highlights, and selection actions. |
+| EPUB 2 / 3 | iOS, Android | Rendering, navigation, preferences, highlights, and selection actions. Packaged EPUB on all platforms; streamed WebPub via `manifest.json` on web and iOS only (see [Streamed Web Publications](#streamed-web-publications-manifestjson)). |
 | Audiobook  | iOS          | Playback and persistent `ReadiumAudio` session; Android is deferred. |
 | PDF        | iOS          | Rendering and navigation; Android is deferred. |
 | CBZ        | iOS          | Rendering and navigation through Readium's EPUB navigator; Android is deferred. |
@@ -373,7 +422,7 @@ DRM is not supported at this time. However, there is a clear path to [support it
 
 | Name                    | Type                                                                                                                                                | Optional           | Description                                                                                                                                                                                                                                                                         |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `file`                  | [`File`](https://github.com/5-stones/react-native-readium/blob/main/src/interfaces/File.ts)                                                         | :x:                | A file object containing the path to the eBook file on disk. Use `File.initialLocation` to set the reader's position on mount.                                                                                                                                                      |
+| `file`                  | [`File`](https://github.com/5-stones/react-native-readium/blob/main/src/interfaces/File.ts)                                                         | :x:                | Publication source: local path to a packaged file on native, or an HTTPS `manifest.json` URL for streamed WebPub (web and iOS). Use `File.initialLocation` to set the reader's position on mount. See [Streamed Web Publications](#streamed-web-publications-manifestjson). |
 | `preferences`           | [`Partial<Preferences>`](https://github.com/readium/swift-toolkit/blob/main/docs/Guides/Navigator%20Preferences.md#appendix-preference-constraints) | :white_check_mark: | An object that allows you to control various aspects of the reader's UI (epub only)                                                                                                                                                                                                 |
 | `decorations`           | [`DecorationGroup[]`](https://github.com/5-stones/react-native-readium/blob/main/src/interfaces/Decoration.ts)                                      | :white_check_mark: | An array of decoration groups to render in the publication (e.g. highlights, underlines).                                                                                                                                                                                           |
 | `selectionActions`      | [`SelectionAction[]`](https://github.com/5-stones/react-native-readium/blob/main/src/interfaces/SelectionAction.ts)                                 | :white_check_mark: | Custom actions to show in the context menu when the user selects text.                                                                                                                                                                                                              |
@@ -416,14 +465,9 @@ const MyComponent: React.FC = () => {
 | `goForward()`   | Navigate forward in the publication (e.g. next page).                            |
 | `goBackward()`  | Navigate backward in the publication (e.g. previous page).                       |
 
-#### :warning: Web vs Native File URLs
+#### File URL by platform
 
-Please note that on `web` the `File.url` should be a web accessible URL path to
-the `manifest.json` of the unpacked epub. In native contexts it needs to be a
-local filepath to the epub file itself on disk. If you're not sure how to
-serve epub books [take a look at this example](https://github.com/d-i-t-a/R2D2BC/blob/production/examples/server.ts)
-which is based on the `dita-streamer-js` project (which is built on all the
-readium [r2-\*-js](https://github.com/readium?q=js) libraries)
+See [Streamed Web Publications (manifest.json)](#streamed-web-publications-manifestjson) for platform rules, sample manifest URLs, and self-hosting guidance.
 
 ## Contributing
 

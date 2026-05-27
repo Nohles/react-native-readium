@@ -8,11 +8,16 @@
       "bundleIdentifier": "com.example.readiumexpo",
       "deploymentTarget": "16.4",
       "infoPlist": {
-        "UIBackgroundModes": ["audio"]
+        "UIBackgroundModes": ["audio"],
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true,
+          "NSAllowsArbitraryLoads": true
+        }
       }
     },
     "android": {
-      "package": "com.example.readiumexpo"
+      "package": "com.example.readiumexpo",
+      "usesCleartextTraffic": true
     },
     "plugins": [
       [

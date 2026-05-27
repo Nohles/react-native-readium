@@ -30,10 +30,10 @@ Pod::Spec.new do |s|
   s.swift_version = "5.0"
   s.module_name   = "NitroReadium"
 
-  s.dependency 'ReadiumShared',    '3.9.1-nohles.1'
-  s.dependency 'ReadiumStreamer',  '3.9.1-nohles.1'
-  s.dependency 'ReadiumNavigator', '3.9.1-nohles.1'
-  s.dependency 'ReadiumInternal',  '3.9.1-nohles.1'
+  s.dependency 'ReadiumShared',    '3.9.1-nohles.2'
+  s.dependency 'ReadiumStreamer',  '3.9.1-nohles.2'
+  s.dependency 'ReadiumNavigator', '3.9.1-nohles.2'
+  s.dependency 'ReadiumInternal',  '3.9.1-nohles.2'
 
   # Adds React Native dependencies, framework header search paths, and
   # folly/compiler flags needed for use_frameworks!(:linkage => :static)

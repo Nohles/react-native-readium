@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import {
+  ReadiumAudio,
   ReadiumView,
   type DecorationGroup,
   type File,
@@ -17,6 +18,14 @@ import {
   type SelectionAction,
   type SelectionActionEvent,
 } from 'react-native-readium';
+import { audiobookDebug } from '../lib/audiobook-debug';
+import {
+  publicationDebug,
+  publicationNetworkHints,
+} from '../lib/publication-debug';
+import { prepareProxiedAudiobook } from '../lib/proxied-audiobook';
+import { isWebPubManifestUrl } from '../lib/webpub-manifest';
+import { probeWebPubManifest } from '../lib/webpub-probe';
 import type { Format, Sample } from '../types';
 
 const selectionActions: SelectionAction[] = [
@@ -46,6 +55,29 @@ export function ReaderScreen({
   ]);
 
   const format: Format = sample.format;
+  const isProxiedAudiobook = sample.format === 'audiobook' && sample.proxied;
+  const isStreamedWebPub = isWebPubManifestUrl(sample.url);
+  const [manifestProbeStatus, setManifestProbeStatus] = useState<string>();
+  const [nativeReady, setNativeReady] = useState(false);
+
+  useEffect(() => {
+    if (!file || nativeReady || !isStreamedWebPub) return;
+    const timer = setTimeout(() => {
+      publicationDebug(
+        'watchdog: onPublicationReady not received within 12s — look for an iOS alert, Metro [ReadiumNative], or Xcode "Failed to open publication"'
+      );
+    }, 12_000);
+    return () => clearTimeout(timer);
+  }, [file, nativeReady, isStreamedWebPub]);
+
+  useEffect(() => {
+    if (!isProxiedAudiobook) return;
+    audiobookDebug('ReaderScreen: mount proxied audiobook', {
+      title: sample.title,
+      url: sample.url,
+    });
+    ReadiumAudio.setVolume(1);
+  }, [isProxiedAudiobook, sample.title, sample.url]);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,27 +86,92 @@ export function ReaderScreen({
       setLoading(true);
       setError(null);
       setFile(null);
+      setManifestProbeStatus(undefined);
+      setNativeReady(false);
+
+      publicationDebug('ReaderScreen: prepare', {
+        title: sample.title,
+        format: sample.format,
+        url: sample.url,
+        isStreamedWebPub,
+        network: publicationNetworkHints(sample.url),
+      });
 
       try {
+        if (isProxiedAudiobook) {
+          audiobookDebug('prepare: proxied audiobook');
+          const result = await prepareProxiedAudiobook({
+            manifestUrl: sample.url,
+            initialLocation: sample.initialLocation,
+          });
+          if (cancelled) return;
+          if (!result.ok) {
+            setError(result.message);
+            return;
+          }
+          setFile(result.file);
+          return;
+        }
+
         let url = sample.url;
-        if (
+
+        if (isStreamedWebPub) {
+          const hints = publicationNetworkHints(url);
+          publicationDebug(
+            'prepare: streamed WebPub (no local download)',
+            hints
+          );
+
+          const probe = await probeWebPubManifest(url);
+          if (cancelled) return;
+
+          if (!probe.ok) {
+            const detail =
+              probe.status === 0 ? probe.bodyPreview : `HTTP ${probe.status}`;
+            setManifestProbeStatus(`JS probe failed: ${detail}`);
+            setError(
+              `Manifest probe failed (${detail}). ${hints.atsNote} Check Metro for [PublicationDebug] and Xcode for Readium native errors.`
+            );
+            return;
+          }
+
+          setManifestProbeStatus(
+            probe.title
+              ? `JS probe OK: "${probe.title}" · ${
+                  probe.readingOrderCount ?? 0
+                } reading-order link(s)`
+              : `JS probe OK (HTTP ${probe.status})`
+          );
+          publicationDebug('prepare: manifest probe succeeded', {
+            title: probe.title,
+            readingOrderCount: probe.readingOrderCount,
+            firstReadingOrderHref: probe.firstReadingOrderHref,
+          });
+        } else if (
           sample.format !== 'audiobook' &&
           !sample.url.startsWith('file://') &&
           sample.format !== 'comic'
         ) {
           const extension = sample.format === 'epub' ? 'epub' : sample.format;
           url = `${FileSystem.documentDirectory}sample.${extension}`;
+          publicationDebug('prepare: downloading packaged file', {
+            from: sample.url,
+            to: url,
+          });
           await FileSystem.downloadAsync(sample.url, url);
+          publicationDebug('prepare: download finished', { localPath: url });
         }
 
         if (cancelled) return;
 
         const nextFile = { url };
+        publicationDebug('prepare: opening ReadiumView', { file: nextFile });
 
         if (cancelled) return;
         setFile(nextFile);
       } catch (err) {
         if (!cancelled) {
+          publicationDebug('prepare: threw', err);
           setError(String(err));
         }
       } finally {
@@ -89,9 +186,30 @@ export function ReaderScreen({
     return () => {
       cancelled = true;
     };
-  }, [sample.url, sample.format]);
+  }, [
+    sample.url,
+    sample.format,
+    sample.initialLocation,
+    isProxiedAudiobook,
+    isStreamedWebPub,
+    sample.title,
+  ]);
 
   const onPublicationReady = (event: PublicationReadyEvent) => {
+    if (isProxiedAudiobook) {
+      audiobookDebug('onPublicationReady', {
+        metadata: event.metadata,
+        tocLinkCount: event.tableOfContents?.length ?? 0,
+        positionCount: event.positions?.length ?? 0,
+      });
+    } else if (isStreamedWebPub) {
+      publicationDebug('onPublicationReady (native)', {
+        metadata: event.metadata,
+        tocLinkCount: event.tableOfContents?.length ?? 0,
+        positionCount: event.positions?.length ?? 0,
+      });
+    }
+    setNativeReady(true);
     setPublicationTitle(event.metadata.title);
     setTocCount(event.tableOfContents.length);
   };
@@ -148,6 +266,12 @@ export function ReaderScreen({
     );
   }
 
+  if (isProxiedAudiobook) {
+    audiobookDebug('ReaderScreen: rendering ReadiumView', { file });
+  } else if (isStreamedWebPub) {
+    publicationDebug('ReaderScreen: rendering ReadiumView', { file });
+  }
+
   const readerKey = `${format}-${file.url}`;
 
   return (
@@ -162,6 +286,25 @@ export function ReaderScreen({
           </Pressable>
         ) : null}
       </View>
+      {isProxiedAudiobook || isStreamedWebPub ? (
+        <View style={styles.readerTools}>
+          <Text style={styles.readerStatus}>
+            {publicationTitle ?? sample.title}
+            {tocCount > 0 ? ` · ${tocCount} toc` : ''}
+            {location?.locations?.progression != null
+              ? ` · ${Math.round((location.locations.progression ?? 0) * 100)}%`
+              : ''}
+          </Text>
+          {manifestProbeStatus ? (
+            <Text style={styles.readerStatus}>{manifestProbeStatus}</Text>
+          ) : null}
+          <Text style={styles.readerStatus}>
+            {isProxiedAudiobook
+              ? 'Metro/Xcode: filter [AudiobookDebug]'
+              : 'Metro: [PublicationDebug] · Xcode: "Failed to open publication"'}
+          </Text>
+        </View>
+      ) : null}
       <View style={styles.reader}>
         <ReadiumView
           key={readerKey}
@@ -170,7 +313,14 @@ export function ReaderScreen({
           preferences={{ theme: format === 'comic' ? 'dark' : 'light' }}
           decorations={format === 'epub' ? decorations : undefined}
           selectionActions={format === 'epub' ? selectionActions : undefined}
-          onLocationChange={setLocation}
+          onLocationChange={(locator) => {
+            if (isProxiedAudiobook) {
+              audiobookDebug('onLocationChange', locator);
+            } else if (isStreamedWebPub) {
+              publicationDebug('onLocationChange', locator);
+            }
+            setLocation(locator);
+          }}
           onPublicationReady={onPublicationReady}
           onSelectionAction={onSelectionAction}
         />

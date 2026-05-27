@@ -35,26 +35,53 @@ final class ReaderService: Loggable {
     locator: ReadiumShared.Locator?,
     selectionActions: [SelectionActionData]?,
     sender: UIViewController?,
-    completion: @escaping (ReadiumReaderHosting) -> Void
+    completion: @escaping (ReadiumReaderHosting) -> Void,
+    onFailure: ((Error) -> Void)? = nil
   ) {
-    guard let reader = self.app?.reader else { return }
+    guard let reader = self.app?.reader else {
+      let error = ReaderError.openFailed(
+        NSError(
+          domain: "ReadiumReader",
+          code: -1,
+          userInfo: [NSLocalizedDescriptionKey: "Reader module is not initialized."]
+        )
+      )
+      log(.error, "Failed to open publication: reader module is not initialized")
+      if let sender = sender {
+        app?.presentError(error, from: sender)
+      }
+      onFailure?(error)
+      return
+    }
     self.url(path: url)
       .flatMap { self.openPublication(at: $0, allowUserInteraction: true, sender: sender ) }
       .flatMap { (pub, _) in self.checkIsReadable(publication: pub) }
+      .receive(on: DispatchQueue.main)
       .sink(
         receiveCompletion: { [weak self] completion in
           if case .failure(let error) = completion {
             self?.log(.error, "Failed to open publication: \(error)")
+            if let sender = sender {
+              self?.app?.presentError(error, from: sender)
+            }
+            onFailure?(error)
           }
         },
-        receiveValue: { pub in
+        receiveValue: { [weak self] pub in
           Task { @MainActor in
+            guard let self else { return }
             guard let viewController = reader.getViewController(
               for: pub,
               bookId: bookId,
               locator: locator,
               selectionActions: selectionActions
             ) else {
+              let error = ReaderError.formatNotSupported
+              self.log(.error, "Failed to open publication: no reader format module supports this publication")
+              if let sender = sender {
+                self.app?.presentError(error, from: sender)
+              }
+              onFailure?(error)
               return
             }
 
@@ -98,7 +125,11 @@ final class ReaderService: Loggable {
             return
           }
 
-          let assetResult = await self.assetRetriever.retrieve(url: absoluteURL)
+          let hints = Self.formatHints(for: url)
+          let assetResult = await self.assetRetriever.retrieve(
+            url: absoluteURL,
+            hints: hints
+          )
 
           let asset: Asset
           switch assetResult {
@@ -139,6 +170,14 @@ final class ReaderService: Loggable {
       }
     }
     .eraseToAnyPublisher()
+  }
+
+  /// Streamed Readium Web Publications are opened from a remote manifest.json URL.
+  private static func formatHints(for url: URL) -> FormatHints {
+    guard url.lastPathComponent == "manifest.json" else {
+      return FormatHints()
+    }
+    return FormatHints(mediaType: .readiumWebPubManifest)
   }
 
   private func checkIsReadable(publication: Publication) -> AnyPublisher<Publication, ReaderError> {

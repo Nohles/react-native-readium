@@ -10,14 +10,30 @@ class HybridReadiumView: HybridReadiumViewSpec {
 
   // MARK: - HybridReadiumViewSpec conformance
 
-  var view: UIView { hostView }
+  var view: UIView {
+    ensureHostViewConfigured()
+    return hostView
+  }
 
   var file: ReadiumFile? = nil {
     didSet {
       guard let file = file else { return }
+      ensureHostViewConfigured()
       pendingFileUrl = file.url
       pendingInitialLocation = file.initialLocation
       tryLoadBook()
+    }
+  }
+
+  private func ensureHostViewConfigured() {
+    guard !didConfigureHostView else { return }
+    didConfigureHostView = true
+    hostView.onLayoutSubviews = { [weak self] in
+      self?.attemptEmbedReaderView()
+    }
+    hostView.onDidMoveToWindow = { [weak self] in
+      self?.attemptEmbedReaderView()
+      self?.retryLoadBookIfNeeded()
     }
   }
 
@@ -49,15 +65,33 @@ class HybridReadiumView: HybridReadiumViewSpec {
 
   // MARK: - Private state
 
-  private let hostView = UIView()
+  private final class ReaderHostContainerView: UIView {
+    var onLayoutSubviews: (() -> Void)?
+    var onDidMoveToWindow: (() -> Void)?
+
+    override func layoutSubviews() {
+      super.layoutSubviews()
+      onLayoutSubviews?()
+    }
+
+    override func didMoveToWindow() {
+      super.didMoveToWindow()
+      onDidMoveToWindow?()
+    }
+  }
+
+  private let hostView = ReaderHostContainerView()
   private var readerService = ReaderService()
   private var readerHost: ReadiumReaderHosting?
   private var subscriptions = Set<AnyCancellable>()
   private var pendingFileUrl: String?
   private var pendingInitialLocation: Locator?
   private var hasLoadedBook = false
+  private var isReaderEmbedded = false
+  private var hasNotifiedPublicationReady = false
   private var selectionActionsReceived = false
   private var activeDecorationGroups = Set<String>()
+  private var didConfigureHostView = false
 
   /// Resolves the parent view controller for embedding reader children.
   /// Falls back to the app root controller when the responder chain does not
@@ -78,6 +112,13 @@ class HybridReadiumView: HybridReadiumViewSpec {
       return
     }
 
+    guard parentViewController != nil else {
+      DispatchQueue.main.async { [weak self] in
+        self?.tryLoadBook()
+      }
+      return
+    }
+
     hasLoadedBook = true
     let initialLoc = pendingInitialLocation
     pendingFileUrl = nil
@@ -86,8 +127,21 @@ class HybridReadiumView: HybridReadiumViewSpec {
     loadBook(url: url, location: initialLoc)
   }
 
+  private func retryLoadBookIfNeeded() {
+    guard !hasLoadedBook, pendingFileUrl != nil, selectionActionsReceived else { return }
+    tryLoadBook()
+  }
+
   private func loadBook(url: String, location: Locator?) {
-    guard let rootViewController = parentViewController else { return }
+    guard parentViewController != nil else {
+      hasLoadedBook = false
+      pendingFileUrl = url
+      pendingInitialLocation = location
+      DispatchQueue.main.async { [weak self] in
+        self?.tryLoadBook()
+      }
+      return
+    }
 
     if let activeAudiobook = AudiobookSession.shared.host(for: url) {
       addViewControllerAsSubview(host: activeAudiobook)
@@ -107,7 +161,7 @@ class HybridReadiumView: HybridReadiumViewSpec {
       bookId: url,
       locator: readiumLocator,
       selectionActions: actionData,
-      sender: rootViewController,
+      sender: parentViewController,
       completion: { [weak self] vc in
         guard let self = self else { return }
 
@@ -116,6 +170,20 @@ class HybridReadiumView: HybridReadiumViewSpec {
         }
 
         self.addViewControllerAsSubview(host: vc)
+      },
+      onFailure: { [weak self] error in
+        let reset = {
+          guard let self = self else { return }
+          print("[ReadiumNative] Failed to open publication: \(error.localizedDescription)")
+          self.hasLoadedBook = false
+          self.pendingFileUrl = url
+          self.pendingInitialLocation = location
+        }
+        if Thread.isMainThread {
+          reset()
+        } else {
+          DispatchQueue.main.async(execute: reset)
+        }
       }
     )
   }
@@ -186,6 +254,17 @@ class HybridReadiumView: HybridReadiumViewSpec {
   // MARK: - View lifecycle
 
   private func addViewControllerAsSubview(host vc: ReadiumReaderHosting) {
+    attachReaderHost(vc)
+    attemptEmbedReaderView()
+  }
+
+  private func attachReaderHost(_ vc: ReadiumReaderHosting) {
+    if readerHost === vc {
+      return
+    }
+
+    detachEmbeddedReaderView()
+
     vc.publisher.sink(receiveValue: { [weak self] locator in
       guard let self = self else { return }
       let nitroLocator = readiumLocatorToNitro(locator)
@@ -203,32 +282,46 @@ class HybridReadiumView: HybridReadiumViewSpec {
       }
     }
 
-    // Apply pending state
     if preferences != nil { updatePreferences() }
     if decorations != nil { updateDecorations() }
+  }
+
+  private func attemptEmbedReaderView() {
+    guard let vc = readerHost, !isReaderEmbedded else { return }
+    guard hostView.window != nil,
+          hostView.superview != nil,
+          let containerViewController = parentViewController else {
+      print(
+        "[ReadiumNative] Reader not embedded yet (window: \(hostView.window != nil), superview: \(hostView.superview != nil), parentVC: \(parentViewController != nil))"
+      )
+      return
+    }
 
     let readerVC = vc.viewController
-
-    guard
-      readerHost != nil,
-      hostView.superview?.frame != nil,
-      let containerViewController = parentViewController
-    else { return }
-
     readerVC.willMove(toParent: nil)
     readerVC.view.removeFromSuperview()
     readerVC.removeFromParent()
-    readerVC.view.frame = hostView.superview!.frame
+
     containerViewController.addChild(readerVC)
     let rootView = readerVC.view!
     hostView.addSubview(rootView)
     readerVC.didMove(toParent: containerViewController)
 
     rootView.translatesAutoresizingMaskIntoConstraints = false
-    rootView.topAnchor.constraint(equalTo: hostView.topAnchor).isActive = true
-    rootView.bottomAnchor.constraint(equalTo: hostView.bottomAnchor).isActive = true
-    rootView.leftAnchor.constraint(equalTo: hostView.leftAnchor).isActive = true
-    rootView.rightAnchor.constraint(equalTo: hostView.rightAnchor).isActive = true
+    NSLayoutConstraint.activate([
+      rootView.topAnchor.constraint(equalTo: hostView.topAnchor),
+      rootView.bottomAnchor.constraint(equalTo: hostView.bottomAnchor),
+      rootView.leftAnchor.constraint(equalTo: hostView.leftAnchor),
+      rootView.rightAnchor.constraint(equalTo: hostView.rightAnchor),
+    ])
+
+    isReaderEmbedded = true
+    notifyPublicationReadyIfNeeded(for: vc)
+  }
+
+  private func notifyPublicationReadyIfNeeded(for vc: ReadiumReaderHosting) {
+    guard !hasNotifiedPublicationReady else { return }
+    hasNotifiedPublicationReady = true
 
     Task { @MainActor [weak self] in
       guard let self = self else { return }
@@ -262,6 +355,18 @@ class HybridReadiumView: HybridReadiumViewSpec {
 
       self.onPublicationReady?(event)
     }
+  }
+
+  private func detachEmbeddedReaderView() {
+    guard let host = readerHost, isReaderEmbedded else { return }
+
+    let vc = host.viewController
+    vc.willMove(toParent: nil)
+    if vc.view.superview != nil {
+      vc.view.removeFromSuperview()
+    }
+    vc.removeFromParent()
+    isReaderEmbedded = false
   }
 
   // MARK: - Imperative navigation
@@ -337,15 +442,10 @@ class HybridReadiumView: HybridReadiumViewSpec {
 
   // Cleanup
   func cleanup() {
-    guard let host = readerHost else { return }
+    detachEmbeddedReaderView()
     readerHost = nil
-
-    let vc = host.viewController
-    vc.willMove(toParent: nil)
-    if vc.view.superview != nil {
-      vc.view.removeFromSuperview()
-    }
-    vc.removeFromParent()
+    hasLoadedBook = false
+    hasNotifiedPublicationReady = false
 
     for subscription in subscriptions {
       subscription.cancel()
