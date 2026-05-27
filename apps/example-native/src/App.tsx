@@ -9,9 +9,21 @@ import {
   RNFS,
 } from 'common-app';
 import type { BookOption, ReaderHandle } from 'common-app';
-import type { AudiobookPlaybackState } from 'react-native-readium';
+import type {
+  AudiobookBookmark,
+  AudiobookBookmarkChangeEvent,
+  AudiobookPlaybackState,
+} from 'react-native-readium';
 
 const books: BookOption[] = [
+  {
+    id: 'the-martian-audiobook',
+    title: 'The Martian',
+    author: 'Andy Weir',
+    manifestUrl:
+      'http://192.168.1.199:3000/readium/29cfb352-3587-40f6-bdab-553ff5def9cb/webpub/QW5keSBXZWlyL1RoZSBNYXJ0aWFuL1RoZSBNYXJ0aWFuLm1wMw/manifest.json',
+    type: 'audiobook',
+  },
   {
     id: 'flatland-audiobook',
     title: 'Flatland',
@@ -78,7 +90,7 @@ const books: BookOption[] = [
   {
     id: 'les-diaboliques',
     title: 'Les Diaboliques (WebPub)',
-    author: 'Barbey d\'Aurevilly',
+    author: "Barbey d'Aurevilly",
     manifestUrl:
       'https://publication-server.readium.org/webpub/Z3M6Ly9yZWFkaXVtLXBsYXlncm91bmQtZmlsZXMvZGVtby9sZXNfZGlhYm9saXF1ZXMuZXB1Yg/manifest.json',
   },
@@ -215,6 +227,9 @@ export default function App() {
   const [audiobookPlaybackState, setAudiobookPlaybackState] =
     useState<AudiobookPlaybackState | null>(null);
   const [audiobookTitle, setAudiobookTitle] = useState('Audiobook');
+  const [audiobookBookmarks, setAudiobookBookmarks] = useState<
+    Record<string, AudiobookBookmark[]>
+  >({});
 
   const handleSelectBook = useCallback((book: BookOption) => {
     setSelectedBook(book);
@@ -245,6 +260,27 @@ export default function App() {
     setSelectedBook(activeAudiobook);
     setSheetOpen(true);
   }, [activeAudiobook]);
+
+  const handleAudiobookBookmarkChange = useCallback(
+    (event: AudiobookBookmarkChangeEvent) => {
+      const key = selectedBook?.id;
+      if (!key) return;
+      setAudiobookBookmarks((stored) => {
+        const current = stored[key] ?? [];
+        const next =
+          event.type === 'remove'
+            ? current.filter((bookmark) => bookmark.id !== event.bookmark.id)
+            : [
+                ...current.filter(
+                  (bookmark) => bookmark.id !== event.bookmark.id
+                ),
+                event.bookmark,
+              ];
+        return { ...stored, [key]: next };
+      });
+    },
+    [selectedBook?.id]
+  );
 
   const homeMiniPlayer =
     activeAudiobook && audiobookPlaybackState && !sheetOpen ? (
@@ -281,6 +317,10 @@ export default function App() {
             onReaderReady={setReaderHandle}
             onAudiobookPlaybackStateChange={setAudiobookPlaybackState}
             onPublicationTitleChange={setAudiobookTitle}
+            audiobookBookmarks={
+              selectedBook ? audiobookBookmarks[selectedBook.id] ?? [] : []
+            }
+            onAudiobookBookmarkChange={handleAudiobookBookmarkChange}
           />
         )}
       </GestureHandlerRootView>

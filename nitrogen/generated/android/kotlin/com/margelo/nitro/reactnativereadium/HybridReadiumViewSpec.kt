@@ -50,6 +50,12 @@ abstract class HybridReadiumViewSpec: HybridView() {
   @set:Keep
   abstract var selectionActions: Array<SelectionAction>?
   
+  @get:DoNotStrip
+  @get:Keep
+  @set:DoNotStrip
+  @set:Keep
+  abstract var audiobookBookmarks: Array<AudiobookBookmark>?
+  
   abstract var onLocationChange: ((locator: Locator) -> Unit)?
   
   private var onLocationChange_cxx: Func_void_Locator?
@@ -132,6 +138,20 @@ abstract class HybridReadiumViewSpec: HybridView() {
     @DoNotStrip
     set(value) {
       onAudiobookPlaybackStateChange = value?.let { it }
+    }
+  
+  abstract var onAudiobookBookmarkChange: ((event: AudiobookBookmarkChangeEvent) -> Unit)?
+  
+  private var onAudiobookBookmarkChange_cxx: Func_void_AudiobookBookmarkChangeEvent?
+    @Keep
+    @DoNotStrip
+    get() {
+      return onAudiobookBookmarkChange?.let { Func_void_AudiobookBookmarkChangeEvent_java(it) }
+    }
+    @Keep
+    @DoNotStrip
+    set(value) {
+      onAudiobookBookmarkChange = value?.let { it }
     }
 
   // Methods

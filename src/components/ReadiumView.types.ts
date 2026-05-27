@@ -9,6 +9,8 @@ import type {
   SelectionEvent,
   SelectionActionEvent,
   AudiobookPlaybackState,
+  AudiobookBookmark,
+  AudiobookBookmarkChangeEvent,
 } from '../interfaces';
 
 export type ReadiumViewRef = {
@@ -28,6 +30,7 @@ export type ReadiumProps = {
   preferences: Preferences;
   decorations?: DecorationGroup[];
   selectionActions?: SelectionAction[];
+  audiobookBookmarks?: AudiobookBookmark[];
   style?: any;
   onLocationChange?: (locator: Locator) => void;
   onPublicationReady?: (event: PublicationReadyEvent) => void;
@@ -35,4 +38,5 @@ export type ReadiumProps = {
   onSelectionChange?: (event: SelectionEvent) => void;
   onSelectionAction?: (event: SelectionActionEvent) => void;
   onAudiobookPlaybackStateChange?: (state: AudiobookPlaybackState) => void;
+  onAudiobookBookmarkChange?: (event: AudiobookBookmarkChangeEvent) => void;
 };

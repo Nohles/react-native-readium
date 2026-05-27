@@ -17,6 +17,8 @@ import { ControlBar } from './ControlBar';
 import type { BookOption } from '../types/reader.types';
 import type {
   AudiobookPlaybackState,
+  AudiobookBookmark,
+  AudiobookBookmarkChangeEvent,
   ReadiumProps,
 } from 'react-native-readium';
 
@@ -31,6 +33,8 @@ interface ReaderBottomSheetProps {
   onReaderReady?: (handle: ReaderHandle | null) => void;
   onAudiobookPlaybackStateChange?: (state: AudiobookPlaybackState) => void;
   onPublicationTitleChange?: (title: string) => void;
+  audiobookBookmarks?: AudiobookBookmark[];
+  onAudiobookBookmarkChange?: (event: AudiobookBookmarkChangeEvent) => void;
 }
 
 const snapPoints = ['100%'];
@@ -83,6 +87,8 @@ export const ReaderBottomSheet: React.FC<ReaderBottomSheetProps> = ({
   onReaderReady,
   onAudiobookPlaybackStateChange,
   onPublicationTitleChange,
+  audiobookBookmarks,
+  onAudiobookBookmarkChange,
 }) => {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [readerHandle, setReaderHandle] = useState<ReaderHandle | null>(null);
@@ -183,13 +189,17 @@ export const ReaderBottomSheet: React.FC<ReaderBottomSheetProps> = ({
                     onAudiobookPlaybackStateChange
                   }
                   onPublicationTitleChange={onPublicationTitleChange}
+                  audiobookBookmarks={audiobookBookmarks}
+                  onAudiobookBookmarkChange={onAudiobookBookmarkChange}
                 />
-                <TouchableOpacity
-                  style={styles.detailsFab}
-                  onPress={() => setContentMode('details')}
-                >
-                  <MaterialIcons name="info-outline" size={24} color="#FFF" />
-                </TouchableOpacity>
+                {!isAudiobook ? (
+                  <TouchableOpacity
+                    style={styles.detailsFab}
+                    onPress={() => setContentMode('details')}
+                  >
+                    <MaterialIcons name="info-outline" size={24} color="#FFF" />
+                  </TouchableOpacity>
+                ) : null}
               </View>
             ) : (
               <View style={styles.placeholder}>

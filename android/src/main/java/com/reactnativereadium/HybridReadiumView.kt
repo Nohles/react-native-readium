@@ -97,11 +97,14 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
       updateSelectionActions()
     }
 
+  override var audiobookBookmarks: Array<AudiobookBookmark>? = null
   override var onLocationChange: ((locator: Locator) -> Unit)? = null
   override var onPublicationReady: ((event: PublicationReadyEvent) -> Unit)? = null
   override var onDecorationActivated: ((event: DecorationActivatedEvent) -> Unit)? = null
   override var onSelectionChange: ((event: SelectionEvent) -> Unit)? = null
   override var onSelectionAction: ((event: SelectionActionEvent) -> Unit)? = null
+  override var onAudiobookPlaybackStateChange: ((state: AudiobookPlaybackState) -> Unit)? = null
+  override var onAudiobookBookmarkChange: ((event: AudiobookBookmarkChangeEvent) -> Unit)? = null
 
   private fun ensureService() {
     if (svc == null) {

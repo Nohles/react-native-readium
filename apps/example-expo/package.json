@@ -10,6 +10,7 @@
     "android": "expo run:android"
   },
   "dependencies": {
+    "@gorhom/bottom-sheet": "^5.1.8",
     "expo": "~56.0.0",
     "expo-build-properties": "~56.0.0",
     "expo-dev-client": "~56.0.0",
@@ -17,9 +18,12 @@
     "expo-file-system": "~56.0.0",
     "react": "19.2.3",
     "react-native": "0.85.3",
+    "react-native-gesture-handler": "~2.31.1",
     "react-native-nitro-modules": "^0.35.0",
     "react-native-readium": "npm:@nohles/react-native-readium@workspace:*",
-    "react-native-safe-area-context": "^5.6.2"
+    "react-native-reanimated": "~4.3.1",
+    "react-native-safe-area-context": "^5.6.2",
+    "react-native-worklets": "~0.8.3"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

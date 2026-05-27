@@ -92,6 +92,11 @@ using namespace margelo::nitro::readium::views;
     swiftPart.setSelectionActions(newViewProps.selectionActions.value);
     newViewProps.selectionActions.isDirty = false;
   }
+  // audiobookBookmarks: optional
+  if (newViewProps.audiobookBookmarks.isDirty) {
+    swiftPart.setAudiobookBookmarks(newViewProps.audiobookBookmarks.value);
+    newViewProps.audiobookBookmarks.isDirty = false;
+  }
   // onLocationChange: optional
   if (newViewProps.onLocationChange.isDirty) {
     swiftPart.setOnLocationChange(newViewProps.onLocationChange.value);
@@ -121,6 +126,11 @@ using namespace margelo::nitro::readium::views;
   if (newViewProps.onAudiobookPlaybackStateChange.isDirty) {
     swiftPart.setOnAudiobookPlaybackStateChange(newViewProps.onAudiobookPlaybackStateChange.value);
     newViewProps.onAudiobookPlaybackStateChange.isDirty = false;
+  }
+  // onAudiobookBookmarkChange: optional
+  if (newViewProps.onAudiobookBookmarkChange.isDirty) {
+    swiftPart.setOnAudiobookBookmarkChange(newViewProps.onAudiobookBookmarkChange.value);
+    newViewProps.onAudiobookBookmarkChange.isDirty = false;
   }
 
   swiftPart.afterUpdate();

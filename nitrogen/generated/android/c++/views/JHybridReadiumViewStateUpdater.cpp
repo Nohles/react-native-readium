@@ -53,6 +53,10 @@ void JHybridReadiumViewStateUpdater::updateViewProps(jni::alias_ref<jni::JClass>
     hybridView->setSelectionActions(props->selectionActions.value);
     props->selectionActions.isDirty = false;
   }
+  if (props->audiobookBookmarks.isDirty) {
+    hybridView->setAudiobookBookmarks(props->audiobookBookmarks.value);
+    props->audiobookBookmarks.isDirty = false;
+  }
   if (props->onLocationChange.isDirty) {
     hybridView->setOnLocationChange(props->onLocationChange.value);
     props->onLocationChange.isDirty = false;
@@ -76,6 +80,10 @@ void JHybridReadiumViewStateUpdater::updateViewProps(jni::alias_ref<jni::JClass>
   if (props->onAudiobookPlaybackStateChange.isDirty) {
     hybridView->setOnAudiobookPlaybackStateChange(props->onAudiobookPlaybackStateChange.value);
     props->onAudiobookPlaybackStateChange.isDirty = false;
+  }
+  if (props->onAudiobookBookmarkChange.isDirty) {
+    hybridView->setOnAudiobookBookmarkChange(props->onAudiobookBookmarkChange.value);
+    props->onAudiobookBookmarkChange.isDirty = false;
   }
 
   // Update hybridRef if it changed

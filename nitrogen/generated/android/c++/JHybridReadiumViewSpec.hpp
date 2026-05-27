@@ -58,6 +58,8 @@ namespace margelo::nitro::readium {
     void setDecorations(const std::optional<std::vector<DecorationGroup>>& decorations) override;
     std::optional<std::vector<SelectionAction>> getSelectionActions() override;
     void setSelectionActions(const std::optional<std::vector<SelectionAction>>& selectionActions) override;
+    std::optional<std::vector<AudiobookBookmark>> getAudiobookBookmarks() override;
+    void setAudiobookBookmarks(const std::optional<std::vector<AudiobookBookmark>>& audiobookBookmarks) override;
     std::optional<std::function<void(const Locator& /* locator */)>> getOnLocationChange() override;
     void setOnLocationChange(const std::optional<std::function<void(const Locator& /* locator */)>>& onLocationChange) override;
     std::optional<std::function<void(const PublicationReadyEvent& /* event */)>> getOnPublicationReady() override;
@@ -70,6 +72,8 @@ namespace margelo::nitro::readium {
     void setOnSelectionAction(const std::optional<std::function<void(const SelectionActionEvent& /* event */)>>& onSelectionAction) override;
     std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>> getOnAudiobookPlaybackStateChange() override;
     void setOnAudiobookPlaybackStateChange(const std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>& onAudiobookPlaybackStateChange) override;
+    std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>> getOnAudiobookBookmarkChange() override;
+    void setOnAudiobookBookmarkChange(const std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>& onAudiobookBookmarkChange) override;
 
   public:
     // Methods

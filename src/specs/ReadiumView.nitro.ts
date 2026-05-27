@@ -229,6 +229,18 @@ export interface AudiobookPlaybackState {
   sleepTimerRemaining?: number;
 }
 
+export interface AudiobookBookmark {
+  id: string;
+  locator: Locator;
+  position: number;
+  note?: string;
+}
+
+export interface AudiobookBookmarkChangeEvent {
+  type: string;
+  bookmark: AudiobookBookmark;
+}
+
 // ── File ─────────────────────────────────────────────────────────────────────
 
 export interface ReadiumFile {
@@ -243,12 +255,14 @@ export interface ReadiumViewProps extends HybridViewProps {
   preferences?: Preferences;
   decorations?: DecorationGroup[];
   selectionActions?: SelectionAction[];
+  audiobookBookmarks?: AudiobookBookmark[];
   onLocationChange?: (locator: Locator) => void;
   onPublicationReady?: (event: PublicationReadyEvent) => void;
   onDecorationActivated?: (event: DecorationActivatedEvent) => void;
   onSelectionChange?: (event: SelectionEvent) => void;
   onSelectionAction?: (event: SelectionActionEvent) => void;
   onAudiobookPlaybackStateChange?: (state: AudiobookPlaybackState) => void;
+  onAudiobookBookmarkChange?: (event: AudiobookBookmarkChangeEvent) => void;
 }
 
 export interface ReadiumViewMethods extends HybridViewMethods {

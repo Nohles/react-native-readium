@@ -10,4 +10,5 @@ export * from './Selection';
 export * from './SelectionAction';
 export * from './AudiobookPlaybackState';
 export * from './AudiobookSessionState';
+export * from './AudiobookBookmark';
 export type { Rect, Point } from '../specs/ReadiumView.nitro';

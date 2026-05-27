@@ -21,6 +21,8 @@ namespace margelo::nitro::readium { struct Preferences; }
 namespace margelo::nitro::readium { struct DecorationGroup; }
 // Forward declaration of `SelectionAction` to properly resolve imports.
 namespace margelo::nitro::readium { struct SelectionAction; }
+// Forward declaration of `AudiobookBookmark` to properly resolve imports.
+namespace margelo::nitro::readium { struct AudiobookBookmark; }
 // Forward declaration of `Locator` to properly resolve imports.
 namespace margelo::nitro::readium { struct Locator; }
 // Forward declaration of `PublicationReadyEvent` to properly resolve imports.
@@ -33,6 +35,8 @@ namespace margelo::nitro::readium { struct SelectionEvent; }
 namespace margelo::nitro::readium { struct SelectionActionEvent; }
 // Forward declaration of `AudiobookPlaybackState` to properly resolve imports.
 namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
+// Forward declaration of `AudiobookBookmarkChangeEvent` to properly resolve imports.
+namespace margelo::nitro::readium { struct AudiobookBookmarkChangeEvent; }
 
 #include "ReadiumFile.hpp"
 #include <optional>
@@ -40,6 +44,7 @@ namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
 #include "DecorationGroup.hpp"
 #include <vector>
 #include "SelectionAction.hpp"
+#include "AudiobookBookmark.hpp"
 #include "Locator.hpp"
 #include <functional>
 #include "PublicationReadyEvent.hpp"
@@ -47,6 +52,7 @@ namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
 #include "SelectionEvent.hpp"
 #include "SelectionActionEvent.hpp"
 #include "AudiobookPlaybackState.hpp"
+#include "AudiobookBookmarkChangeEvent.hpp"
 
 namespace margelo::nitro::readium {
 
@@ -83,6 +89,8 @@ namespace margelo::nitro::readium {
       virtual void setDecorations(const std::optional<std::vector<DecorationGroup>>& decorations) = 0;
       virtual std::optional<std::vector<SelectionAction>> getSelectionActions() = 0;
       virtual void setSelectionActions(const std::optional<std::vector<SelectionAction>>& selectionActions) = 0;
+      virtual std::optional<std::vector<AudiobookBookmark>> getAudiobookBookmarks() = 0;
+      virtual void setAudiobookBookmarks(const std::optional<std::vector<AudiobookBookmark>>& audiobookBookmarks) = 0;
       virtual std::optional<std::function<void(const Locator& /* locator */)>> getOnLocationChange() = 0;
       virtual void setOnLocationChange(const std::optional<std::function<void(const Locator& /* locator */)>>& onLocationChange) = 0;
       virtual std::optional<std::function<void(const PublicationReadyEvent& /* event */)>> getOnPublicationReady() = 0;
@@ -95,6 +103,8 @@ namespace margelo::nitro::readium {
       virtual void setOnSelectionAction(const std::optional<std::function<void(const SelectionActionEvent& /* event */)>>& onSelectionAction) = 0;
       virtual std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>> getOnAudiobookPlaybackStateChange() = 0;
       virtual void setOnAudiobookPlaybackStateChange(const std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>& onAudiobookPlaybackStateChange) = 0;
+      virtual std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>> getOnAudiobookBookmarkChange() = 0;
+      virtual void setOnAudiobookBookmarkChange(const std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>& onAudiobookBookmarkChange) = 0;
 
     public:
       // Methods

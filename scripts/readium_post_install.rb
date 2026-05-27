@@ -18,7 +18,54 @@
 #     readium_post_install(installer)
 #   end
 #
+def patch_readium_publication_media_loader(installer)
+  old_code = [
+    '        guard',
+    '            let link = publication.linkWithHREF(href),',
+    '            let resource = publication.get(link)',
+    '        else {',
+    '            return nil',
+    '        }',
+  ].join("\n")
+
+  new_code = [
+    '        let link: Link?',
+    '        if let matched = publication.linkWithHREF(href) {',
+    '            link = matched',
+    '        } else if let baseURL = publication.baseURL {',
+    '            // AVPlayer requests use absolute URLs (readiumhttp://host/.../file.mp3) while',
+    '            // manifests often declare relative reading-order hrefs (e.g. "chapter.mp3").',
+    '            link = publication.readingOrder.first { readingLink in',
+    '                readingLink.url(relativeTo: baseURL).normalized == href',
+    '            }',
+    '        } else {',
+    '            link = nil',
+    '        }',
+    '',
+    '        guard',
+    '            let link = link,',
+    '            let resource = publication.get(link)',
+    '        else {',
+    '            return nil',
+    '        }',
+  ].join("\n")
+
+  Dir.glob(File.join(installer.sandbox.root, 'ReadiumNavigator/**/PublicationMediaLoader.swift')).each do |path|
+    contents = File.read(path)
+    next if contents.include?('readingLink.url(relativeTo: baseURL)')
+
+    unless contents.include?(old_code)
+      warn "[react-native-readium] PublicationMediaLoader patch skipped (unexpected source in #{path})"
+      next
+    end
+
+    File.write(path, contents.sub(old_code, new_code))
+    puts "[react-native-readium] Patched PublicationMediaLoader for streamed audiobook URLs (#{path})"
+  end
+end
+
 def readium_post_install(installer)
+  patch_readium_publication_media_loader(installer)
   # Rewrite the Minizip modulemap to drop submodules and mark as [extern_c] [system].
   # The modulemap path differs depending on whether use_frameworks! is active:
   #   - With use_frameworks!:  Target Support Files/Minizip/Minizip.modulemap

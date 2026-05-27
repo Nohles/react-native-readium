@@ -56,12 +56,19 @@ class HybridReadiumView: HybridReadiumViewSpec {
     }
   }
 
+  var audiobookBookmarks: [AudiobookBookmark]? = nil {
+    didSet {
+      (readerHost as? AudiobookViewController)?.setBookmarks(audiobookBookmarks ?? [])
+    }
+  }
+
   var onLocationChange: ((Locator) -> Void)? = nil
   var onPublicationReady: ((PublicationReadyEvent) -> Void)? = nil
   var onDecorationActivated: ((DecorationActivatedEvent) -> Void)? = nil
   var onSelectionChange: ((SelectionEvent) -> Void)? = nil
   var onSelectionAction: ((SelectionActionEvent) -> Void)? = nil
   var onAudiobookPlaybackStateChange: ((AudiobookPlaybackState) -> Void)? = nil
+  var onAudiobookBookmarkChange: ((AudiobookBookmarkChangeEvent) -> Void)? = nil
 
   // MARK: - Private state
 
@@ -276,9 +283,13 @@ class HybridReadiumView: HybridReadiumViewSpec {
 
     if let audiobookVC = vc as? AudiobookViewController {
       AudiobookSession.shared.adopt(audiobookVC, url: audiobookVC.bookId)
+      audiobookVC.setBookmarks(audiobookBookmarks ?? [])
       audiobookVC.onPlaybackStateChange = { [weak self] state in
         self?.onAudiobookPlaybackStateChange?(state)
         AudiobookSession.shared.receivePlayback(state)
+      }
+      audiobookVC.onBookmarkChange = { [weak self] event in
+        self?.onAudiobookBookmarkChange?(event)
       }
     }
 

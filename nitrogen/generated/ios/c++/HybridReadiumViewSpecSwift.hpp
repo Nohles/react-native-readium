@@ -30,6 +30,8 @@ namespace margelo::nitro::readium { struct Decoration; }
 namespace margelo::nitro::readium { struct DecorationStyle; }
 // Forward declaration of `SelectionAction` to properly resolve imports.
 namespace margelo::nitro::readium { struct SelectionAction; }
+// Forward declaration of `AudiobookBookmark` to properly resolve imports.
+namespace margelo::nitro::readium { struct AudiobookBookmark; }
 // Forward declaration of `PublicationReadyEvent` to properly resolve imports.
 namespace margelo::nitro::readium { struct PublicationReadyEvent; }
 // Forward declaration of `Link` to properly resolve imports.
@@ -60,6 +62,8 @@ namespace margelo::nitro::readium { struct SelectionEvent; }
 namespace margelo::nitro::readium { struct SelectionActionEvent; }
 // Forward declaration of `AudiobookPlaybackState` to properly resolve imports.
 namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
+// Forward declaration of `AudiobookBookmarkChangeEvent` to properly resolve imports.
+namespace margelo::nitro::readium { struct AudiobookBookmarkChangeEvent; }
 
 #include "ReadiumFile.hpp"
 #include <optional>
@@ -74,6 +78,7 @@ namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
 #include "DecorationStyle.hpp"
 #include <unordered_map>
 #include "SelectionAction.hpp"
+#include "AudiobookBookmark.hpp"
 #include <functional>
 #include "PublicationReadyEvent.hpp"
 #include "Link.hpp"
@@ -90,6 +95,7 @@ namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
 #include "SelectionEvent.hpp"
 #include "SelectionActionEvent.hpp"
 #include "AudiobookPlaybackState.hpp"
+#include "AudiobookBookmarkChangeEvent.hpp"
 
 #include "NitroReadium-Swift-Cxx-Umbrella.hpp"
 
@@ -165,6 +171,13 @@ namespace margelo::nitro::readium {
     inline void setSelectionActions(const std::optional<std::vector<SelectionAction>>& selectionActions) noexcept override {
       _swiftPart.setSelectionActions(selectionActions);
     }
+    inline std::optional<std::vector<AudiobookBookmark>> getAudiobookBookmarks() noexcept override {
+      auto __result = _swiftPart.getAudiobookBookmarks();
+      return __result;
+    }
+    inline void setAudiobookBookmarks(const std::optional<std::vector<AudiobookBookmark>>& audiobookBookmarks) noexcept override {
+      _swiftPart.setAudiobookBookmarks(audiobookBookmarks);
+    }
     inline std::optional<std::function<void(const Locator& /* locator */)>> getOnLocationChange() noexcept override {
       auto __result = _swiftPart.getOnLocationChange();
       return __result;
@@ -206,6 +219,13 @@ namespace margelo::nitro::readium {
     }
     inline void setOnAudiobookPlaybackStateChange(const std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>& onAudiobookPlaybackStateChange) noexcept override {
       _swiftPart.setOnAudiobookPlaybackStateChange(onAudiobookPlaybackStateChange);
+    }
+    inline std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>> getOnAudiobookBookmarkChange() noexcept override {
+      auto __result = _swiftPart.getOnAudiobookBookmarkChange();
+      return __result;
+    }
+    inline void setOnAudiobookBookmarkChange(const std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>& onAudiobookBookmarkChange) noexcept override {
+      _swiftPart.setOnAudiobookBookmarkChange(onAudiobookBookmarkChange);
     }
 
   public:

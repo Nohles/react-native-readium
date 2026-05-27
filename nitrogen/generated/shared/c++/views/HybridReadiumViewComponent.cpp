@@ -66,6 +66,16 @@ namespace margelo::nitro::readium::views {
         throw std::runtime_error(std::string("ReadiumView.selectionActions: ") + exc.what());
       }
     }()),
+    audiobookBookmarks([&]() -> CachedProp<std::optional<std::vector<AudiobookBookmark>>> {
+      try {
+        const react::RawValue* rawValue = rawProps.at("audiobookBookmarks", nullptr, nullptr);
+        if (rawValue == nullptr) return sourceProps.audiobookBookmarks;
+        const auto& [runtime, value] = (std::pair<jsi::Runtime*, jsi::Value>)*rawValue;
+        return CachedProp<std::optional<std::vector<AudiobookBookmark>>>::fromRawValue(*runtime, value, sourceProps.audiobookBookmarks);
+      } catch (const std::exception& exc) {
+        throw std::runtime_error(std::string("ReadiumView.audiobookBookmarks: ") + exc.what());
+      }
+    }()),
     onLocationChange([&]() -> CachedProp<std::optional<std::function<void(const Locator& /* locator */)>>> {
       try {
         const react::RawValue* rawValue = rawProps.at("onLocationChange", nullptr, nullptr);
@@ -126,6 +136,16 @@ namespace margelo::nitro::readium::views {
         throw std::runtime_error(std::string("ReadiumView.onAudiobookPlaybackStateChange: ") + exc.what());
       }
     }()),
+    onAudiobookBookmarkChange([&]() -> CachedProp<std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>> {
+      try {
+        const react::RawValue* rawValue = rawProps.at("onAudiobookBookmarkChange", nullptr, nullptr);
+        if (rawValue == nullptr) return sourceProps.onAudiobookBookmarkChange;
+        const auto& [runtime, value] = (std::pair<jsi::Runtime*, jsi::Value>)*rawValue;
+        return CachedProp<std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>>::fromRawValue(*runtime, value.asObject(*runtime).getProperty(*runtime, PropNameIDCache::get(*runtime, "f")), sourceProps.onAudiobookBookmarkChange);
+      } catch (const std::exception& exc) {
+        throw std::runtime_error(std::string("ReadiumView.onAudiobookBookmarkChange: ") + exc.what());
+      }
+    }()),
     hybridRef([&]() -> CachedProp<std::optional<std::function<void(const std::shared_ptr<HybridReadiumViewSpec>& /* ref */)>>> {
       try {
         const react::RawValue* rawValue = rawProps.at("hybridRef", nullptr, nullptr);
@@ -143,12 +163,14 @@ namespace margelo::nitro::readium::views {
       case hashString("preferences"): return true;
       case hashString("decorations"): return true;
       case hashString("selectionActions"): return true;
+      case hashString("audiobookBookmarks"): return true;
       case hashString("onLocationChange"): return true;
       case hashString("onPublicationReady"): return true;
       case hashString("onDecorationActivated"): return true;
       case hashString("onSelectionChange"): return true;
       case hashString("onSelectionAction"): return true;
       case hashString("onAudiobookPlaybackStateChange"): return true;
+      case hashString("onAudiobookBookmarkChange"): return true;
       case hashString("hybridRef"): return true;
       default: return false;
     }

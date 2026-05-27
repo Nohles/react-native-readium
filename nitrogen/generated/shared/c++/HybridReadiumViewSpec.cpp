@@ -22,6 +22,8 @@ namespace margelo::nitro::readium {
       prototype.registerHybridSetter("decorations", &HybridReadiumViewSpec::setDecorations);
       prototype.registerHybridGetter("selectionActions", &HybridReadiumViewSpec::getSelectionActions);
       prototype.registerHybridSetter("selectionActions", &HybridReadiumViewSpec::setSelectionActions);
+      prototype.registerHybridGetter("audiobookBookmarks", &HybridReadiumViewSpec::getAudiobookBookmarks);
+      prototype.registerHybridSetter("audiobookBookmarks", &HybridReadiumViewSpec::setAudiobookBookmarks);
       prototype.registerHybridGetter("onLocationChange", &HybridReadiumViewSpec::getOnLocationChange);
       prototype.registerHybridSetter("onLocationChange", &HybridReadiumViewSpec::setOnLocationChange);
       prototype.registerHybridGetter("onPublicationReady", &HybridReadiumViewSpec::getOnPublicationReady);
@@ -34,6 +36,8 @@ namespace margelo::nitro::readium {
       prototype.registerHybridSetter("onSelectionAction", &HybridReadiumViewSpec::setOnSelectionAction);
       prototype.registerHybridGetter("onAudiobookPlaybackStateChange", &HybridReadiumViewSpec::getOnAudiobookPlaybackStateChange);
       prototype.registerHybridSetter("onAudiobookPlaybackStateChange", &HybridReadiumViewSpec::setOnAudiobookPlaybackStateChange);
+      prototype.registerHybridGetter("onAudiobookBookmarkChange", &HybridReadiumViewSpec::getOnAudiobookBookmarkChange);
+      prototype.registerHybridSetter("onAudiobookBookmarkChange", &HybridReadiumViewSpec::setOnAudiobookBookmarkChange);
       prototype.registerHybridMethod("goTo", &HybridReadiumViewSpec::goTo);
       prototype.registerHybridMethod("goForward", &HybridReadiumViewSpec::goForward);
       prototype.registerHybridMethod("goBackward", &HybridReadiumViewSpec::goBackward);

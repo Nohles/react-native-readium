@@ -17,6 +17,8 @@ import {
   type ReadiumViewRef,
   type SelectionAction,
   type SelectionActionEvent,
+  type AudiobookBookmark,
+  type AudiobookBookmarkChangeEvent,
 } from 'react-native-readium';
 import { audiobookDebug } from '../lib/audiobook-debug';
 import {
@@ -36,12 +38,19 @@ type ReaderScreenProps = {
   sample: Sample;
   onBack: () => void;
   onAudiobookMinimize: (file: File) => void;
+  audiobookBookmarks: AudiobookBookmark[];
+  onAudiobookBookmarkChange: (event: AudiobookBookmarkChangeEvent) => void;
+  /** When true, navigation chrome is omitted (parent bottom sheet provides close). */
+  embeddedInSheet?: boolean;
 };
 
 export function ReaderScreen({
   sample,
   onBack,
   onAudiobookMinimize,
+  audiobookBookmarks,
+  onAudiobookBookmarkChange,
+  embeddedInSheet = false,
 }: ReaderScreenProps) {
   const readerRef = useRef<ReadiumViewRef>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -273,39 +282,36 @@ export function ReaderScreen({
   }
 
   const readerKey = `${format}-${file.url}`;
+  const isAudiobook = format === 'audiobook';
+  const showAudiobookChrome = isAudiobook && !embeddedInSheet;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Pressable onPress={onBack} style={styles.backButton}>
-          <Text style={styles.backLabel}>← Library</Text>
-        </Pressable>
-        {format === 'audiobook' ? (
-          <Pressable onPress={handleMinimize}>
-            <Text>Minimize</Text>
+    <View style={[styles.container, isAudiobook && styles.containerAudiobook]}>
+      {showAudiobookChrome ? (
+        <View style={styles.audiobookHeader}>
+          <Pressable
+            onPress={onBack}
+            style={styles.audiobookHeaderButton}
+            accessibilityLabel="Back to library"
+          >
+            <Text style={styles.audiobookHeaderButtonLabel}>← Library</Text>
           </Pressable>
-        ) : null}
-      </View>
-      {isProxiedAudiobook || isStreamedWebPub ? (
-        <View style={styles.readerTools}>
-          <Text style={styles.readerStatus}>
-            {publicationTitle ?? sample.title}
-            {tocCount > 0 ? ` · ${tocCount} toc` : ''}
-            {location?.locations?.progression != null
-              ? ` · ${Math.round((location.locations.progression ?? 0) * 100)}%`
-              : ''}
-          </Text>
-          {manifestProbeStatus ? (
-            <Text style={styles.readerStatus}>{manifestProbeStatus}</Text>
-          ) : null}
-          <Text style={styles.readerStatus}>
-            {isProxiedAudiobook
-              ? 'Metro/Xcode: filter [AudiobookDebug]'
-              : 'Metro: [PublicationDebug] · Xcode: "Failed to open publication"'}
-          </Text>
+          <Pressable
+            onPress={handleMinimize}
+            style={styles.audiobookHeaderButton}
+            accessibilityLabel="Minimize player"
+          >
+            <Text style={styles.audiobookHeaderButtonLabel}>Minimize</Text>
+          </Pressable>
+        </View>
+      ) : format !== 'audiobook' ? (
+        <View style={styles.header}>
+          <Pressable onPress={onBack} style={styles.backButton}>
+            <Text style={styles.backLabel}>← Library</Text>
+          </Pressable>
         </View>
       ) : null}
-      <View style={styles.reader}>
+      <View style={[styles.reader, isAudiobook && styles.readerAudiobook]}>
         <ReadiumView
           key={readerKey}
           ref={readerRef}
@@ -323,6 +329,12 @@ export function ReaderScreen({
           }}
           onPublicationReady={onPublicationReady}
           onSelectionAction={onSelectionAction}
+          audiobookBookmarks={
+            format === 'audiobook' ? audiobookBookmarks : undefined
+          }
+          onAudiobookBookmarkChange={
+            format === 'audiobook' ? onAudiobookBookmarkChange : undefined
+          }
         />
       </View>
     </View>
@@ -331,11 +343,30 @@ export function ReaderScreen({
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  containerAudiobook: { backgroundColor: '#131418' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 8,
+  },
+  audiobookHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+  },
+  audiobookHeaderButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  audiobookHeaderButtonLabel: {
+    color: '#f5f5f7',
+    fontSize: 14,
+    fontWeight: '600',
   },
   backButton: { paddingVertical: 4, paddingRight: 8 },
   backLabel: { fontSize: 16, fontWeight: '600' },
@@ -347,6 +378,7 @@ const styles = StyleSheet.create({
   },
   readerStatus: { color: '#555', fontSize: 12, marginTop: 4 },
   reader: { flex: 1, overflow: 'hidden', borderRadius: 8 },
+  readerAudiobook: { borderRadius: 0 },
   controls: { flexDirection: 'row', gap: 20, marginTop: 10 },
   centered: {
     flex: 1,

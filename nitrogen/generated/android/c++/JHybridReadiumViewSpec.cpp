@@ -25,6 +25,8 @@ namespace margelo::nitro::readium { struct Decoration; }
 namespace margelo::nitro::readium { struct DecorationStyle; }
 // Forward declaration of `SelectionAction` to properly resolve imports.
 namespace margelo::nitro::readium { struct SelectionAction; }
+// Forward declaration of `AudiobookBookmark` to properly resolve imports.
+namespace margelo::nitro::readium { struct AudiobookBookmark; }
 // Forward declaration of `PublicationReadyEvent` to properly resolve imports.
 namespace margelo::nitro::readium { struct PublicationReadyEvent; }
 // Forward declaration of `Link` to properly resolve imports.
@@ -55,6 +57,8 @@ namespace margelo::nitro::readium { struct SelectionEvent; }
 namespace margelo::nitro::readium { struct SelectionActionEvent; }
 // Forward declaration of `AudiobookPlaybackState` to properly resolve imports.
 namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
+// Forward declaration of `AudiobookBookmarkChangeEvent` to properly resolve imports.
+namespace margelo::nitro::readium { struct AudiobookBookmarkChangeEvent; }
 
 #include "ReadiumFile.hpp"
 #include <optional>
@@ -78,6 +82,8 @@ namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
 #include <unordered_map>
 #include "SelectionAction.hpp"
 #include "JSelectionAction.hpp"
+#include "AudiobookBookmark.hpp"
+#include "JAudiobookBookmark.hpp"
 #include <functional>
 #include "JFunc_void_Locator.hpp"
 #include <NitroModules/JNICallable.hpp>
@@ -116,6 +122,9 @@ namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
 #include "AudiobookPlaybackState.hpp"
 #include "JFunc_void_AudiobookPlaybackState.hpp"
 #include "JAudiobookPlaybackState.hpp"
+#include "AudiobookBookmarkChangeEvent.hpp"
+#include "JFunc_void_AudiobookBookmarkChangeEvent.hpp"
+#include "JAudiobookBookmarkChangeEvent.hpp"
 
 namespace margelo::nitro::readium {
 
@@ -214,6 +223,33 @@ namespace margelo::nitro::readium {
       for (size_t __i = 0; __i < __size; __i++) {
         const auto& __element = selectionActions.value()[__i];
         auto __elementJni = JSelectionAction::fromCpp(__element);
+        __array->setElement(__i, *__elementJni);
+      }
+      return __array;
+    }() : nullptr);
+  }
+  std::optional<std::vector<AudiobookBookmark>> JHybridReadiumViewSpec::getAudiobookBookmarks() {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<jni::JArrayClass<JAudiobookBookmark>>()>("getAudiobookBookmarks");
+    auto __result = method(_javaPart);
+    return __result != nullptr ? std::make_optional([&]() {
+      size_t __size = __result->size();
+      std::vector<AudiobookBookmark> __vector;
+      __vector.reserve(__size);
+      for (size_t __i = 0; __i < __size; __i++) {
+        auto __element = __result->getElement(__i);
+        __vector.push_back(__element->toCpp());
+      }
+      return __vector;
+    }()) : std::nullopt;
+  }
+  void JHybridReadiumViewSpec::setAudiobookBookmarks(const std::optional<std::vector<AudiobookBookmark>>& audiobookBookmarks) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JArrayClass<JAudiobookBookmark>> /* audiobookBookmarks */)>("setAudiobookBookmarks");
+    method(_javaPart, audiobookBookmarks.has_value() ? [&]() {
+      size_t __size = audiobookBookmarks.value().size();
+      jni::local_ref<jni::JArrayClass<JAudiobookBookmark>> __array = jni::JArrayClass<JAudiobookBookmark>::newArray(__size);
+      for (size_t __i = 0; __i < __size; __i++) {
+        const auto& __element = audiobookBookmarks.value()[__i];
+        auto __elementJni = JAudiobookBookmark::fromCpp(__element);
         __array->setElement(__i, *__elementJni);
       }
       return __array;
@@ -320,6 +356,23 @@ namespace margelo::nitro::readium {
   void JHybridReadiumViewSpec::setOnAudiobookPlaybackStateChange(const std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>& onAudiobookPlaybackStateChange) {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<JFunc_void_AudiobookPlaybackState::javaobject> /* onAudiobookPlaybackStateChange */)>("setOnAudiobookPlaybackStateChange_cxx");
     method(_javaPart, onAudiobookPlaybackStateChange.has_value() ? JFunc_void_AudiobookPlaybackState_cxx::fromCpp(onAudiobookPlaybackStateChange.value()) : nullptr);
+  }
+  std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>> JHybridReadiumViewSpec::getOnAudiobookBookmarkChange() {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<JFunc_void_AudiobookBookmarkChangeEvent::javaobject>()>("getOnAudiobookBookmarkChange_cxx");
+    auto __result = method(_javaPart);
+    return __result != nullptr ? std::make_optional([&]() -> std::function<void(const AudiobookBookmarkChangeEvent& /* event */)> {
+      if (__result->isInstanceOf(JFunc_void_AudiobookBookmarkChangeEvent_cxx::javaClassStatic())) [[likely]] {
+        auto downcast = jni::static_ref_cast<JFunc_void_AudiobookBookmarkChangeEvent_cxx::javaobject>(__result);
+        return downcast->cthis()->getFunction();
+      } else {
+        auto __resultRef = jni::make_global(__result);
+        return JNICallable<JFunc_void_AudiobookBookmarkChangeEvent, void(AudiobookBookmarkChangeEvent)>(std::move(__resultRef));
+      }
+    }()) : std::nullopt;
+  }
+  void JHybridReadiumViewSpec::setOnAudiobookBookmarkChange(const std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>& onAudiobookBookmarkChange) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<JFunc_void_AudiobookBookmarkChangeEvent::javaobject> /* onAudiobookBookmarkChange */)>("setOnAudiobookBookmarkChange_cxx");
+    method(_javaPart, onAudiobookBookmarkChange.has_value() ? JFunc_void_AudiobookBookmarkChangeEvent_cxx::fromCpp(onAudiobookBookmarkChange.value()) : nullptr);
   }
 
   // Methods

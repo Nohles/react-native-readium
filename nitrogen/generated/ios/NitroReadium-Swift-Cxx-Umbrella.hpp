@@ -12,6 +12,10 @@
 namespace margelo::nitro::readium { struct AccessibilityCertification; }
 // Forward declaration of `Accessibility` to properly resolve imports.
 namespace margelo::nitro::readium { struct Accessibility; }
+// Forward declaration of `AudiobookBookmarkChangeEvent` to properly resolve imports.
+namespace margelo::nitro::readium { struct AudiobookBookmarkChangeEvent; }
+// Forward declaration of `AudiobookBookmark` to properly resolve imports.
+namespace margelo::nitro::readium { struct AudiobookBookmark; }
 // Forward declaration of `AudiobookPlaybackState` to properly resolve imports.
 namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
 // Forward declaration of `AudiobookSessionState` to properly resolve imports.
@@ -68,6 +72,8 @@ namespace margelo::nitro::readium { struct Subject; }
 // Include C++ defined types
 #include "Accessibility.hpp"
 #include "AccessibilityCertification.hpp"
+#include "AudiobookBookmark.hpp"
+#include "AudiobookBookmarkChangeEvent.hpp"
 #include "AudiobookPlaybackState.hpp"
 #include "AudiobookSessionState.hpp"
 #include "AudiobookSessionStatus.hpp"

@@ -10,6 +10,8 @@ import type {
   SelectionAction,
   PublicationReadyEvent,
   AudiobookPlaybackState,
+  AudiobookBookmark,
+  AudiobookBookmarkChangeEvent,
 } from 'react-native-readium';
 
 import { ReaderButton } from './ReaderButton';
@@ -49,6 +51,8 @@ interface ReaderProps extends BaseReaderProps {
   onPreferencesChange?: (preferences: ReadiumProps['preferences']) => void;
   onAudiobookPlaybackStateChange?: (state: AudiobookPlaybackState) => void;
   onPublicationTitleChange?: (title: string) => void;
+  audiobookBookmarks?: AudiobookBookmark[];
+  onAudiobookBookmarkChange?: (event: AudiobookBookmarkChangeEvent) => void;
 }
 
 export const Reader: React.FC<ReaderProps> = ({
@@ -63,6 +67,8 @@ export const Reader: React.FC<ReaderProps> = ({
   onPreferencesChange,
   onAudiobookPlaybackStateChange,
   onPublicationTitleChange,
+  audiobookBookmarks,
+  onAudiobookBookmarkChange,
 }) => {
   const ref = useRef<ReadiumViewRef>(null);
 
@@ -233,6 +239,8 @@ export const Reader: React.FC<ReaderProps> = ({
             onSelectionChange={handleSelectionChange}
             onSelectionAction={handleSelectionAction}
             onAudiobookPlaybackStateChange={onAudiobookPlaybackStateChange}
+            audiobookBookmarks={audiobookBookmarks}
+            onAudiobookBookmarkChange={onAudiobookBookmarkChange}
           />
         </View>
 

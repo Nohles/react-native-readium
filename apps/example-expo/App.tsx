@@ -3,6 +3,8 @@ import { Alert, Platform, StyleSheet } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import {
   ReadiumAudio,
+  type AudiobookBookmark,
+  type AudiobookBookmarkChangeEvent,
   type AudiobookSessionState,
   type File,
 } from 'react-native-readium';
@@ -28,6 +30,9 @@ export default function App() {
   const [route, setRoute] = useState<Route>({ screen: 'home' });
   const [audio, setAudio] = useState(initialAudioState);
   const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [audiobookBookmarks, setAudiobookBookmarks] = useState<
+    Record<string, AudiobookBookmark[]>
+  >({});
 
   useEffect(() => ReadiumAudio.subscribe(setAudio), []);
 
@@ -94,9 +99,34 @@ export default function App() {
     }
   };
 
+  const updateAudiobookBookmarks = (
+    url: string,
+    event: AudiobookBookmarkChangeEvent
+  ) => {
+    setAudiobookBookmarks((stored) => {
+      const current = stored[url] ?? [];
+      const next =
+        event.type === 'remove'
+          ? current.filter((bookmark) => bookmark.id !== event.bookmark.id)
+          : [
+              ...current.filter(
+                (bookmark) => bookmark.id !== event.bookmark.id
+              ),
+              event.bookmark,
+            ];
+      return { ...stored, [url]: next };
+    });
+  };
+
+  const isAudiobookReader =
+    route.screen === 'reader' && route.sample.format === 'audiobook';
+
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={styles.screen} edges={['top', 'left', 'right', 'bottom']}>
+      <SafeAreaView
+        style={[styles.screen, isAudiobookReader && styles.screenAudiobook]}
+        edges={isAudiobookReader ? ['top', 'left', 'right'] : ['top', 'left', 'right', 'bottom']}
+      >
         {route.screen === 'home' ? (
           <HomeScreen
             samples={samples}
@@ -113,6 +143,10 @@ export default function App() {
             sample={route.sample}
             onBack={goHome}
             onAudiobookMinimize={handleAudiobookMinimize}
+            audiobookBookmarks={audiobookBookmarks[route.sample.url] ?? []}
+            onAudiobookBookmarkChange={(event) =>
+              updateAudiobookBookmarks(route.sample.url, event)
+            }
           />
         )}
       </SafeAreaView>
@@ -121,9 +155,16 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   screen: {
     flex: 1,
     backgroundColor: '#f7f4ee',
     padding: 12,
+  },
+  screenAudiobook: {
+    backgroundColor: '#131418',
+    padding: 0,
   },
 });
