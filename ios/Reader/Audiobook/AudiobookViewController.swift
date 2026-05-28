@@ -74,8 +74,10 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
   private let remainingCenterLabel = UILabel()
   private let remainingLabel = UILabel()
   private let rateCaptionLabel = UILabel()
+  private let modeScrollView = UIScrollView()
   private let modeStack = UIStackView()
   private var modeButtons: [UIButton] = []
+  private let coverContainer = UIView()
   private let nowPlayingContainer = UIView()
   private let nowPlayingStack = UIStackView()
   private let progressStack = UIStackView()
@@ -192,10 +194,9 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
 
   private func buildUI() {
     view.backgroundColor = backgroundColor
-    coverImageView.contentMode = .scaleAspectFill
+    coverImageView.contentMode = .center
     coverImageView.clipsToBounds = true
     coverImageView.layer.cornerRadius = 12
-    coverImageView.contentAlignment = .center
     coverImageView.backgroundColor = panelColor
 
     placeholderLabel.font = .boldSystemFont(ofSize: 42)
@@ -229,9 +230,13 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     configureModeButton("Bookmarks", image: "bookmark", mode: .bookmarks)
     modeStack.axis = .horizontal
     modeStack.spacing = 8
-    modeStack.alignment = .center
+    modeStack.alignment = .fill
     modeStack.distribution = .fill
-    view.addSubview(modeStack)
+    modeScrollView.showsHorizontalScrollIndicator = false
+    modeScrollView.alwaysBounceHorizontal = true
+    modeScrollView.addSubview(modeStack)
+    view.addSubview(modeScrollView)
+    modeScrollView.translatesAutoresizingMaskIntoConstraints = false
     modeStack.translatesAutoresizingMaskIntoConstraints = false
 
     let overflow = iconButton("ellipsis.circle.fill", action: #selector(settingsTapped), pointSize: 23, size: 38)
@@ -267,28 +272,30 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     progressStack.axis = .vertical
     progressStack.spacing = 8
     progressStack.alignment = .fill
+    progressStack.addArrangedSubview(titleStack)
+    progressStack.setCustomSpacing(4, after: titleStack)
+    progressStack.addArrangedSubview(subtitleLabel)
+    progressStack.setCustomSpacing(12, after: subtitleLabel)
     progressStack.addArrangedSubview(chapterLabel)
     progressStack.addArrangedSubview(timelineSlider)
     progressStack.addArrangedSubview(timeRow)
     view.addSubview(progressStack)
     progressStack.translatesAutoresizingMaskIntoConstraints = false
 
+    coverContainer.addSubview(coverImageView)
+    coverImageView.translatesAutoresizingMaskIntoConstraints = false
+
     nowPlayingStack.axis = .vertical
-    nowPlayingStack.spacing = 10
-    nowPlayingStack.alignment = .leading
-    nowPlayingStack.addArrangedSubview(coverImageView)
-    nowPlayingStack.setCustomSpacing(14, after: coverImageView)
-  
-    nowPlayingStack.addArrangedSubview(titleStack)
-    nowPlayingStack.setCustomSpacing(4, after: titleStack)
-    nowPlayingStack.addArrangedSubview(subtitleLabel)
+    nowPlayingStack.spacing = 0
+    nowPlayingStack.alignment = .fill
+    nowPlayingStack.addArrangedSubview(coverContainer)
     nowPlayingContainer.addSubview(nowPlayingStack)
     nowPlayingStack.translatesAutoresizingMaskIntoConstraints = false
     view.addSubview(nowPlayingContainer)
     nowPlayingContainer.translatesAutoresizingMaskIntoConstraints = false
 
-    titleStack.widthAnchor.constraint(equalTo: nowPlayingStack.widthAnchor).isActive = true
-    subtitleLabel.widthAnchor.constraint(equalTo: nowPlayingStack.widthAnchor).isActive = true
+    titleStack.widthAnchor.constraint(equalTo: progressStack.widthAnchor).isActive = true
+    subtitleLabel.widthAnchor.constraint(equalTo: progressStack.widthAnchor).isActive = true
 
     listTableView.backgroundColor = panelColor
     listTableView.layer.cornerRadius = 28
@@ -342,24 +349,36 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     utilityPanel.translatesAutoresizingMaskIntoConstraints = false
 
     NSLayoutConstraint.activate([
-      modeStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
-      modeStack.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 16),
-      modeStack.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -16),
-      modeStack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+      modeScrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+      modeScrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      modeScrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      modeScrollView.heightAnchor.constraint(equalToConstant: 36),
+      modeStack.topAnchor.constraint(equalTo: modeScrollView.contentLayoutGuide.topAnchor),
+      modeStack.bottomAnchor.constraint(equalTo: modeScrollView.contentLayoutGuide.bottomAnchor),
+      modeStack.leadingAnchor.constraint(equalTo: modeScrollView.contentLayoutGuide.leadingAnchor, constant: 16),
+      modeStack.trailingAnchor.constraint(equalTo: modeScrollView.contentLayoutGuide.trailingAnchor, constant: -16),
+      modeStack.heightAnchor.constraint(equalTo: modeScrollView.frameLayoutGuide.heightAnchor),
       progressStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
       progressStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
       progressStack.bottomAnchor.constraint(equalTo: controls.topAnchor, constant: -20),
-      nowPlayingContainer.topAnchor.constraint(equalTo: modeStack.bottomAnchor, constant: 12),
+      nowPlayingContainer.topAnchor.constraint(equalTo: modeScrollView.bottomAnchor, constant: 12),
       nowPlayingContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
       nowPlayingContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
       nowPlayingContainer.bottomAnchor.constraint(equalTo: progressStack.topAnchor, constant: -8),
       nowPlayingStack.topAnchor.constraint(equalTo: nowPlayingContainer.topAnchor),
       nowPlayingStack.leadingAnchor.constraint(equalTo: nowPlayingContainer.leadingAnchor),
       nowPlayingStack.trailingAnchor.constraint(equalTo: nowPlayingContainer.trailingAnchor),
+      nowPlayingStack.bottomAnchor.constraint(equalTo: nowPlayingContainer.bottomAnchor),
+      coverImageView.centerXAnchor.constraint(equalTo: coverContainer.centerXAnchor),
+      coverImageView.centerYAnchor.constraint(equalTo: coverContainer.centerYAnchor),
+      coverImageView.topAnchor.constraint(greaterThanOrEqualTo: coverContainer.topAnchor),
+      coverImageView.bottomAnchor.constraint(lessThanOrEqualTo: coverContainer.bottomAnchor),
       coverImageView.heightAnchor.constraint(equalTo: coverImageView.widthAnchor),
+      coverImageView.widthAnchor.constraint(lessThanOrEqualTo: coverContainer.widthAnchor),
+      coverImageView.widthAnchor.constraint(lessThanOrEqualTo: view.heightAnchor, multiplier: 0.36),
       placeholderLabel.centerXAnchor.constraint(equalTo: coverImageView.centerXAnchor),
       placeholderLabel.centerYAnchor.constraint(equalTo: coverImageView.centerYAnchor),
-      listTableView.topAnchor.constraint(equalTo: modeStack.bottomAnchor, constant: 16),
+      listTableView.topAnchor.constraint(equalTo: modeScrollView.bottomAnchor, constant: 16),
       listTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
       listTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
       controls.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 26),
@@ -373,10 +392,9 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
       routePicker.heightAnchor.constraint(equalToConstant: 44)
     ])
 
-    let coverWidth = coverImageView.widthAnchor.constraint(equalTo: nowPlayingStack.widthAnchor)
-    coverWidth.priority = .defaultHigh
-    coverWidth.isActive = true
-    coverImageView.widthAnchor.constraint(lessThanOrEqualTo: view.heightAnchor, multiplier: 0.36).isActive = true
+    let coverWidthPreferred = coverImageView.widthAnchor.constraint(equalTo: coverContainer.widthAnchor)
+    coverWidthPreferred.priority = .defaultHigh
+    coverWidthPreferred.isActive = true
 
     listBottomToControlsConstraint = listTableView.bottomAnchor.constraint(equalTo: controls.topAnchor, constant: -20)
     listBottomToControlsConstraint?.isActive = true
@@ -411,7 +429,7 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     configuration.imagePadding = 4
     configuration.titleLineBreakMode = .byTruncatingTail
     configuration.cornerStyle = .capsule
-    configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 11, bottom: 5, trailing: 11)
+    configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12)
     configuration.background.cornerRadius = 18
     configuration.background.backgroundColor = UIColor.white.withAlphaComponent(0.10)
     configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
@@ -430,6 +448,8 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     button.setContentHuggingPriority(.required, for: .horizontal)
     button.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
     button.addTarget(self, action: #selector(modeTapped(_:)), for: .touchUpInside)
+    button.translatesAutoresizingMaskIntoConstraints = false
+    button.heightAnchor.constraint(equalToConstant: 36).isActive = true
     modeButtons.append(button)
     modeStack.addArrangedSubview(button)
   }
@@ -557,23 +577,17 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
 
   private func loadCover() {
     placeholderLabel.text = initials(from: publication.metadata.title ?? "Audiobook")
-    guard let cover = publication.links.first(where: { link in
-      link.rels.contains { "\($0)" == "cover" }
-    }) else {
-      return
-    }
-
-    let url = cover.url().url
-
-    URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
-      guard let data, let image = UIImage(data: data) else { return }
-      DispatchQueue.main.async {
-        self?.placeholderLabel.text = nil
-        self?.coverImageView.image = image
-        self?.nowPlayingArtwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
-        self?.updateNowPlayingInfo()
+    Task {
+      let image = try? await publication.cover().get()
+      await MainActor.run { [weak self] in
+        guard let self, let image else { return }
+        placeholderLabel.text = nil
+        coverImageView.contentMode = .scaleAspectFill
+        coverImageView.image = image
+        nowPlayingArtwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+        updateNowPlayingInfo()
       }
-    }.resume()
+    }
   }
 
   private func configureSystemAudio() {
@@ -708,20 +722,17 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     remainingLabel.text = "-\(formatTime(remainingSeconds))"
     remainingCenterLabel.text = formatRemainingSummary(remainingSeconds)
     rateCaptionLabel.text = formatRate(playbackRate)
-    let chapterTitle = currentChapter()?.title
-    let publicationTitle = publication.metadata.title ?? ""
     let chapterIndex = chapters.lastIndex(where: { $0.time <= currentPosition + 0.25 }).map { $0 + 1 } ?? 1
-    if let chapterTitle, !chapterTitle.isEmpty, chapterTitle != publicationTitle {
-      if chapters.count > 1 {
-        chapterLabel.text = "Chapter \(chapterIndex) - \(chapterTitle)"
-      } else {
-        chapterLabel.text = chapterTitle
-      }
-      chapterLabel.isHidden = false
-    } else if chapters.isEmpty {
+    if chapters.isEmpty {
       chapterLabel.isHidden = true
-    } else {
+    } else if chapters.count > 1 {
       chapterLabel.text = "Chapter \(chapterIndex) of \(chapters.count)"
+      chapterLabel.isHidden = false
+    } else if let chapterTitle = currentChapter()?.title, !chapterTitle.isEmpty {
+      chapterLabel.text = chapterTitle
+      chapterLabel.isHidden = false
+    } else {
+      chapterLabel.text = "Chapter \(chapterIndex) of \(max(chapters.count, 1))"
       chapterLabel.isHidden = false
     }
     let imageName = isPlaying ? "pause.fill" : "play.fill"
@@ -736,11 +747,15 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
   private func updateChapterModeSubtitle() {
     guard let button = modeButtons.first(where: { $0.tag == AudiobookScreenMode.chapters.rawValue }) else { return }
     var configuration = button.configuration
+    configuration?.subtitle = nil
     if chapters.isEmpty {
-      configuration?.subtitle = nil
+      configuration?.title = "Chapters"
+      button.accessibilityLabel = "Chapters"
     } else {
       let chapterIndex = chapters.lastIndex(where: { $0.time <= currentPosition + 0.25 }).map { $0 + 1 } ?? 1
-      configuration?.subtitle = "\(chapterIndex) of \(chapters.count)"
+      let title = "(Chapters \(chapterIndex) of \(chapters.count))"
+      configuration?.title = title
+      button.accessibilityLabel = title
     }
     button.configuration = configuration
   }
