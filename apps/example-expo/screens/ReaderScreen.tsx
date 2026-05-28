@@ -38,6 +38,7 @@ type ReaderScreenProps = {
   sample: Sample;
   onBack: () => void;
   onAudiobookMinimize: (file: File) => void;
+  onAudiobookReady: (file: File) => void;
   audiobookBookmarks: AudiobookBookmark[];
   onAudiobookBookmarkChange: (event: AudiobookBookmarkChangeEvent) => void;
   /** When true, navigation chrome is omitted (parent bottom sheet provides close). */
@@ -48,6 +49,7 @@ export function ReaderScreen({
   sample,
   onBack,
   onAudiobookMinimize,
+  onAudiobookReady,
   audiobookBookmarks,
   onAudiobookBookmarkChange,
   embeddedInSheet = false,
@@ -221,6 +223,9 @@ export function ReaderScreen({
     setNativeReady(true);
     setPublicationTitle(event.metadata.title);
     setTocCount(event.tableOfContents.length);
+    if (format === 'audiobook' && file) {
+      onAudiobookReady(file);
+    }
   };
 
   const onSelectionAction = (event: SelectionActionEvent) => {

@@ -47,7 +47,7 @@ export const samples: Sample[] = [
   {
     title: 'The Martian (Proxied manifest, iOS)',
     format: 'audiobook',
-    url: 'http://192.168.1.199:3000/readium/29cfb352-3587-40f6-bdab-553ff5def9cb/webpub/QW5keSBXZWlyL1RoZSBNYXJ0aWFuL1RoZSBNYXJ0aWFuLm1wMw/manifest.json',
+    url: 'http://192.168.1.199:3000/readium/9b4fb794-7711-4aff-aab7-1a8c15378c68/webpub/QW5keSBXZWlyL1RoZSBNYXJ0aWFuL1RoZSBNYXJ0aWFuLm1wMw/manifest.json',
   },
 
   // RTL + CJK
@@ -56,7 +56,6 @@ export const samples: Sample[] = [
     format: 'epub',
     url: 'https://publication-server.readium.org/webpub/aHR0cHM6Ly9naXRodWIuY29tL0lEUEYvZXB1YjMtc2FtcGxlcy9yZWxlYXNlcy9kb3dubG9hZC8yMDIzMDcwNC9oYXJ1a28taHRtbC1qcGVnLmVwdWI/manifest.json',
   },
- 
 
   // PDF
   {
@@ -64,6 +63,4 @@ export const samples: Sample[] = [
     format: 'pdf',
     url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
   },
-
-
 ];

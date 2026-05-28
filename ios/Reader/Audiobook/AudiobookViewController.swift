@@ -46,6 +46,7 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
   private var currentResourceIndex: Int = 0
   private var currentResourceTime: Double = 0
   private var isPlaying = false
+  private var isPlaybackLoading = false
   private var playbackRate = 1.0
   private var volume = 1.0
   private var skipBackwardInterval = 15.0
@@ -68,6 +69,7 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
   private let titleLabel = UILabel()
   private let subtitleLabel = UILabel()
   private let playButton = UIButton(type: .system)
+  private let playLoadingIndicator = UIActivityIndicatorView(style: .large)
   private let chapterLabel = UILabel()
   private let timelineSlider = ChapterSlider()
   private let elapsedLabel = UILabel()
@@ -491,6 +493,15 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     playButton.setPreferredSymbolConfiguration(.init(pointSize: 44, weight: .bold), forImageIn: .normal)
     playButton.addTarget(self, action: #selector(playPauseTapped), for: .touchUpInside)
     constrainButton(playButton, size: 72)
+
+    playLoadingIndicator.color = foregroundColor
+    playLoadingIndicator.hidesWhenStopped = true
+    playLoadingIndicator.translatesAutoresizingMaskIntoConstraints = false
+    playButton.addSubview(playLoadingIndicator)
+    NSLayoutConstraint.activate([
+      playLoadingIndicator.centerXAnchor.constraint(equalTo: playButton.centerXAnchor),
+      playLoadingIndicator.centerYAnchor.constraint(equalTo: playButton.centerYAnchor)
+    ])
   }
 
   private func iconButton(
@@ -707,6 +718,7 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     currentResourceTime = info.time
     currentPosition = absoluteTime(resourceIndex: info.resourceIndex, time: info.time)
     isPlaying = info.state == .playing
+    isPlaybackLoading = info.state == .loading
     duration = publication.metadata.duration ?? audioNavigator.totalDuration ?? max(duration, currentPosition + (info.duration ?? 0))
     updatePlaybackUI()
     updateNowPlayingInfo()
@@ -735,8 +747,16 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
       chapterLabel.text = "Chapter \(chapterIndex) of \(max(chapters.count, 1))"
       chapterLabel.isHidden = false
     }
-    let imageName = isPlaying ? "pause.fill" : "play.fill"
-    playButton.setImage(UIImage(systemName: imageName), for: .normal)
+    if isPlaybackLoading {
+      playButton.setImage(nil, for: .normal)
+      playButton.isEnabled = false
+      playLoadingIndicator.startAnimating()
+    } else {
+      let imageName = isPlaying ? "pause.fill" : "play.fill"
+      playButton.setImage(UIImage(systemName: imageName), for: .normal)
+      playButton.isEnabled = true
+      playLoadingIndicator.stopAnimating()
+    }
     updateBookmarkButton()
     if !listTableView.isHidden {
       listTableView.reloadData()

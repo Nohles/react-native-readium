@@ -4,11 +4,11 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "android": "react-native run-android",
+    "android": "react-native run-android --port 8191",
     "android:ide": "open -a /Applications/Android\\ Studio.app ./android",
-    "ios": "react-native run-ios",
+    "ios": "react-native run-ios --port 8191",
     "ios:ide": "open ios/ReadiumExample.xcworkspace/",
-    "start": "react-native start --client-logs",
+    "start": "react-native start --client-logs --port 8191",
     "clean": "react-native-clean-project"
   },
   "dependencies": {

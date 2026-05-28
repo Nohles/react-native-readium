@@ -9,9 +9,15 @@ const root = path.resolve(__dirname, '../..');
  *
  * @type {import('@react-native/metro-config').MetroConfig}
  */
+// Dedicated port so we don't reuse another project's Metro on 8081 (e.g. Reader/Expo).
+const METRO_PORT = 8191;
+
 const config = {
   projectRoot: __dirname,
   watchFolders: [root],
+  server: {
+    port: METRO_PORT,
+  },
 
   transformer: {
     getTransformOptions: async () => ({

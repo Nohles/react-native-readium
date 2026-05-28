@@ -1,5 +1,11 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { ReadiumAudio } from 'react-native-readium';
 import type { AudiobookSessionState, File } from 'react-native-readium';
 import type { Sample } from '../types';
@@ -23,6 +29,8 @@ export function HomeScreen({
   onOpenAudiobookPlayer,
   onCloseAudio,
 }: HomeScreenProps) {
+  const audioLoading = audio.status === 'loading';
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Readium Expo SDK 56</Text>
@@ -61,13 +69,18 @@ export function HomeScreen({
               <Text>Previous</Text>
             </Pressable>
             <Pressable
+              disabled={audioLoading}
               onPress={() =>
                 audio.status === 'playing'
                   ? ReadiumAudio.pause()
                   : ReadiumAudio.play()
               }
             >
-              <Text>{audio.status === 'playing' ? 'Pause' : 'Play'}</Text>
+              {audioLoading ? (
+                <ActivityIndicator size="small" />
+              ) : (
+                <Text>{audio.status === 'playing' ? 'Pause' : 'Play'}</Text>
+              )}
             </Pressable>
             <Pressable onPress={() => ReadiumAudio.goForward()}>
               <Text>Next</Text>

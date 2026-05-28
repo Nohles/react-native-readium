@@ -82,6 +82,13 @@ export default function App() {
     goHome();
   };
 
+  const handleAudiobookReady = (file: File) => {
+    setAudioFile(file);
+    ReadiumAudio.open(file).catch((error) => {
+      Alert.alert('Unable to load audiobook', String(error));
+    });
+  };
+
   const openAudiobookPlayer = () => {
     if (!audioFile) return;
     openSample({
@@ -143,6 +150,7 @@ export default function App() {
             sample={route.sample}
             onBack={goHome}
             onAudiobookMinimize={handleAudiobookMinimize}
+            onAudiobookReady={handleAudiobookReady}
             audiobookBookmarks={audiobookBookmarks[route.sample.url] ?? []}
             onAudiobookBookmarkChange={(event) =>
               updateAudiobookBookmarks(route.sample.url, event)

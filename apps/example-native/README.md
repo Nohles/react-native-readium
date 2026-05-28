@@ -41,3 +41,9 @@ this file you should run them from `../`.
 Ex. `yarn example ios`.
 
 Thats it! :tada:, you should now be running the example project.
+
+### Metro port (8191)
+
+This example uses Metro port **8191** instead of the default **8081**, so it does not accidentally bundle against another React Native or Expo dev server you may have running (for example the Reader app on 8081).
+
+If you see `Unable to resolve module ./index from /Users/rich/Code/Reader/.`, the simulator is still pointed at the wrong packager. Stop other Metro instances, run `yarn example start`, rebuild with `yarn example ios`, and reload the simulator (**⌘R**).
