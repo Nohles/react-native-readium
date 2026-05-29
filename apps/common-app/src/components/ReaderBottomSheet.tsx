@@ -13,7 +13,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Reader } from './Reader';
 import type { ReaderHandle } from './Reader';
-import { ControlBar } from './ControlBar';
 import type { BookOption } from '../types/reader.types';
 import type {
   AudiobookPlaybackState,
@@ -158,20 +157,7 @@ export const ReaderBottomSheet: React.FC<ReaderBottomSheetProps> = ({
       <View style={styles.content}>
         {contentMode === 'reader' ? (
           <>
-            {book && readerHandle && !isAudiobook ? (
-              <ControlBar
-                preferences={readerHandle.preferences}
-                onPreferencesChange={readerHandle.setPreferences}
-                toc={readerHandle.toc}
-                onNavigateToTocItem={readerHandle.navigateToTocItem}
-                highlights={readerHandle.highlights}
-                onDeleteHighlight={readerHandle.deleteHighlight}
-                onNavigateToHighlight={readerHandle.navigateToLocator}
-                onEditHighlight={readerHandle.editHighlight}
-                onClearBook={onClearBook}
-                onClose={handleClose}
-              />
-            ) : !book || !isAudiobook ? (
+            {book && !readerHandle && !isAudiobook ? (
               <EmptyBar onClose={handleClose} />
             ) : null}
 
@@ -194,6 +180,9 @@ export const ReaderBottomSheet: React.FC<ReaderBottomSheetProps> = ({
                   audiobookBookmarks={audiobookBookmarks}
                   onAudiobookBookmarkChange={onAudiobookBookmarkChange}
                   reopenActiveAudiobook={reopenActiveAudiobook}
+                  showControlBar={!isAudiobook}
+                  onClose={handleClose}
+                  onClearBook={onClearBook}
                 />
                 {!isAudiobook ? (
                   <TouchableOpacity

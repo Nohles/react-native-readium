@@ -13,6 +13,7 @@ import type {
   AudiobookBookmark,
   AudiobookBookmarkChangeEvent,
 } from 'react-native-readium';
+import { createComicPreferences } from 'react-native-readium';
 
 import { ReaderButton } from './ReaderButton';
 import { HighlightColorPicker, HighlightEditDialog } from './highlights';
@@ -23,6 +24,7 @@ import { useHighlights } from '../hooks/useHighlights';
 
 import { styles } from '../styles/reader';
 import type { ReaderProps as BaseReaderProps } from '../types/reader.types';
+import { ControlBar } from './ControlBar';
 export type { BookOption, PublicationFormat } from '../types/reader.types';
 
 const selectionActions: SelectionAction[] = [
@@ -54,6 +56,10 @@ interface ReaderProps extends BaseReaderProps {
   audiobookBookmarks?: AudiobookBookmark[];
   onAudiobookBookmarkChange?: (event: AudiobookBookmarkChangeEvent) => void;
   reopenActiveAudiobook?: boolean;
+  /** Settings / TOC / highlights chrome (default: all formats except audiobook). */
+  showControlBar?: boolean;
+  onClose?: () => void;
+  onClearBook?: () => void;
 }
 
 export const Reader: React.FC<ReaderProps> = ({
@@ -71,6 +77,9 @@ export const Reader: React.FC<ReaderProps> = ({
   audiobookBookmarks,
   onAudiobookBookmarkChange,
   reopenActiveAudiobook,
+  showControlBar,
+  onClose,
+  onClearBook,
 }) => {
   const ref = useRef<ReadiumViewRef>(null);
 
@@ -89,7 +98,16 @@ export const Reader: React.FC<ReaderProps> = ({
     setPreferences,
     handleLocationChange,
     handlePublicationReady: baseHandlePublicationReady,
-  } = useReaderState({ initialPreferences, onPreferencesChange });
+  } = useReaderState({
+    initialPreferences:
+      format === 'comic'
+        ? createComicPreferences(
+            { canvasMode: 'singlePage', fit: 'screen' },
+            initialPreferences
+          )
+        : initialPreferences,
+    onPreferencesChange,
+  });
 
   const navigateToLocator = useCallback((locator: Locator) => {
     ref.current?.goTo(locator);
@@ -199,6 +217,11 @@ export const Reader: React.FC<ReaderProps> = ({
       ? 'PDF'
       : 'EPUB';
 
+  const showChrome =
+    (showControlBar ?? format !== 'audiobook') &&
+    onClose != null &&
+    onClearBook != null;
+
   if (isLoading || !file) {
     return (
       <View style={styles.loadingContainer}>
@@ -219,6 +242,21 @@ export const Reader: React.FC<ReaderProps> = ({
 
   return (
     <View style={styles.container}>
+      {showChrome ? (
+        <ControlBar
+          preferences={preferences}
+          onPreferencesChange={setPreferences}
+          toc={toc}
+          onNavigateToTocItem={navigateToTocItem}
+          highlights={highlights}
+          onDeleteHighlight={handleDeleteHighlight}
+          onNavigateToHighlight={navigateToLocator}
+          onEditHighlight={handleEditHighlight}
+          onClearBook={onClearBook}
+          onClose={onClose}
+        />
+      ) : null}
+
       <View style={styles.reader}>
         {Platform.OS === 'web' ? (
           <ReaderButton

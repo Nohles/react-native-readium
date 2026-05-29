@@ -412,9 +412,50 @@ Key concepts:
 | EPUB 2 / 3 | iOS, Android | Rendering, navigation, preferences, highlights, and selection actions. Packaged EPUB on all platforms; streamed WebPub via `manifest.json` on web and iOS only (see [Streamed Web Publications](#streamed-web-publications-manifestjson)). |
 | Audiobook  | iOS          | Playback and persistent `ReadiumAudio` session; Android is deferred. |
 | PDF        | iOS          | Rendering and navigation; Android is deferred. |
-| CBZ        | iOS          | Rendering and navigation through Readium's EPUB navigator; Android is deferred. |
+| CBZ        | iOS          | Rendering, navigation, comic canvas presets, fit, spread, and reading direction through Readium's EPUB navigator; Android is deferred. |
 
 **Missing a format you need?** Reach out and see if it can be added to the roadmap.
+
+#### CBZ / Comic Canvas Presets
+
+CBZ publications can be tuned with the same navigator preferences used by fixed-layout content. For convenience, `createComicPreferences` maps comic concepts onto Readium preferences:
+
+```tsx
+import {
+  ReadiumView,
+  comicProgressFromLocator,
+  comicProgressStorageKey,
+  createComicPreferences,
+} from 'react-native-readium';
+
+const preferences = createComicPreferences({
+  canvasMode: 'webtoon', // 'webtoon' | 'singlePage' | 'doublePage'
+  readingDirection: 'rtl', // 'ltr' western comics, 'rtl' manga
+  fit: 'width', // 'width' | 'height' | 'screen' | 'actualSize'
+});
+
+<ReadiumView
+  file={file}
+  preferences={preferences}
+  onLocationChange={(locator) => {
+    const progress = comicProgressFromLocator(locator);
+    if (!progress) return;
+
+    const key = comicProgressStorageKey(file.url, progress.href);
+    saveProgress(key, progress);
+  }}
+/>;
+```
+
+Preset mapping:
+
+| Canvas mode | Readium preferences |
+| ----------- | ------------------- |
+| `webtoon` | `scroll: true`, `spread: "never"`, `fit: "width"` |
+| `singlePage` | `scroll: false`, `spread: "never"` |
+| `doublePage` | `scroll: false`, `spread: "always"` |
+
+The native navigator owns pinch, double-tap, pointer/wheel, and keyboard navigation where supported by the platform. Sync remains app-owned: persist the `ComicProgress` payload locally or upload it as your encrypted/iCloud/Drive blob, then pass `comicLocatorFromProgress(progress)` as `file.initialLocation` when reopening.
 
 #### DRM Support
 

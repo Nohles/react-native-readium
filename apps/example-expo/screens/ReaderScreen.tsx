@@ -316,6 +316,7 @@ export function ReaderScreen({
           </Pressable>
         </View>
       ) : null}
+
       <View style={[styles.reader, isAudiobook && styles.readerAudiobook]}>
         <ReadiumView
           key={readerKey}

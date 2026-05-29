@@ -8,10 +8,7 @@ import {
   type AudiobookSessionState,
   type File,
 } from 'react-native-readium';
-import {
-  SafeAreaProvider,
-  SafeAreaView,
-} from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { HomeScreen } from './screens/HomeScreen';
 import { ReaderScreen } from './screens/ReaderScreen';
 import { samples, type Sample } from './types';
@@ -132,7 +129,11 @@ export default function App() {
     <SafeAreaProvider>
       <SafeAreaView
         style={[styles.screen, isAudiobookReader && styles.screenAudiobook]}
-        edges={isAudiobookReader ? ['top', 'left', 'right'] : ['top', 'left', 'right', 'bottom']}
+        edges={
+          isAudiobookReader
+            ? ['top', 'left', 'right']
+            : ['top', 'left', 'right', 'bottom']
+        }
       >
         {route.screen === 'home' ? (
           <HomeScreen

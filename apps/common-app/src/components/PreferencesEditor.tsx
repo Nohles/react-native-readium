@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Slider from '@react-native-community/slider';
 import type { ReadiumProps } from 'react-native-readium';
-import { RANGES } from 'react-native-readium';
+import { createComicPreferences, RANGES } from 'react-native-readium';
 import { ReaderButton } from './ReaderButton';
 import { BaseModal } from './BaseModal';
 import { modalStyles, colors } from '../styles/modal';
@@ -18,6 +18,7 @@ type ReadingProgression = NonNullable<
 >;
 type Fit = NonNullable<ReadiumProps['preferences']['fit']>;
 type Spread = NonNullable<ReadiumProps['preferences']['spread']>;
+type CanvasMode = 'webtoon' | 'singlePage' | 'doublePage';
 
 const THEME_LABELS: Record<Theme, string> = {
   light: 'Light',
@@ -40,6 +41,12 @@ const SPREAD_LABELS: Record<Spread, string> = {
   auto: 'Auto',
   never: 'Never',
   always: 'Always',
+};
+
+const CANVAS_MODE_LABELS: Record<CanvasMode, string> = {
+  webtoon: 'Webtoon',
+  singlePage: 'Single',
+  doublePage: 'Double',
 };
 
 const OptionRow = <T extends string>({
@@ -141,6 +148,10 @@ export const PreferencesEditor = ({ preferences, onChange }: Props) => {
       ...preferences,
       spread,
     });
+  };
+
+  const handleCanvasModeChange = (canvasMode: CanvasMode) => {
+    onChange(createComicPreferences({ canvasMode }, preferences));
   };
 
   const handleVerticalTextChange = (verticalText: boolean) => {
@@ -255,6 +266,18 @@ export const PreferencesEditor = ({ preferences, onChange }: Props) => {
 
         <View style={modalStyles.cardItem}>
           <View style={styles.settingHeader}>
+            <Text style={styles.settingLabel}>Comic Canvas</Text>
+          </View>
+          <OptionRow
+            value={comicCanvasMode(preferences)}
+            options={['webtoon', 'singlePage', 'doublePage']}
+            labels={CANVAS_MODE_LABELS}
+            onChange={handleCanvasModeChange}
+          />
+        </View>
+
+        <View style={modalStyles.cardItem}>
+          <View style={styles.settingHeader}>
             <Text style={styles.settingLabel}>Fit</Text>
           </View>
           <OptionRow
@@ -286,7 +309,7 @@ export const PreferencesEditor = ({ preferences, onChange }: Props) => {
                 preferences.verticalText && styles.optionButtonActive,
               ]}
               onPress={() =>
-                handleVerticalTextChange(!Boolean(preferences.verticalText))
+                handleVerticalTextChange(!preferences.verticalText)
               }
               activeOpacity={0.7}
             >
@@ -303,6 +326,14 @@ export const PreferencesEditor = ({ preferences, onChange }: Props) => {
     </>
   );
 };
+
+function comicCanvasMode(preferences: ReadiumProps['preferences']): CanvasMode {
+  if (preferences.scroll) {
+    return 'webtoon';
+  }
+
+  return preferences.spread === 'always' ? 'doublePage' : 'singlePage';
+}
 
 const styles = StyleSheet.create({
   settingHeader: {
