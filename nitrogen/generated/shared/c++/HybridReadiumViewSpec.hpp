@@ -38,8 +38,8 @@ namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
 // Forward declaration of `AudiobookBookmarkChangeEvent` to properly resolve imports.
 namespace margelo::nitro::readium { struct AudiobookBookmarkChangeEvent; }
 
-#include "ReadiumFile.hpp"
 #include <optional>
+#include "ReadiumFile.hpp"
 #include "Preferences.hpp"
 #include "DecorationGroup.hpp"
 #include <vector>
@@ -81,6 +81,8 @@ namespace margelo::nitro::readium {
 
     public:
       // Properties
+      virtual std::optional<bool> getReopenActiveAudiobook() = 0;
+      virtual void setReopenActiveAudiobook(std::optional<bool> reopenActiveAudiobook) = 0;
       virtual std::optional<ReadiumFile> getFile() = 0;
       virtual void setFile(const std::optional<ReadiumFile>& file) = 0;
       virtual std::optional<Preferences> getPreferences() = 0;

@@ -72,6 +72,11 @@ using namespace margelo::nitro::readium::views;
   // 2. Update each prop individually
   swiftPart.beforeUpdate();
 
+  // reopenActiveAudiobook: optional
+  if (newViewProps.reopenActiveAudiobook.isDirty) {
+    swiftPart.setReopenActiveAudiobook(newViewProps.reopenActiveAudiobook.value);
+    newViewProps.reopenActiveAudiobook.isDirty = false;
+  }
   // file: optional
   if (newViewProps.file.isDirty) {
     swiftPart.setFile(newViewProps.file.value);

@@ -16,8 +16,8 @@
 #include <react/renderer/components/view/ConcreteViewShadowNode.h>
 #include <react/renderer/components/view/ViewProps.h>
 
-#include "ReadiumFile.hpp"
 #include <optional>
+#include "ReadiumFile.hpp"
 #include "Preferences.hpp"
 #include "DecorationGroup.hpp"
 #include <vector>
@@ -54,6 +54,7 @@ namespace margelo::nitro::readium::views {
                            const react::RawProps& rawProps);
 
   public:
+    CachedProp<std::optional<bool>> reopenActiveAudiobook;
     CachedProp<std::optional<ReadiumFile>> file;
     CachedProp<std::optional<Preferences>> preferences;
     CachedProp<std::optional<std::vector<DecorationGroup>>> decorations;

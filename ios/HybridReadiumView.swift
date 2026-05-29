@@ -25,6 +25,8 @@ class HybridReadiumView: HybridReadiumViewSpec {
     }
   }
 
+  var reopenActiveAudiobook: Bool? = nil
+
   private func ensureHostViewConfigured() {
     guard !didConfigureHostView else { return }
     didConfigureHostView = true
@@ -151,6 +153,12 @@ class HybridReadiumView: HybridReadiumViewSpec {
     }
 
     if let activeAudiobook = AudiobookSession.shared.host(for: url) {
+      addViewControllerAsSubview(host: activeAudiobook)
+      return
+    }
+
+    if reopenActiveAudiobook == true,
+       let activeAudiobook = AudiobookSession.shared.activeHost() {
       addViewControllerAsSubview(host: activeAudiobook)
       return
     }

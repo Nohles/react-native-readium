@@ -53,6 +53,7 @@ interface ReaderProps extends BaseReaderProps {
   onPublicationTitleChange?: (title: string) => void;
   audiobookBookmarks?: AudiobookBookmark[];
   onAudiobookBookmarkChange?: (event: AudiobookBookmarkChangeEvent) => void;
+  reopenActiveAudiobook?: boolean;
 }
 
 export const Reader: React.FC<ReaderProps> = ({
@@ -69,6 +70,7 @@ export const Reader: React.FC<ReaderProps> = ({
   onPublicationTitleChange,
   audiobookBookmarks,
   onAudiobookBookmarkChange,
+  reopenActiveAudiobook,
 }) => {
   const ref = useRef<ReadiumViewRef>(null);
 
@@ -241,6 +243,7 @@ export const Reader: React.FC<ReaderProps> = ({
             onAudiobookPlaybackStateChange={onAudiobookPlaybackStateChange}
             audiobookBookmarks={audiobookBookmarks}
             onAudiobookBookmarkChange={onAudiobookBookmarkChange}
+            reopenActiveAudiobook={reopenActiveAudiobook}
           />
         </View>
 

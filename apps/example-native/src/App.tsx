@@ -321,6 +321,7 @@ export default function App() {
               selectedBook ? audiobookBookmarks[selectedBook.id] ?? [] : []
             }
             onAudiobookBookmarkChange={handleAudiobookBookmarkChange}
+            reopenActiveAudiobook={selectedBook?.id === activeAudiobook?.id}
           />
         )}
       </GestureHandlerRootView>

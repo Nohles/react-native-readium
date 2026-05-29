@@ -14,6 +14,8 @@ namespace margelo::nitro::readium {
     HybridObject::loadHybridMethods();
     // load custom methods/properties
     registerHybrids(this, [](Prototype& prototype) {
+      prototype.registerHybridGetter("reopenActiveAudiobook", &HybridReadiumViewSpec::getReopenActiveAudiobook);
+      prototype.registerHybridSetter("reopenActiveAudiobook", &HybridReadiumViewSpec::setReopenActiveAudiobook);
       prototype.registerHybridGetter("file", &HybridReadiumViewSpec::getFile);
       prototype.registerHybridSetter("file", &HybridReadiumViewSpec::setFile);
       prototype.registerHybridGetter("preferences", &HybridReadiumViewSpec::getPreferences);

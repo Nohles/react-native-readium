@@ -37,6 +37,10 @@ void JHybridReadiumViewStateUpdater::updateViewProps(jni::alias_ref<jni::JClass>
   }
 
   // Update all props if they are dirty
+  if (props->reopenActiveAudiobook.isDirty) {
+    hybridView->setReopenActiveAudiobook(props->reopenActiveAudiobook.value);
+    props->reopenActiveAudiobook.isDirty = false;
+  }
   if (props->file.isDirty) {
     hybridView->setFile(props->file.value);
     props->file.isDirty = false;

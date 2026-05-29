@@ -27,6 +27,7 @@ export type ReadiumViewRef = {
 
 export type ReadiumProps = {
   file: File;
+  reopenActiveAudiobook?: boolean;
   preferences: Preferences;
   decorations?: DecorationGroup[];
   selectionActions?: SelectionAction[];

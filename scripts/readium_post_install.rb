@@ -28,7 +28,7 @@ def patch_readium_publication_media_loader(installer)
     '        }',
   ].join("\n")
 
-  new_code = [
+  previous_patch_code = [
     '        let link: Link?',
     '        if let matched = publication.linkWithHREF(href) {',
     '            link = matched',
@@ -50,16 +50,60 @@ def patch_readium_publication_media_loader(installer)
     '        }',
   ].join("\n")
 
+  new_code = [
+    '        let link: Link?',
+    '        if let matched = publication.linkWithHREF(href) {',
+    '            link = matched',
+    '        } else {',
+    '            // AVPlayer requests use absolute URLs (readiumhttp://host/.../file.mp3) while',
+    '            // manifests can declare either relative reading-order hrefs (e.g. "chapter.mp3")',
+    '            // or absolute HTTP URLs whose scheme may be upgraded by redirects.',
+    '            link = publication.readingOrder.first { readingLink in',
+    '                let candidates = [',
+    '                    readingLink.url(relativeTo: publication.baseURL).normalized,',
+    '                    readingLink.url().normalized',
+    '                ]',
+    '                return candidates.contains(href)',
+    '                    || candidates.contains(href.httpSchemeVariant)',
+    '                    || candidates.contains(href.httpsSchemeVariant)',
+    '            }',
+    '        }',
+    '',
+    '        guard',
+    '            let link = link,',
+    '            let resource = publication.get(link)',
+    '        else {',
+    '            return nil',
+    '        }',
+  ].join("\n")
+
   Dir.glob(File.join(installer.sandbox.root, 'ReadiumNavigator/**/PublicationMediaLoader.swift')).each do |path|
     contents = File.read(path)
-    next if contents.include?('readingLink.url(relativeTo: baseURL)')
+    next if contents.include?('href.httpSchemeVariant')
 
-    unless contents.include?(old_code)
+    source_code = contents.include?(old_code) ? old_code : previous_patch_code
+
+    unless contents.include?(source_code)
       warn "[react-native-readium] PublicationMediaLoader patch skipped (unexpected source in #{path})"
       next
     end
 
-    File.write(path, contents.sub(old_code, new_code))
+    variant_extension = [
+      '',
+      'private extension AnyURL {',
+      '    var httpSchemeVariant: AnyURL { schemeVariant("http") }',
+      '    var httpsSchemeVariant: AnyURL { schemeVariant("https") }',
+      '',
+      '    private func schemeVariant(_ scheme: String) -> AnyURL {',
+      '        guard var urlComponents = URLComponents(string: string) else { return self }',
+      '        urlComponents.scheme = scheme',
+      '        return AnyURL(string: urlComponents.string ?? string)?.normalized ?? self',
+      '    }',
+      '}',
+      ''
+    ].join("\n")
+
+    File.write(path, contents.sub(source_code, new_code) + variant_extension)
     puts "[react-native-readium] Patched PublicationMediaLoader for streamed audiobook URLs (#{path})"
   end
 end

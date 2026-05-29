@@ -10,6 +10,7 @@ import NitroModules
 /// See ``HybridReadiumViewSpec``
 public protocol HybridReadiumViewSpec_protocol: HybridObject, HybridView {
   // Properties
+  var reopenActiveAudiobook: Bool? { get set }
   var file: ReadiumFile? { get set }
   var preferences: Preferences? { get set }
   var decorations: [DecorationGroup]? { get set }

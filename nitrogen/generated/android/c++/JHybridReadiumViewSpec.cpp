@@ -60,8 +60,8 @@ namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
 // Forward declaration of `AudiobookBookmarkChangeEvent` to properly resolve imports.
 namespace margelo::nitro::readium { struct AudiobookBookmarkChangeEvent; }
 
-#include "ReadiumFile.hpp"
 #include <optional>
+#include "ReadiumFile.hpp"
 #include "JReadiumFile.hpp"
 #include <string>
 #include "Locator.hpp"
@@ -156,6 +156,15 @@ namespace margelo::nitro::readium {
   }
 
   // Properties
+  std::optional<bool> JHybridReadiumViewSpec::getReopenActiveAudiobook() {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<jni::JBoolean>()>("getReopenActiveAudiobook");
+    auto __result = method(_javaPart);
+    return __result != nullptr ? std::make_optional(static_cast<bool>(__result->value())) : std::nullopt;
+  }
+  void JHybridReadiumViewSpec::setReopenActiveAudiobook(std::optional<bool> reopenActiveAudiobook) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JBoolean> /* reopenActiveAudiobook */)>("setReopenActiveAudiobook");
+    method(_javaPart, reopenActiveAudiobook.has_value() ? jni::JBoolean::valueOf(reopenActiveAudiobook.value()) : nullptr);
+  }
   std::optional<ReadiumFile> JHybridReadiumViewSpec::getFile() {
     static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<JReadiumFile>()>("getFile");
     auto __result = method(_javaPart);

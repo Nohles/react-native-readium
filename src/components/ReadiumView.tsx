@@ -30,6 +30,7 @@ export const ReadiumView = forwardRef<ReadiumViewRef, ReadiumProps>(
       decorations,
       selectionActions,
       audiobookBookmarks,
+      reopenActiveAudiobook,
       ...props
     },
     forwardedRef
@@ -97,6 +98,7 @@ export const ReadiumView = forwardRef<ReadiumViewRef, ReadiumProps>(
           <NitroReadiumView
             style={{ width, height }}
             {...props}
+            reopenActiveAudiobook={reopenActiveAudiobook}
             preferences={preferences}
             decorations={decorations}
             selectionActions={selectionActions ?? []}

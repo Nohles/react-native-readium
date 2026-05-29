@@ -79,6 +79,8 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
       }
     }
 
+  override var reopenActiveAudiobook: Boolean? = null
+
   override var preferences: Preferences? = null
     set(value) {
       field = value

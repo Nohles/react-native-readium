@@ -418,21 +418,6 @@ namespace margelo::nitro::readium::bridge::swift {
     return Result<void>::withError(error);
   }
   
-  // pragma MARK: std::optional<ReadiumFile>
-  /**
-   * Specialized version of `std::optional<ReadiumFile>`.
-   */
-  using std__optional_ReadiumFile_ = std::optional<ReadiumFile>;
-  inline std::optional<ReadiumFile> create_std__optional_ReadiumFile_(const ReadiumFile& value) noexcept {
-    return std::optional<ReadiumFile>(value);
-  }
-  inline bool has_value_std__optional_ReadiumFile_(const std::optional<ReadiumFile>& optional) noexcept {
-    return optional.has_value();
-  }
-  inline ReadiumFile get_std__optional_ReadiumFile_(const std::optional<ReadiumFile>& optional) noexcept {
-    return optional.value();
-  }
-  
   // pragma MARK: std::optional<bool>
   /**
    * Specialized version of `std::optional<bool>`.
@@ -445,6 +430,21 @@ namespace margelo::nitro::readium::bridge::swift {
     return optional.has_value();
   }
   inline bool get_std__optional_bool_(const std::optional<bool>& optional) noexcept {
+    return optional.value();
+  }
+  
+  // pragma MARK: std::optional<ReadiumFile>
+  /**
+   * Specialized version of `std::optional<ReadiumFile>`.
+   */
+  using std__optional_ReadiumFile_ = std::optional<ReadiumFile>;
+  inline std::optional<ReadiumFile> create_std__optional_ReadiumFile_(const ReadiumFile& value) noexcept {
+    return std::optional<ReadiumFile>(value);
+  }
+  inline bool has_value_std__optional_ReadiumFile_(const std::optional<ReadiumFile>& optional) noexcept {
+    return optional.has_value();
+  }
+  inline ReadiumFile get_std__optional_ReadiumFile_(const std::optional<ReadiumFile>& optional) noexcept {
     return optional.value();
   }
   

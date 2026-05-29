@@ -4,6 +4,7 @@
   "bubblingEventTypes": {},
   "directEventTypes": {},
   "validAttributes": {
+    "reopenActiveAudiobook": true,
     "file": true,
     "preferences": true,
     "decorations": true,

@@ -50,6 +50,8 @@ namespace margelo::nitro::readium {
 
   public:
     // Properties
+    std::optional<bool> getReopenActiveAudiobook() override;
+    void setReopenActiveAudiobook(std::optional<bool> reopenActiveAudiobook) override;
     std::optional<ReadiumFile> getFile() override;
     void setFile(const std::optional<ReadiumFile>& file) override;
     std::optional<Preferences> getPreferences() override;

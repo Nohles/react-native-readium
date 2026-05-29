@@ -26,6 +26,16 @@ namespace margelo::nitro::readium::views {
                                                  const HybridReadiumViewProps& sourceProps,
                                                  const react::RawProps& rawProps):
     react::ViewProps(context, sourceProps, rawProps, filterObjectKeys),
+    reopenActiveAudiobook([&]() -> CachedProp<std::optional<bool>> {
+      try {
+        const react::RawValue* rawValue = rawProps.at("reopenActiveAudiobook", nullptr, nullptr);
+        if (rawValue == nullptr) return sourceProps.reopenActiveAudiobook;
+        const auto& [runtime, value] = (std::pair<jsi::Runtime*, jsi::Value>)*rawValue;
+        return CachedProp<std::optional<bool>>::fromRawValue(*runtime, value, sourceProps.reopenActiveAudiobook);
+      } catch (const std::exception& exc) {
+        throw std::runtime_error(std::string("ReadiumView.reopenActiveAudiobook: ") + exc.what());
+      }
+    }()),
     file([&]() -> CachedProp<std::optional<ReadiumFile>> {
       try {
         const react::RawValue* rawValue = rawProps.at("file", nullptr, nullptr);
@@ -159,6 +169,7 @@ namespace margelo::nitro::readium::views {
 
   bool HybridReadiumViewProps::filterObjectKeys(const std::string& propName) {
     switch (hashString(propName)) {
+      case hashString("reopenActiveAudiobook"): return true;
       case hashString("file"): return true;
       case hashString("preferences"): return true;
       case hashString("decorations"): return true;

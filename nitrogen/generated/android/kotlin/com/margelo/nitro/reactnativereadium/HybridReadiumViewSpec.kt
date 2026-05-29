@@ -30,6 +30,12 @@ abstract class HybridReadiumViewSpec: HybridView() {
   @get:Keep
   @set:DoNotStrip
   @set:Keep
+  abstract var reopenActiveAudiobook: Boolean?
+  
+  @get:DoNotStrip
+  @get:Keep
+  @set:DoNotStrip
+  @set:Keep
   abstract var file: ReadiumFile?
   
   @get:DoNotStrip

@@ -251,6 +251,7 @@ export interface ReadiumFile {
 // ── HybridView ───────────────────────────────────────────────────────────────
 
 export interface ReadiumViewProps extends HybridViewProps {
+  reopenActiveAudiobook?: boolean;
   file?: ReadiumFile;
   preferences?: Preferences;
   decorations?: DecorationGroup[];

@@ -35,6 +35,7 @@ interface ReaderBottomSheetProps {
   onPublicationTitleChange?: (title: string) => void;
   audiobookBookmarks?: AudiobookBookmark[];
   onAudiobookBookmarkChange?: (event: AudiobookBookmarkChangeEvent) => void;
+  reopenActiveAudiobook?: boolean;
 }
 
 const snapPoints = ['100%'];
@@ -89,6 +90,7 @@ export const ReaderBottomSheet: React.FC<ReaderBottomSheetProps> = ({
   onPublicationTitleChange,
   audiobookBookmarks,
   onAudiobookBookmarkChange,
+  reopenActiveAudiobook,
 }) => {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [readerHandle, setReaderHandle] = useState<ReaderHandle | null>(null);
@@ -191,6 +193,7 @@ export const ReaderBottomSheet: React.FC<ReaderBottomSheetProps> = ({
                   onPublicationTitleChange={onPublicationTitleChange}
                   audiobookBookmarks={audiobookBookmarks}
                   onAudiobookBookmarkChange={onAudiobookBookmarkChange}
+                  reopenActiveAudiobook={reopenActiveAudiobook}
                 />
                 {!isAudiobook ? (
                   <TouchableOpacity

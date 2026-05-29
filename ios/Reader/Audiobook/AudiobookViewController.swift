@@ -57,6 +57,7 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
   private var nowPlayingArtwork: MPMediaItemArtwork?
   private var bookmarks: [AudiobookBookmark] = []
   private var screenMode: AudiobookScreenMode = .nowPlaying
+  private var isScrubbingTimeline = false
 
   private let backgroundColor = UIColor(red: 0.075, green: 0.078, blue: 0.086, alpha: 1)
   private let panelColor = UIColor(red: 0.15, green: 0.15, blue: 0.17, alpha: 0.72)
@@ -255,7 +256,10 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     timelineSlider.maximumValue = Float(max(duration, 1))
     timelineSlider.tintColor = accentColor
     timelineSlider.markerColor = accentColor
+    timelineSlider.addTarget(self, action: #selector(timelineScrubbingStarted), for: .touchDown)
     timelineSlider.addTarget(self, action: #selector(timelineChanged), for: .valueChanged)
+    timelineSlider.addTarget(self, action: #selector(timelineScrubbingEnded), for: [.touchUpInside, .touchUpOutside])
+    timelineSlider.addTarget(self, action: #selector(timelineScrubbingCancelled), for: .touchCancel)
 
     elapsedLabel.font = .monospacedDigitSystemFont(ofSize: 14, weight: .regular)
     elapsedLabel.textColor = secondaryColor
@@ -648,35 +652,39 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
   }
 
   private func seekToChapter(_ chapter: AudiobookChapter) {
-    let localTime = fragmentTime(chapter.href)
-    Task { @MainActor in
-      let moved = await self.audioNavigator.go(to: chapter.link, options: .animated)
-      if moved {
-        if localTime > 0 {
-          await self.audioNavigator.seek(to: localTime)
-        }
-      } else {
-        self.seekToAbsoluteTime(chapter.time)
-      }
-    }
+    seekToAbsoluteTime(chapter.time)
   }
 
   private func seekToAbsoluteTime(_ absoluteTime: Double) {
     let clamped = min(max(absoluteTime, 0), max(duration, 0))
     guard let (resourceIndex, localTime) = resourceIndexAndLocalTime(forAbsoluteTime: clamped) else { return }
+    seekToResource(resourceIndex: resourceIndex, localTime: localTime)
+  }
+
+  private func seekToResource(resourceIndex: Int, localTime: Double, autoplay: Bool = false) {
     Task { @MainActor in
       let info = self.audioNavigator.playbackInfo
       if resourceIndex == info.resourceIndex, info.state != .loading {
         await self.audioNavigator.seek(to: localTime)
+        if autoplay {
+          self.play()
+        }
         return
       }
       guard self.readingOrderLinks.indices.contains(resourceIndex) else { return }
+      let link = self.readingOrderLinks[resourceIndex]
+      let locator = ReadiumShared.Locator(
+        href: link.url(),
+        mediaType: link.mediaType ?? MediaType("audio/*")!,
+        title: link.title,
+        locations: .init(fragments: ["t=\(max(0, localTime))"])
+      )
       let moved = await self.audioNavigator.go(
-        to: self.readingOrderLinks[resourceIndex],
+        to: locator,
         options: .animated
       )
-      if moved, localTime > 0 {
-        await self.audioNavigator.seek(to: localTime)
+      if moved, autoplay {
+        self.play()
       }
     }
   }
@@ -728,13 +736,16 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
 
   private func updatePlaybackUI() {
     timelineSlider.maximumValue = Float(max(duration, 1))
-    timelineSlider.value = Float(min(currentPosition, duration))
-    elapsedLabel.text = formatTime(currentPosition)
-    let remainingSeconds = max(0, duration - currentPosition)
+    let displayPosition = isScrubbingTimeline ? Double(timelineSlider.value) : currentPosition
+    if !isScrubbingTimeline {
+      timelineSlider.value = Float(min(currentPosition, duration))
+    }
+    elapsedLabel.text = formatTime(displayPosition)
+    let remainingSeconds = max(0, duration - displayPosition)
     remainingLabel.text = "-\(formatTime(remainingSeconds))"
     remainingCenterLabel.text = formatRemainingSummary(remainingSeconds)
     rateCaptionLabel.text = formatRate(playbackRate)
-    let chapterIndex = chapters.lastIndex(where: { $0.time <= currentPosition + 0.25 }).map { $0 + 1 } ?? 1
+    let chapterIndex = chapters.lastIndex(where: { $0.time <= displayPosition + 0.25 }).map { $0 + 1 } ?? 1
     if chapters.isEmpty {
       chapterLabel.isHidden = true
     } else if chapters.count > 1 {
@@ -1031,8 +1042,27 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     seekToNextChapter()
   }
 
+  @objc private func timelineScrubbingStarted() {
+    isScrubbingTimeline = true
+  }
+
   @objc private func timelineChanged() {
+    guard timelineSlider.isTracking else {
+      seekToAbsoluteTime(Double(timelineSlider.value))
+      return
+    }
+    isScrubbingTimeline = true
+    updatePlaybackUI()
+  }
+
+  @objc private func timelineScrubbingEnded() {
+    isScrubbingTimeline = false
     seekToAbsoluteTime(Double(timelineSlider.value))
+  }
+
+  @objc private func timelineScrubbingCancelled() {
+    isScrubbingTimeline = false
+    updatePlaybackUI()
   }
 
   @objc private func rateTapped() {
@@ -1175,7 +1205,11 @@ extension AudiobookViewController: AudioNavigatorDelegate {
   }
 
   func navigator(_ navigator: AudioNavigator, shouldPlayNextResource info: MediaPlaybackInfo) -> Bool {
-    continuousPlay
+    guard continuousPlay else { return false }
+    let nextResourceIndex = info.resourceIndex + 1
+    guard readingOrderLinks.indices.contains(nextResourceIndex) else { return false }
+    seekToResource(resourceIndex: nextResourceIndex, localTime: 0, autoplay: true)
+    return false
   }
 }
 

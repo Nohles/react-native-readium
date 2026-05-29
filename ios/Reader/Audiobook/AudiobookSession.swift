@@ -64,6 +64,10 @@ final class AudiobookSession {
     fileURL == url ? controller : nil
   }
 
+  func activeHost() -> AudiobookViewController? {
+    controller
+  }
+
   func adopt(_ host: AudiobookViewController, url: String) {
     if controller !== host {
       controller?.pause()

@@ -308,6 +308,10 @@ unsubscribe();
 `ReadiumAudio`, audiobook rendering, PDF, and CBZ are iOS-only for this release.
 Android continues to support EPUB reading; non-EPUB Android support is deferred.
 
+When reopening the full reader from a mini-player, pass
+`reopenActiveAudiobook` to `ReadiumView` to attach the current audiobook
+session instead of creating a new one.
+
 ### Highlights & Note Taking
 
 ![Decorators](https://github.com/5-stones/react-native-readium/blob/main/docs/demo-decorators.gif)
