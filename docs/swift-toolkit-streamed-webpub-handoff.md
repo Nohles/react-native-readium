@@ -49,7 +49,7 @@ self links: []
 
 **Contrast with a known-good streamed manifest** (Readium publication server, Moby Dick): `links` includes a `self` link with `type: application/webpub+json`.
 
-The fork’s **Migration Guide** (`docs/Migration Guide.md`, section *Streamed Readium Web Publications (EPUB profile)*) states that the manifest **must** include a **`self`** link so the toolkit can resolve the publication **base URL** for relative reading-order `href`s.
+The fork’s **Migration Guide** (`docs/Migration Guide.md`, section _Streamed Readium Web Publications (EPUB profile)_) states that the manifest **must** include a **`self`** link so the toolkit can resolve the publication **base URL** for relative reading-order `href`s.
 
 ### Related toolkit behavior (for implementers)
 
@@ -81,15 +81,15 @@ Pick one or combine:
 
 ## Reference files (fork, tag `3.9.1-nohles.2`)
 
-| Area | Path |
-|------|------|
-| RWPM sniff / `self` gate | `Sources/Shared/Toolkit/Format/Sniffers/RWPMFormatSniffer.swift` |
-| Asset retrieval failure | `Sources/Shared/Toolkit/Data/Asset/AssetRetriever.swift` |
-| WebPub parser | `Sources/Streamer/Parser/Readium/ReadiumWebPubParser.swift` |
-| `baseURL` | `Sources/Shared/Publication/Manifest.swift` |
-| Remote resources | `Sources/Shared/Toolkit/HTTP/HTTPContainer.swift` |
-| Migration / `self` requirement | `docs/Migration Guide.md` (streamed Web Pub section) |
-| Live smoke tests | `Tests/StreamerTests/Parser/Readium/ReadiumWebPubParserIntegrationTests.swift` |
+| Area                           | Path                                                                           |
+| ------------------------------ | ------------------------------------------------------------------------------ |
+| RWPM sniff / `self` gate       | `Sources/Shared/Toolkit/Format/Sniffers/RWPMFormatSniffer.swift`               |
+| Asset retrieval failure        | `Sources/Shared/Toolkit/Data/Asset/AssetRetriever.swift`                       |
+| WebPub parser                  | `Sources/Streamer/Parser/Readium/ReadiumWebPubParser.swift`                    |
+| `baseURL`                      | `Sources/Shared/Publication/Manifest.swift`                                    |
+| Remote resources               | `Sources/Shared/Toolkit/HTTP/HTTPContainer.swift`                              |
+| Migration / `self` requirement | `docs/Migration Guide.md` (streamed Web Pub section)                           |
+| Live smoke tests               | `Tests/StreamerTests/Parser/Readium/ReadiumWebPubParserIntegrationTests.swift` |
 
 ## Quick verification commands (from any machine with the proxy running)
 
@@ -105,4 +105,4 @@ Empty `[]` here is consistent with the **`RWPMFormatSniffer`** path returning no
 
 ---
 
-*Prepared from investigation in react-native-readium; continue in [Nohles/swift-toolkit](https://github.com/Nohles/swift-toolkit) at tag **3.9.1-nohles.2** or later fork releases.*
+_Prepared from investigation in react-native-readium; continue in [Nohles/swift-toolkit](https://github.com/Nohles/swift-toolkit) at tag **3.9.1-nohles.2** or later fork releases._

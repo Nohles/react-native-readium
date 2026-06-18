@@ -92,7 +92,8 @@ export const useNavigator = ({
       const publicationURL = normalizePublicationURL(file.url);
 
       // 2. Fetch and deserialize the manifest
-      const { manifest, fetcher } = await fetchManifest(publicationURL);
+      const { manifest, fetcher, tableOfContentsManifest } =
+        await fetchManifest(publicationURL);
       if (cancelled) return;
 
       // 3. Create the publication
@@ -148,7 +149,9 @@ export const useNavigator = ({
 
       // 8. Emit onPublicationReady event
       if (onPublicationReady) {
-        const tocItems = extractTableOfContents(manifest);
+        const tocItems = extractTableOfContents(
+          tableOfContentsManifest ?? manifest
+        );
         const metadata = normalizeMetadata(manifest.metadata);
 
         // @ts-ignore - Type compatibility between Readium types and our interfaces

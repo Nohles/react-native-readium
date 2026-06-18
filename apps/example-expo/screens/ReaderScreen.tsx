@@ -10,6 +10,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import {
   ReadiumAudio,
   ReadiumView,
+  resolveStreamedComicChapterManifestUrl,
   type DecorationGroup,
   type File,
   type Locator,
@@ -158,6 +159,23 @@ export function ReaderScreen({
             readingOrderCount: probe.readingOrderCount,
             firstReadingOrderHref: probe.firstReadingOrderHref,
           });
+
+          if (sample.format === 'comic' && probe.manifest) {
+            const chapterManifestUrl = resolveStreamedComicChapterManifestUrl(
+              url,
+              probe.manifest
+            );
+            if (chapterManifestUrl) {
+              publicationDebug(
+                'prepare: comic series → first chapter manifest',
+                {
+                  seriesManifestUrl: url,
+                  chapterManifestUrl,
+                }
+              );
+              url = chapterManifestUrl;
+            }
+          }
         } else if (
           sample.format !== 'audiobook' &&
           !sample.url.startsWith('file://') &&

@@ -1,3 +1,4 @@
+export * from './comicManifest';
 export * from './locationNormalizer';
 export * from './manifestFetcher';
 export * from './manifestNormalizer';

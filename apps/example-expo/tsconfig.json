@@ -4,13 +4,8 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "react-native-readium": [
-        "../../src/index"
-      ]
+      "react-native-readium": ["../../src/index"]
     }
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx"
-  ]
+  "include": ["**/*.ts", "**/*.tsx"]
 }

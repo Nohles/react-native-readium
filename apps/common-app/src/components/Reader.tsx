@@ -31,6 +31,62 @@ const selectionActions: SelectionAction[] = [
   { id: 'highlight', label: '📑 Highlight' },
 ];
 
+const COMIC_BOOK_TYPES = new Set([
+  'application/vnd.comicbook+zip',
+  'application/x-cbz',
+]);
+
+function isComicBookLink(link: any): boolean {
+  return typeof link?.type === 'string' && COMIC_BOOK_TYPES.has(link.type);
+}
+
+function base64UrlDecode(value: string): string {
+  const atobFn = (globalThis as any).atob as (encoded: string) => string;
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(
+    normalized.length + ((4 - (normalized.length % 4)) % 4),
+    '='
+  );
+
+  return decodeURIComponent(
+    Array.prototype.map
+      .call(atobFn(padded), (char: string) => {
+        return `%${`00${char.charCodeAt(0).toString(16)}`.slice(-2)}`;
+      })
+      .join('')
+  );
+}
+
+function base64UrlEncode(value: string): string {
+  const btoaFn = (globalThis as any).btoa as (decoded: string) => string;
+  const binary = encodeURIComponent(value).replace(
+    /%([0-9A-F]{2})/g,
+    (_match, hex) => String.fromCharCode(Number.parseInt(hex, 16))
+  );
+
+  return btoaFn(binary)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+function chapterManifestUrlFromSeries(
+  seriesManifestUrl: string,
+  chapterHref: string
+): string | null {
+  const match = seriesManifestUrl.match(
+    /^(https?:\/\/[^/]+)(.*\/webpub\/)([^/]+)\/manifest\.json$/
+  );
+  if (!match) return null;
+
+  const seriesPath = base64UrlDecode(match[3]!);
+  const chapterPath = `${seriesPath.replace(/\/$/, '')}/${decodeURIComponent(
+    chapterHref
+  )}`;
+
+  return `${match[1]}${match[2]}${base64UrlEncode(chapterPath)}/manifest.json`;
+}
+
 export interface ReaderHandle {
   toc: Link[] | null;
   location: Locator | undefined;
@@ -82,13 +138,27 @@ export const Reader: React.FC<ReaderProps> = ({
   onClearBook,
 }) => {
   const ref = useRef<ReadiumViewRef>(null);
+  const [chapterManifestUrl, setChapterManifestUrl] = React.useState<string>();
+  const [chapterInitialLocation, setChapterInitialLocation] =
+    React.useState<Locator>();
+  const [seriesManifestUrl, setSeriesManifestUrl] = React.useState<string>();
+  const [seriesToc, setSeriesToc] = React.useState<Link[] | null>(null);
+
+  React.useEffect(() => {
+    setChapterManifestUrl(undefined);
+    setChapterInitialLocation(undefined);
+    setSeriesManifestUrl(undefined);
+    setSeriesToc(null);
+  }, [manifestUrl]);
 
   const { file, isLoading, error } = useEpubFile({
     epubUrl,
-    manifestUrl,
+    manifestUrl: chapterManifestUrl ?? manifestUrl,
     epubPath,
     bundledAsset,
-    initialLocation,
+    initialLocation: chapterManifestUrl
+      ? chapterInitialLocation
+      : initialLocation,
   });
 
   const {
@@ -108,6 +178,7 @@ export const Reader: React.FC<ReaderProps> = ({
         : initialPreferences,
     onPreferencesChange,
   });
+  const visibleToc = format === 'comic' ? seriesToc ?? toc : toc;
 
   const navigateToLocator = useCallback((locator: Locator) => {
     ref.current?.goTo(locator);
@@ -115,10 +186,28 @@ export const Reader: React.FC<ReaderProps> = ({
 
   const navigateToTocItem = useCallback(
     (item: Link) => {
+      if (
+        Platform.OS === 'web' &&
+        format === 'comic' &&
+        manifestUrl &&
+        isComicBookLink(item)
+      ) {
+        const nextManifestUrl = chapterManifestUrlFromSeries(
+          seriesManifestUrl ?? manifestUrl,
+          item.href
+        );
+
+        if (nextManifestUrl) {
+          setChapterInitialLocation(undefined);
+          setChapterManifestUrl(nextManifestUrl);
+          return;
+        }
+      }
+
       ref.current?.goTo({
         href: item.href,
         type:
-          item.type ||
+          (item as Link & { type?: string }).type ||
           (format === 'audiobook' ? 'audio/mpeg' : 'application/xhtml+xml'),
         title: item.title || '',
         locations: {
@@ -126,7 +215,7 @@ export const Reader: React.FC<ReaderProps> = ({
         },
       });
     },
-    [format]
+    [format, manifestUrl, seriesManifestUrl]
   );
 
   const play = useCallback(() => {
@@ -166,17 +255,27 @@ export const Reader: React.FC<ReaderProps> = ({
 
   const handlePublicationReady = React.useCallback(
     (event: PublicationReadyEvent) => {
+      if (
+        Platform.OS === 'web' &&
+        format === 'comic' &&
+        manifestUrl &&
+        event.tableOfContents?.some((item) => isComicBookLink(item))
+      ) {
+        setSeriesManifestUrl((current) => current ?? manifestUrl);
+        setSeriesToc(event.tableOfContents);
+      }
+
       baseHandlePublicationReady(event);
       onPublicationTitleChange?.(event.metadata.title || 'Audiobook');
     },
-    [baseHandlePublicationReady, onPublicationTitleChange]
+    [baseHandlePublicationReady, format, manifestUrl, onPublicationTitleChange]
   );
 
   // Expose reader state to parent via callback
   React.useEffect(() => {
     if (onReaderReady) {
       onReaderReady({
-        toc,
+        toc: visibleToc,
         location,
         preferences,
         setPreferences,
@@ -192,7 +291,7 @@ export const Reader: React.FC<ReaderProps> = ({
       });
     }
   }, [
-    toc,
+    visibleToc,
     location,
     preferences,
     highlights,
@@ -246,7 +345,7 @@ export const Reader: React.FC<ReaderProps> = ({
         <ControlBar
           preferences={preferences}
           onPreferencesChange={setPreferences}
-          toc={toc}
+          toc={visibleToc}
           onNavigateToTocItem={navigateToTocItem}
           highlights={highlights}
           onDeleteHighlight={handleDeleteHighlight}

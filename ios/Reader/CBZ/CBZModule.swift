@@ -10,6 +10,10 @@ final class CBZModule: ReaderFormatModule {
 
   func supports(_ publication: Publication) -> Bool {
     publication.conforms(to: .divina)
+      || publication.metadata.conformsTo.contains(.divina)
+      || publication.readingOrder.allSatisfy {
+        $0.mediaType?.isBitmap == true || $0.mediaType?.matches(.cbz) == true
+      }
   }
 
   func makeReaderViewController(

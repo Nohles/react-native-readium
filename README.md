@@ -170,17 +170,15 @@ they persist across builds.
 This package contains native Readium and Nitro code and therefore does **not** run in Expo Go.
 Use an Expo development build or an EAS build. Expo SDK 56 apps must target iOS 16.4 or newer.
 
-The package exports a config plugin that installs the Readium CocoaPods source/helpers and
-Android EPUB desugaring setup during `expo prebuild`:
+The package exports a config plugin that installs the Readium CocoaPods source/helpers,
+enables iOS background audio, and applies Android EPUB desugaring setup during
+`expo prebuild`:
 
 ```json
 {
   "expo": {
     "plugins": [
-      [
-        "expo-build-properties",
-        { "ios": { "deploymentTarget": "16.4" } }
-      ],
+      ["expo-build-properties", { "ios": { "deploymentTarget": "16.4" } }],
       "react-native-readium"
     ]
   }
@@ -269,13 +267,13 @@ Many samples below come from the [Readium publication server](https://publicatio
 
 Copy any of these into `File.url` for quick testing:
 
-| Category | Title | Manifest URL |
-| -------- | ----- | ------------ |
-| Streamed EPUB | Moby Dick | `https://publication-server.readium.org/webpub/Z3M6Ly9yZWFkaXVtLXBsYXlncm91bmQtZmlsZXMvZGVtby9tb2J5LWRpY2suZXB1Yg/manifest.json` |
-| Official example | Moby Dick (Readium) | `https://readium.org/webpub-manifest/examples/MobyDick/manifest.json` |
-| Audiobook | Flatland | `https://readium.org/webpub-manifest/examples/Flatland/manifest.json` |
-| Accessibility | DAISY Basic Functionality v2.0.0 | `https://publication-server.readium.org/webpub/aHR0cHM6Ly9naXRodWIuY29tL2RhaXN5L2VwdWItYWNjZXNzaWJpbGl0eS10ZXN0cy9yZWxlYXNlcy9kb3dubG9hZC9mdW5kYW1lbnRhbC0yLjAvRnVuZGFtZW50YWwtQWNjZXNzaWJpbGl0eS1UZXN0cy1CYXNpYy1GdW5jdGlvbmFsaXR5LXYyLjAuMC5lcHVi/manifest.json` |
-| RTL / CJK | Haruko | `https://publication-server.readium.org/webpub/aHR0cHM6Ly9naXRodWIuY29tL0lEUEYvZXB1YjMtc2FtcGxlcy9yZWxlYXNlcy9kb3dubG9hZC8yMDIzMDcwNC9oYXJ1a28taHRtbC1qcGVnLmVwdWI/manifest.json` |
+| Category         | Title                            | Manifest URL                                                                                                                                                                                                                                                       |
+| ---------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Streamed EPUB    | Moby Dick                        | `https://publication-server.readium.org/webpub/Z3M6Ly9yZWFkaXVtLXBsYXlncm91bmQtZmlsZXMvZGVtby9tb2J5LWRpY2suZXB1Yg/manifest.json`                                                                                                                                   |
+| Official example | Moby Dick (Readium)              | `https://readium.org/webpub-manifest/examples/MobyDick/manifest.json`                                                                                                                                                                                              |
+| Audiobook        | Flatland                         | `https://readium.org/webpub-manifest/examples/Flatland/manifest.json`                                                                                                                                                                                              |
+| Accessibility    | DAISY Basic Functionality v2.0.0 | `https://publication-server.readium.org/webpub/aHR0cHM6Ly9naXRodWIuY29tL2RhaXN5L2VwdWItYWNjZXNzaWJpbGl0eS10ZXN0cy9yZWxlYXNlcy9kb3dubG9hZC9mdW5kYW1lbnRhbC0yLjAvRnVuZGFtZW50YWwtQWNjZXNzaWJpbGl0eS1UZXN0cy1CYXNpYy1GdW5jdGlvbmFsaXR5LXYyLjAuMC5lcHVi/manifest.json` |
+| RTL / CJK        | Haruko                           | `https://publication-server.readium.org/webpub/aHR0cHM6Ly9naXRodWIuY29tL0lEUEYvZXB1YjMtc2FtcGxlcy9yZWxlYXNlcy9kb3dubG9hZC8yMDIzMDcwNC9oYXJ1a28taHRtbC1qcGVnLmVwdWI/manifest.json`                                                                                  |
 
 The example apps maintain longer lists of sample URLs:
 
@@ -304,6 +302,12 @@ ReadiumAudio.play();
 ReadiumAudio.pause();
 unsubscribe();
 ```
+
+On iOS, audiobook playback publishes native Now Playing metadata for the lock screen,
+Control Center, and external audio surfaces, including cover artwork, chapter/book
+title, author, duration, elapsed time, playback rate, and remote transport controls.
+When using the Expo config plugin, the required `UIBackgroundModes` audio entry is
+added during prebuild.
 
 `ReadiumAudio`, audiobook rendering, PDF, and CBZ are iOS-only for this release.
 Android continues to support EPUB reading; non-EPUB Android support is deferred.
@@ -407,12 +411,12 @@ Key concepts:
 
 #### Format Support
 
-| Format     | Platforms    | Notes                                                          |
-| ---------- | ------------ | -------------------------------------------------------------- |
+| Format     | Platforms    | Notes                                                                                                                                                                                                                                      |
+| ---------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | EPUB 2 / 3 | iOS, Android | Rendering, navigation, preferences, highlights, and selection actions. Packaged EPUB on all platforms; streamed WebPub via `manifest.json` on web and iOS only (see [Streamed Web Publications](#streamed-web-publications-manifestjson)). |
-| Audiobook  | iOS          | Playback and persistent `ReadiumAudio` session; Android is deferred. |
-| PDF        | iOS          | Rendering and navigation; Android is deferred. |
-| CBZ        | iOS          | Rendering, navigation, comic canvas presets, fit, spread, and reading direction through Readium's EPUB navigator; Android is deferred. |
+| Audiobook  | iOS          | Playback and persistent `ReadiumAudio` session; Android is deferred.                                                                                                                                                                       |
+| PDF        | iOS          | Rendering and navigation; Android is deferred.                                                                                                                                                                                             |
+| CBZ        | iOS          | Rendering, navigation, comic canvas presets, fit, spread, and reading direction through Readium's EPUB navigator; Android is deferred.                                                                                                     |
 
 **Missing a format you need?** Reach out and see if it can be added to the roadmap.
 
@@ -449,11 +453,11 @@ const preferences = createComicPreferences({
 
 Preset mapping:
 
-| Canvas mode | Readium preferences |
-| ----------- | ------------------- |
-| `webtoon` | `scroll: true`, `spread: "never"`, `fit: "width"` |
-| `singlePage` | `scroll: false`, `spread: "never"` |
-| `doublePage` | `scroll: false`, `spread: "always"` |
+| Canvas mode  | Readium preferences                               |
+| ------------ | ------------------------------------------------- |
+| `webtoon`    | `scroll: true`, `spread: "never"`, `fit: "width"` |
+| `singlePage` | `scroll: false`, `spread: "never"`                |
+| `doublePage` | `scroll: false`, `spread: "always"`               |
 
 The native navigator owns pinch, double-tap, pointer/wheel, and keyboard navigation where supported by the platform. Sync remains app-owned: persist the `ComicProgress` payload locally or upload it as your encrypted/iCloud/Drive blob, then pass `comicLocatorFromProgress(progress)` as `file.initialLocation` when reopening.
 
@@ -467,7 +471,7 @@ DRM is not supported at this time. However, there is a clear path to [support it
 
 | Name                    | Type                                                                                                                                                | Optional           | Description                                                                                                                                                                                                                                                                         |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `file`                  | [`File`](https://github.com/5-stones/react-native-readium/blob/main/src/interfaces/File.ts)                                                         | :x:                | Publication source: local path to a packaged file on native, or an HTTPS `manifest.json` URL for streamed WebPub (web and iOS). Use `File.initialLocation` to set the reader's position on mount. See [Streamed Web Publications](#streamed-web-publications-manifestjson). |
+| `file`                  | [`File`](https://github.com/5-stones/react-native-readium/blob/main/src/interfaces/File.ts)                                                         | :x:                | Publication source: local path to a packaged file on native, or an HTTPS `manifest.json` URL for streamed WebPub (web and iOS). Use `File.initialLocation` to set the reader's position on mount. See [Streamed Web Publications](#streamed-web-publications-manifestjson).         |
 | `preferences`           | [`Partial<Preferences>`](https://github.com/readium/swift-toolkit/blob/main/docs/Guides/Navigator%20Preferences.md#appendix-preference-constraints) | :white_check_mark: | An object that allows you to control various aspects of the reader's UI (epub only)                                                                                                                                                                                                 |
 | `decorations`           | [`DecorationGroup[]`](https://github.com/5-stones/react-native-readium/blob/main/src/interfaces/Decoration.ts)                                      | :white_check_mark: | An array of decoration groups to render in the publication (e.g. highlights, underlines).                                                                                                                                                                                           |
 | `selectionActions`      | [`SelectionAction[]`](https://github.com/5-stones/react-native-readium/blob/main/src/interfaces/SelectionAction.ts)                                 | :white_check_mark: | Custom actions to show in the context menu when the user selects text.                                                                                                                                                                                                              |

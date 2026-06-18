@@ -1,6 +1,7 @@
 const {
   withDangerousMod,
   withAppBuildGradle,
+  withInfoPlist,
   createRunOncePlugin,
 } = require('expo/config-plugins');
 const fs = require('fs');
@@ -107,7 +108,18 @@ function withReadiumAndroidDesugaring(config) {
   });
 }
 
+function withReadiumIosBackgroundAudio(config) {
+  return withInfoPlist(config, (modConfig) => {
+    const modes = modConfig.modResults.UIBackgroundModes || [];
+    modConfig.modResults.UIBackgroundModes = Array.from(
+      new Set([...modes, 'audio'])
+    );
+    return modConfig;
+  });
+}
+
 const withReadium = (config) => {
+  config = withReadiumIosBackgroundAudio(config);
   config = withReadiumPods(config);
   return withReadiumAndroidDesugaring(config);
 };

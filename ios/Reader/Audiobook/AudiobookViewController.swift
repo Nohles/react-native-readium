@@ -114,6 +114,9 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     MPRemoteCommandCenter.shared().nextTrackCommand.removeTarget(self)
     MPRemoteCommandCenter.shared().changePlaybackPositionCommand.removeTarget(self)
     MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+    if #available(iOS 13.0, *) {
+      MPNowPlayingInfoCenter.default().playbackState = .stopped
+    }
     audioNavigator.pause()
   }
 
@@ -125,6 +128,7 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     configureSystemAudio()
     configureRemoteCommandCenter()
     updatePlaybackUI()
+    updateNowPlayingInfo()
     emitPlaybackState()
   }
 
@@ -792,22 +796,32 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
   }
 
   private func updateNowPlayingInfo() {
+    let publicationTitle = publication.metadata.title ?? "Audiobook"
+    let currentLink = readingOrderLinks.indices.contains(currentResourceIndex) ? readingOrderLinks[currentResourceIndex] : nil
+    let chapterTitle = currentChapter()?.title ?? currentLink?.title
     var info: [String: Any] = [
-      MPMediaItemPropertyTitle: publication.metadata.title ?? "Audiobook",
+      MPMediaItemPropertyTitle: chapterTitle ?? publicationTitle,
+      MPMediaItemPropertyAlbumTitle: publicationTitle,
+      MPMediaItemPropertyGenre: "Audiobook",
       MPMediaItemPropertyPlaybackDuration: duration,
       MPNowPlayingInfoPropertyElapsedPlaybackTime: currentPosition,
       MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? playbackRate : 0,
       MPNowPlayingInfoPropertyDefaultPlaybackRate: playbackRate,
-      MPNowPlayingInfoPropertyMediaType: MPNowPlayingInfoMediaType.audio.rawValue
+      MPNowPlayingInfoPropertyMediaType: MPNowPlayingInfoMediaType.audio.rawValue,
+      MPNowPlayingInfoPropertyIsLiveStream: false,
+      MPNowPlayingInfoPropertyExternalContentIdentifier: bookId,
+      MPNowPlayingInfoPropertyServiceIdentifier: "react-native-readium"
     ]
 
     let authors = publication.metadata.authors.map(\.name).joined(separator: ", ")
     if !authors.isEmpty {
       info[MPMediaItemPropertyArtist] = authors
+      info[MPMediaItemPropertyAlbumArtist] = authors
     }
 
-    if let chapterTitle = currentChapter()?.title {
-      info[MPMediaItemPropertyAlbumTitle] = chapterTitle
+    let narrators = publication.metadata.narrators.map(\.name).joined(separator: ", ")
+    if !narrators.isEmpty {
+      info[MPMediaItemPropertyComposer] = narrators
     }
 
     if let artwork = nowPlayingArtwork {
@@ -815,6 +829,9 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     }
 
     MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+    if #available(iOS 13.0, *) {
+      MPNowPlayingInfoCenter.default().playbackState = isPlaying ? .playing : .paused
+    }
   }
 
   private func emitPlaybackState() {

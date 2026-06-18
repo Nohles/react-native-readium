@@ -1,5 +1,11 @@
 import { Fetcher, HttpFetcher, Link, Manifest } from '@readium/shared';
+import {
+  chapterManifestUrlFromSeries,
+  firstComicChapterHref,
+  isComicSeriesManifest,
+} from './comicManifest';
 import { normalizeManifest } from './manifestNormalizer';
+import { normalizePublicationURL } from './publicationUtils';
 
 /**
  * Fetches and deserializes the publication manifest
@@ -7,6 +13,40 @@ import { normalizeManifest } from './manifestNormalizer';
 export async function fetchManifest(publicationURL: string): Promise<{
   manifest: Manifest;
   fetcher: Fetcher;
+  tableOfContentsManifest?: Manifest;
+}> {
+  const loaded = await fetchManifestFromPublicationURL(publicationURL);
+
+  if (!isComicSeriesManifest(loaded.rawManifest)) {
+    return loaded;
+  }
+
+  const firstChapterHref = firstComicChapterHref(loaded.rawManifest);
+  const chapterManifestUrl = firstChapterHref
+    ? chapterManifestUrlFromSeries(loaded.selfLink, firstChapterHref)
+    : null;
+
+  if (!chapterManifestUrl) {
+    return loaded;
+  }
+
+  const chapter = await fetchManifestFromPublicationURL(
+    normalizePublicationURL(chapterManifestUrl)
+  );
+
+  return {
+    ...chapter,
+    tableOfContentsManifest: loaded.manifest,
+  };
+}
+
+async function fetchManifestFromPublicationURL(
+  publicationURL: string
+): Promise<{
+  manifest: Manifest;
+  fetcher: Fetcher;
+  selfLink: string;
+  rawManifest: any;
 }> {
   const manifestLink = new Link({ href: 'manifest.json' });
   const fetcher: Fetcher = new HttpFetcher(undefined, publicationURL);
@@ -34,5 +74,5 @@ export async function fetchManifest(publicationURL: string): Promise<{
   }
 
   manifest.setSelfLink(selfLink);
-  return { manifest, fetcher };
+  return { manifest, fetcher, selfLink, rawManifest: responseObj };
 }

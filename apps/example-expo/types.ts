@@ -63,4 +63,9 @@ export const samples: Sample[] = [
     format: 'pdf',
     url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
   },
+  {
+    title: 'cadet',
+    format: 'comic',
+    url: 'http://localhost:15080/webpub/QSBDYWRldCBCZWNvbWVzIGEgUHJvcGhldF8h/manifest.json',
+  },
 ];
