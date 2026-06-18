@@ -6,18 +6,20 @@ import {
   Text,
   View,
 } from 'react-native';
-import { ReadiumAudio } from 'react-native-readium';
-import type { AudiobookSessionState, File } from 'react-native-readium';
+import type { AudiobookPlayerState, File } from 'react-native-readium';
 import type { Sample } from '../types';
 
 type HomeScreenProps = {
   samples: Sample[];
-  audio: AudiobookSessionState;
+  audio: AudiobookPlayerState;
   audioFile: File | null;
   onOpenSample: (sample: Sample) => void;
   onOpenComic: () => void;
   onOpenAudiobookPlayer: () => void;
   onCloseAudio: () => void;
+  onPlayPause: () => void;
+  onGoBackward: () => void;
+  onGoForward: () => void;
 };
 
 export function HomeScreen({
@@ -28,6 +30,9 @@ export function HomeScreen({
   onOpenComic,
   onOpenAudiobookPlayer,
   onCloseAudio,
+  onPlayPause,
+  onGoBackward,
+  onGoForward,
 }: HomeScreenProps) {
   const audioLoading = audio.status === 'loading';
 
@@ -65,24 +70,17 @@ export function HomeScreen({
             {Math.floor(audio.position)}s / {Math.floor(audio.duration)}s
           </Text>
           <View style={styles.controls}>
-            <Pressable onPress={() => ReadiumAudio.goBackward()}>
+            <Pressable onPress={onGoBackward}>
               <Text>Previous</Text>
             </Pressable>
-            <Pressable
-              disabled={audioLoading}
-              onPress={() =>
-                audio.status === 'playing'
-                  ? ReadiumAudio.pause()
-                  : ReadiumAudio.play()
-              }
-            >
+            <Pressable disabled={audioLoading} onPress={onPlayPause}>
               {audioLoading ? (
                 <ActivityIndicator size="small" />
               ) : (
                 <Text>{audio.status === 'playing' ? 'Pause' : 'Play'}</Text>
               )}
             </Pressable>
-            <Pressable onPress={() => ReadiumAudio.goForward()}>
+            <Pressable onPress={onGoForward}>
               <Text>Next</Text>
             </Pressable>
             {audioFile ? (

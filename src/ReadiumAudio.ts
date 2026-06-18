@@ -11,13 +11,14 @@ type Listener = (state: AudiobookSessionState) => void;
 
 let nativeAudio: NativeReadiumAudio | undefined;
 const listeners = new Set<Listener>();
-let currentState: AudiobookSessionState = {
+const idleState: AudiobookSessionState = {
   status: 'idle',
   position: 0,
   duration: 0,
   rate: 1,
   volume: 1,
 };
+let currentState: AudiobookSessionState = idleState;
 
 const unsupportedError = () =>
   new Error('Readium audiobook sessions are currently supported on iOS only.');
@@ -31,12 +32,16 @@ function getNativeAudio(): NativeReadiumAudio {
     nativeAudio =
       NitroModules.createHybridObject<NativeReadiumAudio>('ReadiumAudio');
     nativeAudio.onStateChange = (state) => {
-      currentState = state;
-      listeners.forEach((listener) => listener(state));
+      emitState(state);
     };
   }
 
   return nativeAudio;
+}
+
+function emitState(state: AudiobookSessionState): void {
+  currentState = state;
+  listeners.forEach((listener) => listener(state));
 }
 
 function waitForSession(
@@ -70,6 +75,10 @@ function waitForSession(
 }
 
 export const ReadiumAudio = {
+  getState(): AudiobookSessionState {
+    return currentState;
+  },
+
   async open(file: File): Promise<void> {
     getNativeAudio().open(file);
     const state = await waitForSession(
@@ -116,6 +125,7 @@ export const ReadiumAudio = {
     if (Platform.OS === 'ios') {
       getNativeAudio().close();
     }
+    emitState(idleState);
   },
 
   subscribe(listener: Listener): () => void {

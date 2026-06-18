@@ -285,23 +285,50 @@ For a proxied audiobook sample (The Martian), see [`apps/example-expo/README.md`
 
 ### Persistent Audiobook Playback (iOS)
 
-Use `ReadiumAudio` for audiobook playback that continues when the full reader view is
-unmounted, such as a mini-player displayed elsewhere in an Expo app:
+Use `useAudiobookPlayer` to build your own audiobook UI while keeping playback
+state and controls connected to Readium. The hook can drive a mini-player while
+the full reader is unmounted, and it also returns props you can spread onto
+`ReadiumView` when showing the full player:
 
 ```tsx
-import { ReadiumAudio } from 'react-native-readium';
+import { Pressable, Text, View } from 'react-native';
+import { ReadiumView, useAudiobookPlayer } from 'react-native-readium';
 
-const unsubscribe = ReadiumAudio.subscribe((state) => {
-  console.log(state.status, state.position);
-});
+export function AudiobookScreen({ file }) {
+  const audiobook = useAudiobookPlayer({
+    file,
+    autoOpen: true,
+    reopenActiveAudiobook: true,
+  });
 
-await ReadiumAudio.open({ url: audiobookManifestUrl });
-ReadiumAudio.play();
-
-// Later:
-ReadiumAudio.pause();
-unsubscribe();
+  return (
+    <View>
+      <ReadiumView
+        file={file}
+        preferences={{ theme: 'dark' }}
+        {...audiobook.readiumViewProps}
+      />
+      <Text>{audiobook.state.currentTitle ?? 'Audiobook'}</Text>
+      <Text>
+        {Math.floor(audiobook.state.position)}s /{' '}
+        {Math.floor(audiobook.state.duration)}s
+      </Text>
+      <Pressable onPress={audiobook.goBackward}>
+        <Text>Previous</Text>
+      </Pressable>
+      <Pressable onPress={audiobook.togglePlayback}>
+        <Text>{audiobook.isPlaying ? 'Pause' : 'Play'}</Text>
+      </Pressable>
+      <Pressable onPress={audiobook.goForward}>
+        <Text>Next</Text>
+      </Pressable>
+    </View>
+  );
+}
 ```
+
+`ReadiumAudio` remains available as a low-level imperative API for advanced
+integrations.
 
 On iOS, audiobook playback publishes native Now Playing metadata for the lock screen,
 Control Center, and external audio surfaces, including cover artwork, chapter/book
@@ -313,8 +340,9 @@ added during prebuild.
 Android continues to support EPUB reading; non-EPUB Android support is deferred.
 
 When reopening the full reader from a mini-player, pass
-`reopenActiveAudiobook` to `ReadiumView` to attach the current audiobook
-session instead of creating a new one.
+`reopenActiveAudiobook` through `useAudiobookPlayer` or directly to
+`ReadiumView` to attach the current audiobook session instead of creating a new
+one.
 
 ### Highlights & Note Taking
 

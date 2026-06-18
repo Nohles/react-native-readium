@@ -15,6 +15,10 @@ interface AudiobookMiniPlayerProps {
   onNext: () => void;
 }
 
+/**
+ * @deprecated Prefer building app-specific audiobook UI with
+ * `useAudiobookPlayer` from `react-native-readium`.
+ */
 export const AudiobookMiniPlayer: React.FC<AudiobookMiniPlayerProps> = ({
   playbackState,
   title = 'Audiobook',

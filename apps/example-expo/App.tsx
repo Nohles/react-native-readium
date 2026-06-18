@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Alert, Platform, StyleSheet } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import {
-  ReadiumAudio,
+  useAudiobookPlayer,
   type AudiobookBookmark,
   type AudiobookBookmarkChangeEvent,
-  type AudiobookSessionState,
   type File,
 } from 'react-native-readium';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -13,25 +12,15 @@ import { HomeScreen } from './screens/HomeScreen';
 import { ReaderScreen } from './screens/ReaderScreen';
 import { samples, type Sample } from './types';
 
-const initialAudioState: AudiobookSessionState = {
-  status: 'idle',
-  position: 0,
-  duration: 0,
-  rate: 1,
-  volume: 1,
-};
-
 type Route = { screen: 'home' } | { screen: 'reader'; sample: Sample };
 
 export default function App() {
   const [route, setRoute] = useState<Route>({ screen: 'home' });
-  const [audio, setAudio] = useState(initialAudioState);
+  const audiobook = useAudiobookPlayer();
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audiobookBookmarks, setAudiobookBookmarks] = useState<
     Record<string, AudiobookBookmark[]>
   >({});
-
-  useEffect(() => ReadiumAudio.subscribe(setAudio), []);
 
   const guardPlatform = (sample: Sample): boolean => {
     if (Platform.OS === 'android' && sample.format !== 'epub') {
@@ -81,7 +70,7 @@ export default function App() {
 
   const handleAudiobookReady = (file: File) => {
     setAudioFile(file);
-    ReadiumAudio.open(file).catch((error) => {
+    audiobook.open(file).catch((error) => {
       Alert.alert('Unable to load audiobook', String(error));
     });
   };
@@ -89,14 +78,14 @@ export default function App() {
   const openAudiobookPlayer = () => {
     if (!audioFile) return;
     openSample({
-      title: audio.publication?.title ?? 'Audiobook',
+      title: audiobook.state.publication?.title ?? 'Audiobook',
       format: 'audiobook',
       url: audioFile.url,
     });
   };
 
   const closeAudio = () => {
-    ReadiumAudio.close();
+    audiobook.close();
     setAudioFile(null);
     if (route.screen === 'reader' && route.sample.format === 'audiobook') {
       goHome();
@@ -138,12 +127,15 @@ export default function App() {
         {route.screen === 'home' ? (
           <HomeScreen
             samples={samples}
-            audio={audio}
+            audio={audiobook.state}
             audioFile={audioFile}
             onOpenSample={openSample}
             onOpenComic={openComic}
             onOpenAudiobookPlayer={openAudiobookPlayer}
             onCloseAudio={closeAudio}
+            onPlayPause={audiobook.togglePlayback}
+            onGoBackward={audiobook.goBackward}
+            onGoForward={audiobook.goForward}
           />
         ) : (
           <ReaderScreen

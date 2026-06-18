@@ -108,7 +108,26 @@ def patch_readium_publication_media_loader(installer)
   end
 end
 
+# Xcode rejects simulator builds when a pod target's deployment target is below
+# the SDK minimum (currently 15.0). Readium's transitive pods (CryptoSwift,
+# ReadiumZIPFoundation, etc.) still declare older values in their podspecs.
+def ensure_minimum_ios_deployment_target(installer, minimum_version = '15.0')
+  minimum = Gem::Version.new(minimum_version)
+
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      deployment_target = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+      next if deployment_target.nil?
+
+      if Gem::Version.new(deployment_target) < minimum
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = minimum_version
+      end
+    end
+  end
+end
+
 def readium_post_install(installer)
+  ensure_minimum_ios_deployment_target(installer)
   patch_readium_publication_media_loader(installer)
   # Rewrite the Minizip modulemap to drop submodules and mark as [extern_c] [system].
   # The modulemap path differs depending on whether use_frameworks! is active:
