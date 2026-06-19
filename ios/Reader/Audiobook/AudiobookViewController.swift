@@ -14,6 +14,12 @@ private struct AudiobookChapter {
   let time: Double
 }
 
+private struct AudiobookChapterTimelineWindow {
+  let start: Double
+  let duration: Double
+  let position: Double
+}
+
 private enum SleepTimerMode {
   case off
   case seconds(Double, startedAt: Date)
@@ -799,12 +805,13 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     let publicationTitle = publication.metadata.title ?? "Audiobook"
     let currentLink = readingOrderLinks.indices.contains(currentResourceIndex) ? readingOrderLinks[currentResourceIndex] : nil
     let chapterTitle = currentChapter()?.title ?? currentLink?.title
+    let chapterWindow = currentChapterTimelineWindow()
     var info: [String: Any] = [
       MPMediaItemPropertyTitle: chapterTitle ?? publicationTitle,
       MPMediaItemPropertyAlbumTitle: publicationTitle,
       MPMediaItemPropertyGenre: "Audiobook",
-      MPMediaItemPropertyPlaybackDuration: duration,
-      MPNowPlayingInfoPropertyElapsedPlaybackTime: currentPosition,
+      MPMediaItemPropertyPlaybackDuration: chapterWindow?.duration ?? duration,
+      MPNowPlayingInfoPropertyElapsedPlaybackTime: chapterWindow?.position ?? currentPosition,
       MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? playbackRate : 0,
       MPNowPlayingInfoPropertyDefaultPlaybackRate: playbackRate,
       MPNowPlayingInfoPropertyMediaType: MPNowPlayingInfoMediaType.audio.rawValue,
@@ -873,6 +880,24 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
 
   private func currentChapter() -> AudiobookChapter? {
     chapters.last(where: { $0.time <= currentPosition + 0.25 })
+  }
+
+  private func currentChapterTimelineWindow() -> AudiobookChapterTimelineWindow? {
+    guard let index = chapters.lastIndex(where: { $0.time <= currentPosition + 0.25 }) else {
+      return nil
+    }
+
+    let start = chapters[index].time
+    let end = chapters.indices.contains(index + 1) ? chapters[index + 1].time : duration
+    guard end > start else { return nil }
+
+    let chapterDuration = end - start
+    let chapterPosition = min(max(currentPosition - start, 0), chapterDuration)
+    return AudiobookChapterTimelineWindow(
+      start: start,
+      duration: chapterDuration,
+      position: chapterPosition
+    )
   }
 
   private func seekToPreviousChapter() {
@@ -1200,7 +1225,12 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
   }
 
   @objc private func remoteChangePlaybackPosition(_ event: MPChangePlaybackPositionCommandEvent) -> MPRemoteCommandHandlerStatus {
-    seekToAbsoluteTime(event.positionTime)
+    if let chapterWindow = currentChapterTimelineWindow() {
+      let chapterPosition = min(max(event.positionTime, 0), chapterWindow.duration)
+      seekToAbsoluteTime(chapterWindow.start + chapterPosition)
+    } else {
+      seekToAbsoluteTime(event.positionTime)
+    }
     return .success
   }
 }
