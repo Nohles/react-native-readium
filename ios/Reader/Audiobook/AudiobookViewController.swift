@@ -665,10 +665,14 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     seekToAbsoluteTime(chapter.time)
   }
 
-  private func seekToAbsoluteTime(_ absoluteTime: Double) {
+  private func seekToAbsoluteTime(_ absoluteTime: Double, preservePlayback: Bool = true) {
     let clamped = min(max(absoluteTime, 0), max(duration, 0))
     guard let (resourceIndex, localTime) = resourceIndexAndLocalTime(forAbsoluteTime: clamped) else { return }
-    seekToResource(resourceIndex: resourceIndex, localTime: localTime)
+    seekToResource(
+      resourceIndex: resourceIndex,
+      localTime: localTime,
+      autoplay: preservePlayback && isPlaying
+    )
   }
 
   private func seekToResource(resourceIndex: Int, localTime: Double, autoplay: Bool = false) {
@@ -902,7 +906,13 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
 
   private func seekToPreviousChapter() {
     guard !chapters.isEmpty else {
-      Task { @MainActor in _ = await audioNavigator.goBackward(options: .animated) }
+      let shouldResume = isPlaying
+      Task { @MainActor in
+        _ = await audioNavigator.goBackward(options: .animated)
+        if shouldResume {
+          self.play()
+        }
+      }
       return
     }
     let current = currentChapter()
