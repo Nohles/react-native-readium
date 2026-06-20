@@ -100,7 +100,34 @@ data class Preferences(
   val merging: Boolean?,
   @DoNotStrip
   @Keep
-  val comicReadingMode: String?
+  val comicReadingMode: String?,
+  @DoNotStrip
+  @Keep
+  val comicStretchSmallPages: Boolean?,
+  @DoNotStrip
+  @Keep
+  val comicWidthLimitEnabled: Boolean?,
+  @DoNotStrip
+  @Keep
+  val comicWidthLimitPercent: Double?,
+  @DoNotStrip
+  @Keep
+  val comicImagePreloadAmount: Double?,
+  @DoNotStrip
+  @Keep
+  val comicChapterStartIndex: Double?,
+  @DoNotStrip
+  @Keep
+  val comicChapterEndIndex: Double?,
+  @DoNotStrip
+  @Keep
+  val comicPreviousChapterTitle: String?,
+  @DoNotStrip
+  @Keep
+  val comicNextChapterTitle: String?,
+  @DoNotStrip
+  @Keep
+  val comicBoundaryTarget: String?
 ) {
   /* primary constructor */
 
@@ -112,8 +139,8 @@ data class Preferences(
     @Keep
     @Suppress("unused")
     @JvmStatic
-    private fun fromCpp(backgroundColor: String?, columnCount: String?, fit: String?, fontFamily: String?, fontSize: Double?, fontWeight: Double?, hyphens: Boolean?, imageFilter: String?, language: String?, letterSpacing: Double?, ligatures: Boolean?, lineHeight: Double?, pageMargins: Double?, paragraphIndent: Double?, paragraphSpacing: Double?, publisherStyles: Boolean?, readingProgression: String?, scroll: Boolean?, spread: String?, textAlign: String?, textColor: String?, textNormalization: Boolean?, theme: String?, typeScale: Double?, verticalText: Boolean?, wordSpacing: Double?, merging: Boolean?, comicReadingMode: String?): Preferences {
-      return Preferences(backgroundColor, columnCount, fit, fontFamily, fontSize, fontWeight, hyphens, imageFilter, language, letterSpacing, ligatures, lineHeight, pageMargins, paragraphIndent, paragraphSpacing, publisherStyles, readingProgression, scroll, spread, textAlign, textColor, textNormalization, theme, typeScale, verticalText, wordSpacing, merging, comicReadingMode)
+    private fun fromCpp(backgroundColor: String?, columnCount: String?, fit: String?, fontFamily: String?, fontSize: Double?, fontWeight: Double?, hyphens: Boolean?, imageFilter: String?, language: String?, letterSpacing: Double?, ligatures: Boolean?, lineHeight: Double?, pageMargins: Double?, paragraphIndent: Double?, paragraphSpacing: Double?, publisherStyles: Boolean?, readingProgression: String?, scroll: Boolean?, spread: String?, textAlign: String?, textColor: String?, textNormalization: Boolean?, theme: String?, typeScale: Double?, verticalText: Boolean?, wordSpacing: Double?, merging: Boolean?, comicReadingMode: String?, comicStretchSmallPages: Boolean?, comicWidthLimitEnabled: Boolean?, comicWidthLimitPercent: Double?, comicImagePreloadAmount: Double?, comicChapterStartIndex: Double?, comicChapterEndIndex: Double?, comicPreviousChapterTitle: String?, comicNextChapterTitle: String?, comicBoundaryTarget: String?): Preferences {
+      return Preferences(backgroundColor, columnCount, fit, fontFamily, fontSize, fontWeight, hyphens, imageFilter, language, letterSpacing, ligatures, lineHeight, pageMargins, paragraphIndent, paragraphSpacing, publisherStyles, readingProgression, scroll, spread, textAlign, textColor, textNormalization, theme, typeScale, verticalText, wordSpacing, merging, comicReadingMode, comicStretchSmallPages, comicWidthLimitEnabled, comicWidthLimitPercent, comicImagePreloadAmount, comicChapterStartIndex, comicChapterEndIndex, comicPreviousChapterTitle, comicNextChapterTitle, comicBoundaryTarget)
     }
   }
 }

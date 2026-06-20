@@ -22,6 +22,10 @@ describe('comic preferences', () => {
       spread: 'never',
       fit: 'width',
       readingProgression: 'rtl',
+      comicStretchSmallPages: false,
+      comicWidthLimitEnabled: false,
+      comicWidthLimitPercent: 50,
+      comicImagePreloadAmount: 5,
     });
     expect(
       createComicPreferences({

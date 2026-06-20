@@ -33,8 +33,23 @@ export interface ComicReaderSettings {
   direction?: ComicReadingDirection;
   tapZones?: ComicTapZones;
   scaleType?: ComicScaleType;
+  overlayMode?: 'auto' | 'pinned';
+  showPageNumber?: boolean;
+  staticNavigation?: boolean;
   progressBarType?: ComicProgressBarType;
+  progressBarSizePx?: number;
   progressBarPosition?: ComicProgressBarPosition;
+  stretchSmallPages?: boolean;
+  widthLimitEnabled?: boolean;
+  widthLimitPercent?: number;
+  scrollAmountPercent?: number;
+  autoScrollEnabled?: boolean;
+  autoScrollSpeedSeconds?: number;
+  autoScrollSmooth?: boolean;
+  readingModePreview?: boolean;
+  tapZonePreview?: boolean;
+  imagePreloadAmount?: number;
+  comicChapterBoundaries?: boolean;
   /** @deprecated Use readingMode. Kept for existing callers. */
   canvasMode?: ComicCanvasMode;
   /** @deprecated Use direction. Kept for existing callers. */
@@ -49,8 +64,23 @@ export const DEFAULT_COMIC_READER_SETTINGS = {
   direction: 'ltr',
   tapZones: 'default',
   scaleType: 'originalSize',
+  overlayMode: 'auto',
+  showPageNumber: true,
+  staticNavigation: false,
   progressBarType: 'standard',
+  progressBarSizePx: 4,
   progressBarPosition: 'auto',
+  stretchSmallPages: false,
+  widthLimitEnabled: false,
+  widthLimitPercent: 50,
+  scrollAmountPercent: 95,
+  autoScrollEnabled: false,
+  autoScrollSpeedSeconds: 5,
+  autoScrollSmooth: true,
+  readingModePreview: true,
+  tapZonePreview: false,
+  imagePreloadAmount: 5,
+  comicChapterBoundaries: true,
 } as const satisfies Required<
   Pick<
     ComicReaderSettings,
@@ -59,8 +89,23 @@ export const DEFAULT_COMIC_READER_SETTINGS = {
     | 'direction'
     | 'tapZones'
     | 'scaleType'
+    | 'overlayMode'
+    | 'showPageNumber'
+    | 'staticNavigation'
     | 'progressBarType'
+    | 'progressBarSizePx'
     | 'progressBarPosition'
+    | 'stretchSmallPages'
+    | 'widthLimitEnabled'
+    | 'widthLimitPercent'
+    | 'scrollAmountPercent'
+    | 'autoScrollEnabled'
+    | 'autoScrollSpeedSeconds'
+    | 'autoScrollSmooth'
+    | 'readingModePreview'
+    | 'tapZonePreview'
+    | 'imagePreloadAmount'
+    | 'comicChapterBoundaries'
   >
 >;
 
@@ -143,6 +188,18 @@ export function createComicPreferences(
       settings.readingDirection ??
       DEFAULT_COMIC_READER_SETTINGS.direction,
     publisherStyles: true,
+    comicStretchSmallPages:
+      settings.stretchSmallPages ??
+      DEFAULT_COMIC_READER_SETTINGS.stretchSmallPages,
+    comicWidthLimitEnabled:
+      settings.widthLimitEnabled ??
+      DEFAULT_COMIC_READER_SETTINGS.widthLimitEnabled,
+    comicWidthLimitPercent:
+      settings.widthLimitPercent ??
+      DEFAULT_COMIC_READER_SETTINGS.widthLimitPercent,
+    comicImagePreloadAmount:
+      settings.imagePreloadAmount ??
+      DEFAULT_COMIC_READER_SETTINGS.imagePreloadAmount,
   };
 }
 

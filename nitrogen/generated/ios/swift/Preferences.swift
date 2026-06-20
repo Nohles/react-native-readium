@@ -18,7 +18,7 @@ public extension Preferences {
   /**
    * Create a new instance of `Preferences`.
    */
-  init(backgroundColor: String?, columnCount: String?, fit: String?, fontFamily: String?, fontSize: Double?, fontWeight: Double?, hyphens: Bool?, imageFilter: String?, language: String?, letterSpacing: Double?, ligatures: Bool?, lineHeight: Double?, pageMargins: Double?, paragraphIndent: Double?, paragraphSpacing: Double?, publisherStyles: Bool?, readingProgression: String?, scroll: Bool?, spread: String?, textAlign: String?, textColor: String?, textNormalization: Bool?, theme: String?, typeScale: Double?, verticalText: Bool?, wordSpacing: Double?, merging: Bool?, comicReadingMode: String?) {
+  init(backgroundColor: String?, columnCount: String?, fit: String?, fontFamily: String?, fontSize: Double?, fontWeight: Double?, hyphens: Bool?, imageFilter: String?, language: String?, letterSpacing: Double?, ligatures: Bool?, lineHeight: Double?, pageMargins: Double?, paragraphIndent: Double?, paragraphSpacing: Double?, publisherStyles: Bool?, readingProgression: String?, scroll: Bool?, spread: String?, textAlign: String?, textColor: String?, textNormalization: Bool?, theme: String?, typeScale: Double?, verticalText: Bool?, wordSpacing: Double?, merging: Bool?, comicReadingMode: String?, comicStretchSmallPages: Bool?, comicWidthLimitEnabled: Bool?, comicWidthLimitPercent: Double?, comicImagePreloadAmount: Double?, comicChapterStartIndex: Double?, comicChapterEndIndex: Double?, comicPreviousChapterTitle: String?, comicNextChapterTitle: String?, comicBoundaryTarget: String?) {
     self.init({ () -> bridge.std__optional_std__string_ in
       if let __unwrappedValue = backgroundColor {
         return bridge.create_std__optional_std__string_(std.string(__unwrappedValue))
@@ -183,6 +183,60 @@ public extension Preferences {
       }
     }(), { () -> bridge.std__optional_std__string_ in
       if let __unwrappedValue = comicReadingMode {
+        return bridge.create_std__optional_std__string_(std.string(__unwrappedValue))
+      } else {
+        return .init()
+      }
+    }(), { () -> bridge.std__optional_bool_ in
+      if let __unwrappedValue = comicStretchSmallPages {
+        return bridge.create_std__optional_bool_(__unwrappedValue)
+      } else {
+        return .init()
+      }
+    }(), { () -> bridge.std__optional_bool_ in
+      if let __unwrappedValue = comicWidthLimitEnabled {
+        return bridge.create_std__optional_bool_(__unwrappedValue)
+      } else {
+        return .init()
+      }
+    }(), { () -> bridge.std__optional_double_ in
+      if let __unwrappedValue = comicWidthLimitPercent {
+        return bridge.create_std__optional_double_(__unwrappedValue)
+      } else {
+        return .init()
+      }
+    }(), { () -> bridge.std__optional_double_ in
+      if let __unwrappedValue = comicImagePreloadAmount {
+        return bridge.create_std__optional_double_(__unwrappedValue)
+      } else {
+        return .init()
+      }
+    }(), { () -> bridge.std__optional_double_ in
+      if let __unwrappedValue = comicChapterStartIndex {
+        return bridge.create_std__optional_double_(__unwrappedValue)
+      } else {
+        return .init()
+      }
+    }(), { () -> bridge.std__optional_double_ in
+      if let __unwrappedValue = comicChapterEndIndex {
+        return bridge.create_std__optional_double_(__unwrappedValue)
+      } else {
+        return .init()
+      }
+    }(), { () -> bridge.std__optional_std__string_ in
+      if let __unwrappedValue = comicPreviousChapterTitle {
+        return bridge.create_std__optional_std__string_(std.string(__unwrappedValue))
+      } else {
+        return .init()
+      }
+    }(), { () -> bridge.std__optional_std__string_ in
+      if let __unwrappedValue = comicNextChapterTitle {
+        return bridge.create_std__optional_std__string_(std.string(__unwrappedValue))
+      } else {
+        return .init()
+      }
+    }(), { () -> bridge.std__optional_std__string_ in
+      if let __unwrappedValue = comicBoundaryTarget {
         return bridge.create_std__optional_std__string_(std.string(__unwrappedValue))
       } else {
         return .init()
@@ -519,6 +573,114 @@ public extension Preferences {
     return { () -> String? in
       if bridge.has_value_std__optional_std__string_(self.__comicReadingMode) {
         let __unwrapped = bridge.get_std__optional_std__string_(self.__comicReadingMode)
+        return String(__unwrapped)
+      } else {
+        return nil
+      }
+    }()
+  }
+  
+  @inline(__always)
+  var comicStretchSmallPages: Bool? {
+    return { () -> Bool? in
+      if bridge.has_value_std__optional_bool_(self.__comicStretchSmallPages) {
+        let __unwrapped = bridge.get_std__optional_bool_(self.__comicStretchSmallPages)
+        return __unwrapped
+      } else {
+        return nil
+      }
+    }()
+  }
+  
+  @inline(__always)
+  var comicWidthLimitEnabled: Bool? {
+    return { () -> Bool? in
+      if bridge.has_value_std__optional_bool_(self.__comicWidthLimitEnabled) {
+        let __unwrapped = bridge.get_std__optional_bool_(self.__comicWidthLimitEnabled)
+        return __unwrapped
+      } else {
+        return nil
+      }
+    }()
+  }
+  
+  @inline(__always)
+  var comicWidthLimitPercent: Double? {
+    return { () -> Double? in
+      if bridge.has_value_std__optional_double_(self.__comicWidthLimitPercent) {
+        let __unwrapped = bridge.get_std__optional_double_(self.__comicWidthLimitPercent)
+        return __unwrapped
+      } else {
+        return nil
+      }
+    }()
+  }
+  
+  @inline(__always)
+  var comicImagePreloadAmount: Double? {
+    return { () -> Double? in
+      if bridge.has_value_std__optional_double_(self.__comicImagePreloadAmount) {
+        let __unwrapped = bridge.get_std__optional_double_(self.__comicImagePreloadAmount)
+        return __unwrapped
+      } else {
+        return nil
+      }
+    }()
+  }
+  
+  @inline(__always)
+  var comicChapterStartIndex: Double? {
+    return { () -> Double? in
+      if bridge.has_value_std__optional_double_(self.__comicChapterStartIndex) {
+        let __unwrapped = bridge.get_std__optional_double_(self.__comicChapterStartIndex)
+        return __unwrapped
+      } else {
+        return nil
+      }
+    }()
+  }
+  
+  @inline(__always)
+  var comicChapterEndIndex: Double? {
+    return { () -> Double? in
+      if bridge.has_value_std__optional_double_(self.__comicChapterEndIndex) {
+        let __unwrapped = bridge.get_std__optional_double_(self.__comicChapterEndIndex)
+        return __unwrapped
+      } else {
+        return nil
+      }
+    }()
+  }
+  
+  @inline(__always)
+  var comicPreviousChapterTitle: String? {
+    return { () -> String? in
+      if bridge.has_value_std__optional_std__string_(self.__comicPreviousChapterTitle) {
+        let __unwrapped = bridge.get_std__optional_std__string_(self.__comicPreviousChapterTitle)
+        return String(__unwrapped)
+      } else {
+        return nil
+      }
+    }()
+  }
+  
+  @inline(__always)
+  var comicNextChapterTitle: String? {
+    return { () -> String? in
+      if bridge.has_value_std__optional_std__string_(self.__comicNextChapterTitle) {
+        let __unwrapped = bridge.get_std__optional_std__string_(self.__comicNextChapterTitle)
+        return String(__unwrapped)
+      } else {
+        return nil
+      }
+    }()
+  }
+  
+  @inline(__always)
+  var comicBoundaryTarget: String? {
+    return { () -> String? in
+      if bridge.has_value_std__optional_std__string_(self.__comicBoundaryTarget) {
+        let __unwrapped = bridge.get_std__optional_std__string_(self.__comicBoundaryTarget)
         return String(__unwrapped)
       } else {
         return nil

@@ -13,15 +13,20 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
   private let scrollView = UIScrollView()
   private let stackView = UIStackView()
   private let loadingIndicator = UIActivityIndicatorView(style: .large)
+  private let previousChapterBoundaryView = ComicChapterBoundaryView(direction: .previous)
+  private let nextChapterBoundaryView = ComicChapterBoundaryView(direction: .next)
   private let links: [RLink]
   private var images: [UIImage?]
+  private var loadingImageIndices = Set<Int>()
   private var imageViews: [UIImageView] = []
   private var imageSizeConstraints: [NSLayoutConstraint] = []
+  private var boundarySizeConstraints: [NSLayoutConstraint] = []
   private var initialLocator: ReadiumShared.Locator?
   private var currentIndex = 0
   private var preferences: Preferences?
   private var isApplyingProgrammaticScroll = false
   private var isClampingContentOffset = false
+  private var lastAppliedBoundaryTarget: String?
 
   init(
     publication: Publication,
@@ -58,6 +63,7 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
   func updatePreferences(_ preferences: Preferences) {
     self.preferences = preferences
     guard isViewLoaded else { return }
+    applyThemeColors()
     applyLayoutForCurrentPreferences()
     navigateToIndex(currentIndex, animated: false, emit: false)
   }
@@ -107,6 +113,14 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     ])
   }
 
+  private func applyThemeColors() {
+    let backgroundColor = preferences?.backgroundColor.flatMap(UIColor.fromCSS) ?? .black
+    view.backgroundColor = backgroundColor
+    scrollView.backgroundColor = backgroundColor
+    stackView.backgroundColor = backgroundColor
+    imageViews.forEach { $0.backgroundColor = backgroundColor }
+  }
+
   private func configureLoadingIndicator() {
     loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
     loadingIndicator.color = .white
@@ -125,35 +139,72 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
         imageView.tag = index
         imageView.contentMode = .scaleAspectFit
         imageView.clipsToBounds = true
-        imageView.backgroundColor = .black
+        imageView.backgroundColor = preferences?.backgroundColor.flatMap(UIColor.fromCSS) ?? .black
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
       }
+      applyThemeColors()
       rebuildArrangedSubviews()
     }
 
-    for (index, link) in links.enumerated() {
-      guard
-        let resource = publication.get(link),
-        let data = try? await resource.read().get(),
-        let image = UIImage(data: data)
-      else {
-        continue
-      }
-
-      await MainActor.run {
-        images[index] = image
-        imageViews[index].image = image
-        applyLayoutForCurrentPreferences()
-      }
+    let startIndex = await MainActor.run {
+      let startIndex = initialLocator.flatMap(index(for:)) ?? 0
+      navigateToIndex(startIndex, animated: false, emit: false)
+      initialLocator = nil
+      return startIndex
     }
+
+    await preloadImages(around: startIndex)
 
     await MainActor.run {
       loadingIndicator.stopAnimating()
       loadingIndicator.removeFromSuperview()
-      let startIndex = initialLocator.flatMap(index(for:)) ?? 0
-      navigateToIndex(startIndex, animated: false)
-      initialLocator = nil
+      subject.send(locator(for: currentIndex))
+    }
+  }
+
+  private func preloadImages(around index: Int) async {
+    guard !links.isEmpty else { return }
+    let preloadAmount = await MainActor.run { imagePreloadAmount }
+    let lowerBound = max(0, index - preloadAmount)
+    let upperBound = min(links.count - 1, index + preloadAmount)
+
+    await withTaskGroup(of: Void.self) { group in
+      for imageIndex in lowerBound...upperBound {
+        group.addTask { [weak self] in
+          await self?.loadImageIfNeeded(at: imageIndex)
+        }
+      }
+    }
+  }
+
+  private func loadImageIfNeeded(at index: Int) async {
+    let shouldLoad = await MainActor.run { () -> Bool in
+      guard links.indices.contains(index), images[index] == nil else { return false }
+      guard !loadingImageIndices.contains(index) else { return false }
+      loadingImageIndices.insert(index)
+      return true
+    }
+    guard shouldLoad else { return }
+
+    let link = links[index]
+    let image: UIImage?
+    if
+      let resource = publication.get(link),
+      let data = try? await resource.read().get()
+    {
+      image = UIImage(data: data)
+    } else {
+      image = nil
+    }
+
+    await MainActor.run {
+      loadingImageIndices.remove(index)
+      images[index] = image
+      if imageViews.indices.contains(index) {
+        imageViews[index].image = image
+      }
+      applyLayoutForCurrentPreferences()
     }
   }
 
@@ -166,25 +217,55 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     if isPaginatedMode {
       addPaginatedSubviews()
     } else {
-      imageViews.forEach { stackView.addArrangedSubview($0) }
+      addScrollableSubviews()
     }
 
     applyLayoutForCurrentPreferences()
   }
 
+  private func addScrollableSubviews() {
+    guard !imageViews.isEmpty else { return }
+
+    if shouldShowPreviousChapterBoundary {
+      stackView.addArrangedSubview(previousChapterBoundaryView)
+    }
+
+    for index in visibleChapterRange {
+      stackView.addArrangedSubview(imageViews[index])
+    }
+
+    if shouldShowNextChapterBoundary {
+      stackView.addArrangedSubview(nextChapterBoundaryView)
+    }
+  }
+
   private func addPaginatedSubviews() {
     guard !imageViews.isEmpty else { return }
-    if isDoublePageMode, currentIndex + 1 < imageViews.count {
-      let spread = UIStackView(arrangedSubviews: [imageViews[currentIndex], imageViews[currentIndex + 1]])
+    let pageIndices = paginatedPageIndices()
+    if pageIndices.count > 1 {
+      let spread = UIStackView(arrangedSubviews: pageIndices.map { imageViews[$0] })
       spread.axis = .horizontal
       spread.alignment = .center
-      spread.distribution = .fillEqually
+      spread.distribution = isOriginalSizeMode ? .fill : .fillEqually
       spread.spacing = gap
       spread.translatesAutoresizingMaskIntoConstraints = false
       stackView.addArrangedSubview(spread)
-    } else {
-      stackView.addArrangedSubview(imageViews[currentIndex])
+    } else if let pageIndex = pageIndices.first {
+      stackView.addArrangedSubview(imageViews[pageIndex])
     }
+  }
+
+  private func paginatedPageIndices() -> [Int] {
+    guard imageViews.indices.contains(currentIndex) else { return [] }
+    guard isDoublePageMode else { return [currentIndex] }
+
+    if isRightToLeft {
+      return currentIndex > 0 ? [currentIndex, currentIndex - 1] : [currentIndex]
+    }
+
+    return currentIndex + 1 < imageViews.count
+      ? [currentIndex, currentIndex + 1]
+      : [currentIndex]
   }
 
   private func applyLayoutForCurrentPreferences() {
@@ -192,6 +273,8 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
 
     imageSizeConstraints.forEach { $0.isActive = false }
     imageSizeConstraints.removeAll()
+    boundarySizeConstraints.forEach { $0.isActive = false }
+    boundarySizeConstraints.removeAll()
 
     stackView.spacing = isPaginatedMode ? 0 : gap
     stackView.axis = isHorizontalScrollMode ? .horizontal : .vertical
@@ -201,7 +284,11 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
 
     if isPaginatedMode {
       rebuildPaginatedSubviewsIfNeeded()
+    } else {
+      rebuildScrollableSubviewsIfNeeded()
     }
+
+    configureChapterBoundaryViews()
 
     let viewport = scrollView.bounds.size
     guard viewport.width > 0, viewport.height > 0 else { return }
@@ -212,21 +299,40 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
       imageSizeConstraints.append(stackView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor))
     }
 
+    for boundaryView in [previousChapterBoundaryView, nextChapterBoundaryView]
+      where boundaryView.superview != nil
+    {
+      if isHorizontalScrollMode {
+        boundarySizeConstraints.append(boundaryView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor))
+        boundarySizeConstraints.append(boundaryView.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor))
+      } else {
+        boundarySizeConstraints.append(boundaryView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor))
+        boundarySizeConstraints.append(boundaryView.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor))
+      }
+    }
+
     for (index, imageView) in imageViews.enumerated() where imageView.superview != nil {
       let imageSize = images[index]?.size ?? CGSize(width: viewport.width, height: viewport.height)
       let aspect = imageSize.width > 0 ? imageSize.height / imageSize.width : 1
 
+      let displaySize = displaySize(for: imageSize, viewport: viewport)
+
       if isHorizontalScrollMode || isPaginatedMode {
-        let width = isDoublePageMode && isPaginatedMode ? max((viewport.width - gap) / 2, 1) : viewport.width
+        let width = paginatedWidth(for: displaySize.width, viewport: viewport)
         imageSizeConstraints.append(imageView.widthAnchor.constraint(equalToConstant: width))
-        imageSizeConstraints.append(imageView.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor))
+        if isPaginatedMode, isOriginalSizeMode {
+          imageSizeConstraints.append(imageView.heightAnchor.constraint(equalToConstant: displaySize.height))
+        } else {
+          imageSizeConstraints.append(imageView.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor))
+        }
       } else {
-        imageSizeConstraints.append(imageView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor))
-        imageSizeConstraints.append(imageView.heightAnchor.constraint(equalToConstant: verticalImageHeight(for: imageSize, aspect: aspect, viewport: viewport)))
+        imageSizeConstraints.append(imageView.widthAnchor.constraint(equalToConstant: displaySize.width))
+        imageSizeConstraints.append(imageView.heightAnchor.constraint(equalToConstant: max(1, displaySize.width * aspect)))
       }
     }
 
-    NSLayoutConstraint.activate(imageSizeConstraints)
+    NSLayoutConstraint.activate(imageSizeConstraints + boundarySizeConstraints)
+    applyPendingBoundaryTargetIfNeeded()
     clampContentOffsetForCurrentMode()
   }
 
@@ -241,24 +347,60 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
       return []
     }
 
-    let expected = isDoublePageMode && currentIndex + 1 < imageViews.count
-      ? [currentIndex, currentIndex + 1]
-      : [currentIndex]
+    let expected = paginatedPageIndices()
 
     if visibleTags != expected {
       rebuildArrangedSubviews()
     }
   }
 
-  private func verticalImageHeight(for imageSize: CGSize, aspect: CGFloat, viewport: CGSize) -> CGFloat {
+  private func rebuildScrollableSubviewsIfNeeded() {
+    let visibleTags = stackView.arrangedSubviews.compactMap { ($0 as? UIImageView)?.tag }
+    let expected = Array(visibleChapterRange)
+
+    let hasPreviousBoundary = previousChapterBoundaryView.superview != nil
+    let hasNextBoundary = nextChapterBoundaryView.superview != nil
+
+    if visibleTags != expected
+      || hasPreviousBoundary != shouldShowPreviousChapterBoundary
+      || hasNextBoundary != shouldShowNextChapterBoundary
+    {
+      rebuildArrangedSubviews()
+    }
+  }
+
+  private func displaySize(for imageSize: CGSize, viewport: CGSize) -> CGSize {
+    let availableWidth = pageWidthLimit(for: viewport)
+    let naturalWidth = max(imageSize.width, 1)
+    let naturalHeight = max(imageSize.height, 1)
+    let aspect = naturalHeight / naturalWidth
+
     switch preferences?.fit {
     case "page":
-      return min(viewport.height, viewport.width * aspect)
+      let widthFromHeight = viewport.height / aspect
+      let width = min(availableWidth, widthFromHeight)
+      return CGSize(width: max(1, width), height: max(1, width * aspect))
     case "width":
-      return viewport.width * aspect
+      return CGSize(width: max(1, availableWidth), height: max(1, availableWidth * aspect))
     default:
-      return max(1, viewport.width * aspect)
+      let baseWidth = shouldStretchSmallPages ? availableWidth : naturalWidth
+      let width = isWidthLimitEnabled ? min(baseWidth, availableWidth) : baseWidth
+      return CGSize(width: max(1, width), height: max(1, width * aspect))
     }
+  }
+
+  private func paginatedWidth(for displayWidth: CGFloat, viewport: CGSize) -> CGFloat {
+    guard isDoublePageMode, isPaginatedMode, !isOriginalSizeMode else {
+      return displayWidth
+    }
+    return min(max((viewport.width - gap) / 2, 1), displayWidth)
+  }
+
+  private func pageWidthLimit(for viewport: CGSize) -> CGFloat {
+    let viewportWidth = max(viewport.width, 1)
+    guard preferences?.comicWidthLimitEnabled == true else { return viewportWidth }
+    let percent = min(max(preferences?.comicWidthLimitPercent ?? 50, 10), 100)
+    return max(1, viewportWidth * CGFloat(percent / 100))
   }
 
   private func navigateToIndex(_ index: Int, animated: Bool, emit: Bool = true) {
@@ -267,16 +409,11 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
 
     if isPaginatedMode {
       rebuildArrangedSubviews()
-      scrollView.setContentOffset(.zero, animated: false)
+      scrollView.setContentOffset(paginatedContentOffset(), animated: false)
     } else if imageViews.indices.contains(currentIndex) {
       let targetView = imageViews[currentIndex]
       let rect = targetView.convert(targetView.bounds, to: scrollView)
-      let offset: CGPoint
-      if isHorizontalScrollMode {
-        offset = CGPoint(x: max(rect.minX, 0), y: 0)
-      } else {
-        offset = CGPoint(x: 0, y: max(rect.minY, 0))
-      }
+      let offset = centeredContinuousOffset(for: rect)
       isApplyingProgrammaticScroll = true
       scrollView.setContentOffset(offset, animated: animated)
       if !animated {
@@ -286,6 +423,9 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
 
     if emit {
       subject.send(locator(for: currentIndex))
+    }
+    Task { [weak self] in
+      await self?.preloadImages(around: self?.currentIndex ?? index)
     }
   }
 
@@ -313,6 +453,9 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     guard closestIndex != currentIndex else { return }
     currentIndex = closestIndex
     subject.send(locator(for: closestIndex))
+    Task { [weak self] in
+      await self?.preloadImages(around: closestIndex)
+    }
   }
 
   private func index(for locator: ReadiumShared.Locator) -> Int? {
@@ -355,15 +498,78 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     preferences?.comicReadingMode == "continuousHorizontal"
   }
 
+  private var isWebtoonMode: Bool {
+    preferences?.comicReadingMode == "webtoon"
+  }
+
+  private var isRightToLeft: Bool {
+    preferences?.readingProgression == "rtl"
+  }
+
+  private var isOriginalSizeMode: Bool {
+    preferences?.fit == "auto"
+  }
+
   private var gap: CGFloat {
     CGFloat(max(preferences?.pageMargins ?? 0, 0) * 16)
   }
 
+  private var shouldStretchSmallPages: Bool {
+    preferences?.comicStretchSmallPages ?? false
+  }
+
+  private var isWidthLimitEnabled: Bool {
+    preferences?.comicWidthLimitEnabled == true
+  }
+
+  private var imagePreloadAmount: Int {
+    let value = preferences?.comicImagePreloadAmount ?? 5
+    return max(0, min(Int(value.rounded()), max(links.count - 1, 0)))
+  }
+
+  private var visibleChapterRange: ClosedRange<Int> {
+    guard !imageViews.isEmpty else { return 0...0 }
+    guard
+      let start = preferences?.comicChapterStartIndex,
+      let end = preferences?.comicChapterEndIndex
+    else {
+      return 0...(imageViews.count - 1)
+    }
+
+    let lower = min(max(Int(start.rounded()), 0), imageViews.count - 1)
+    let upper = min(max(Int(end.rounded()), lower), imageViews.count - 1)
+    return lower...upper
+  }
+
+  private var shouldShowPreviousChapterBoundary: Bool {
+    !isPaginatedMode && visibleChapterRange.lowerBound > 0
+  }
+
+  private var shouldShowNextChapterBoundary: Bool {
+    !isPaginatedMode && visibleChapterRange.upperBound < max(imageViews.count - 1, 0)
+  }
+
+  private func configureChapterBoundaryViews() {
+    let backgroundColor = preferences?.backgroundColor.flatMap(UIColor.fromCSS) ?? .black
+    let textColor = preferences?.textColor.flatMap(UIColor.fromCSS) ?? .white
+
+    previousChapterBoundaryView.configure(
+      title: preferences?.comicPreviousChapterTitle,
+      backgroundColor: backgroundColor,
+      textColor: textColor
+    )
+    nextChapterBoundaryView.configure(
+      title: preferences?.comicNextChapterTitle,
+      backgroundColor: backgroundColor,
+      textColor: textColor
+    )
+  }
+
   private func applyScrollAxisPolicy() {
     if isPaginatedMode {
-      scrollView.alwaysBounceVertical = false
-      scrollView.alwaysBounceHorizontal = false
-      scrollView.bounces = false
+      scrollView.alwaysBounceVertical = isOriginalSizeMode
+      scrollView.alwaysBounceHorizontal = isOriginalSizeMode
+      scrollView.bounces = isOriginalSizeMode
       scrollView.showsVerticalScrollIndicator = false
       scrollView.showsHorizontalScrollIndicator = false
       return
@@ -378,9 +584,49 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     } else {
       scrollView.alwaysBounceVertical = true
       scrollView.alwaysBounceHorizontal = false
-      scrollView.showsVerticalScrollIndicator = true
+      scrollView.showsVerticalScrollIndicator = !isWebtoonMode
       scrollView.showsHorizontalScrollIndicator = false
     }
+  }
+
+  private func centeredContinuousOffset(for rect: CGRect) -> CGPoint {
+    let maxX = max(scrollView.contentSize.width - scrollView.bounds.width, 0)
+    let maxY = max(scrollView.contentSize.height - scrollView.bounds.height, 0)
+
+    if isHorizontalScrollMode {
+      let targetX = rect.midX - scrollView.bounds.width / 2
+      return CGPoint(x: min(max(targetX, 0), maxX), y: 0)
+    }
+
+    let targetY = rect.midY - scrollView.bounds.height / 2
+    return CGPoint(x: 0, y: min(max(targetY, 0), maxY))
+  }
+
+  private func applyPendingBoundaryTargetIfNeeded() {
+    guard !isPaginatedMode else { return }
+    guard let target = preferences?.comicBoundaryTarget, target != "none" else {
+      lastAppliedBoundaryTarget = nil
+      return
+    }
+    guard target != lastAppliedBoundaryTarget else { return }
+
+    let boundaryView: UIView?
+    switch target {
+    case "previous":
+      boundaryView = shouldShowPreviousChapterBoundary ? previousChapterBoundaryView : nil
+    case "next":
+      boundaryView = shouldShowNextChapterBoundary ? nextChapterBoundaryView : nil
+    default:
+      boundaryView = nil
+    }
+
+    guard let boundaryView, boundaryView.superview != nil else { return }
+    view.layoutIfNeeded()
+    let rect = boundaryView.convert(boundaryView.bounds, to: scrollView)
+    let offset = centeredContinuousOffset(for: rect)
+    lastAppliedBoundaryTarget = target
+    isApplyingProgrammaticScroll = true
+    scrollView.setContentOffset(offset, animated: true)
   }
 
   private func clampContentOffsetForCurrentMode() {
@@ -392,7 +638,9 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     let clamped: CGPoint
 
     if isPaginatedMode {
-      clamped = .zero
+      clamped = isOriginalSizeMode
+        ? CGPoint(x: min(max(current.x, 0), maxX), y: min(max(current.y, 0), maxY))
+        : .zero
     } else if isHorizontalScrollMode {
       clamped = CGPoint(x: min(max(current.x, 0), maxX), y: 0)
     } else {
@@ -403,6 +651,96 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     isClampingContentOffset = true
     scrollView.setContentOffset(clamped, animated: false)
     isClampingContentOffset = false
+  }
+
+  private func paginatedContentOffset() -> CGPoint {
+    guard isOriginalSizeMode else { return .zero }
+    let maxX = max(scrollView.contentSize.width - scrollView.bounds.width, 0)
+    let maxY = max(scrollView.contentSize.height - scrollView.bounds.height, 0)
+    return CGPoint(
+      x: min(max(scrollView.contentOffset.x, 0), maxX),
+      y: min(max(scrollView.contentOffset.y, 0), maxY)
+    )
+  }
+}
+
+private final class ComicChapterBoundaryView: UIView {
+  enum Direction {
+    case previous
+    case next
+  }
+
+  private let eyebrowLabel = UILabel()
+  private let titleLabel = UILabel()
+  private let hintLabel = UILabel()
+  private let direction: Direction
+
+  init(direction: Direction) {
+    self.direction = direction
+    super.init(frame: .zero)
+    translatesAutoresizingMaskIntoConstraints = false
+    setup()
+  }
+
+  @available(*, unavailable)
+  required init?(coder: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
+
+  func configure(title: String?, backgroundColor: UIColor, textColor: UIColor) {
+    self.backgroundColor = backgroundColor
+    eyebrowLabel.textColor = textColor.withAlphaComponent(0.65)
+    titleLabel.textColor = textColor
+    hintLabel.textColor = textColor.withAlphaComponent(0.72)
+
+    if let chapterTitle = title?.trimmingCharacters(in: .whitespacesAndNewlines),
+      !chapterTitle.isEmpty
+    {
+      titleLabel.text = chapterTitle
+    } else {
+      titleLabel.text = direction == .previous ? "Previous chapter" : "Next chapter"
+    }
+  }
+
+  private func setup() {
+    let contentStack = UIStackView(arrangedSubviews: [
+      eyebrowLabel,
+      titleLabel,
+      hintLabel,
+    ])
+    contentStack.axis = .vertical
+    contentStack.alignment = .center
+    contentStack.spacing = 12
+    contentStack.translatesAutoresizingMaskIntoConstraints = false
+    addSubview(contentStack)
+
+    eyebrowLabel.font = .preferredFont(forTextStyle: .subheadline)
+    eyebrowLabel.adjustsFontForContentSizeCategory = true
+    eyebrowLabel.textAlignment = .center
+    eyebrowLabel.text = direction == .previous
+      ? "Start of chapter"
+      : "End of chapter"
+
+    titleLabel.font = .preferredFont(forTextStyle: .title2)
+    titleLabel.adjustsFontForContentSizeCategory = true
+    titleLabel.font = .systemFont(ofSize: titleLabel.font.pointSize, weight: .semibold)
+    titleLabel.textAlignment = .center
+    titleLabel.numberOfLines = 3
+
+    hintLabel.font = .preferredFont(forTextStyle: .footnote)
+    hintLabel.adjustsFontForContentSizeCategory = true
+    hintLabel.textAlignment = .center
+    hintLabel.numberOfLines = 2
+    hintLabel.text = direction == .previous
+      ? "Go back again to enter the previous chapter"
+      : "Go forward again to enter the next chapter"
+
+    NSLayoutConstraint.activate([
+      contentStack.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 32),
+      contentStack.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -32),
+      contentStack.centerXAnchor.constraint(equalTo: centerXAnchor),
+      contentStack.centerYAnchor.constraint(equalTo: centerYAnchor),
+    ])
   }
 }
 

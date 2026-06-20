@@ -37,4 +37,13 @@ export interface Preferences
     | 'continuousVertical'
     | 'continuousHorizontal'
     | 'webtoon';
+  comicStretchSmallPages?: boolean;
+  comicWidthLimitEnabled?: boolean;
+  comicWidthLimitPercent?: number;
+  comicImagePreloadAmount?: number;
+  comicChapterStartIndex?: number;
+  comicChapterEndIndex?: number;
+  comicPreviousChapterTitle?: string;
+  comicNextChapterTitle?: string;
+  comicBoundaryTarget?: 'previous' | 'next' | 'none';
 }
