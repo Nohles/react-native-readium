@@ -1,4 +1,4 @@
-# [5.0.0-rc.27](https://github.com/nohles/react-native-readium/compare/v5.0.0-rc.19...v5.0.0-rc.27) (2026-06-20)
+# [5.0.0-rc.28](https://github.com/nohles/react-native-readium/compare/v5.0.0-rc.19...v5.0.0-rc.28) (2026-06-20)
 
 
 
