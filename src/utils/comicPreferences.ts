@@ -1,14 +1,27 @@
 export {
+  DEFAULT_COMIC_READER_SETTINGS,
+  comicProgressBarPosition,
   comicLocatorFromProgress,
   comicProgressFromLocator,
   comicProgressStorageKey,
   createComicPreferences,
+  effectiveComicReadingMode,
+  effectiveComicScaleType,
+  isComicScrollMode,
+  resolveComicTapAction,
+  shouldShowComicProgressBar,
 } from '../interfaces/Comic';
 export type {
   ComicCanvasMode,
   ComicFit,
+  ComicProgressBarPosition,
+  ComicProgressBarType,
   ComicProgress,
   ComicProgressStorage,
   ComicReaderSettings,
   ComicReadingDirection,
+  ComicReadingMode,
+  ComicScaleType,
+  ComicTapAction,
+  ComicTapZones,
 } from '../interfaces/Comic';

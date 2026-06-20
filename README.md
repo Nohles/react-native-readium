@@ -461,9 +461,11 @@ import {
 } from 'react-native-readium';
 
 const preferences = createComicPreferences({
-  canvasMode: 'webtoon', // 'webtoon' | 'singlePage' | 'doublePage'
-  readingDirection: 'rtl', // 'ltr' western comics, 'rtl' manga
-  fit: 'width', // 'width' | 'height' | 'screen' | 'actualSize'
+  readingMode: 'webtoon', // 'default' | 'singlePage' | 'doublePage' | 'continuousVertical' | 'continuousHorizontal' | 'webtoon'
+  direction: 'rtl', // 'ltr' western comics, 'rtl' manga
+  scaleType: 'fitWidth', // 'fitWidth' | 'fitHeight' | 'fitScreen' | 'originalSize'
+  tapZones: 'rightAndLeft',
+  pageGapPx: 5,
 });
 
 <ReadiumView
@@ -481,11 +483,16 @@ const preferences = createComicPreferences({
 
 Preset mapping:
 
-| Canvas mode  | Readium preferences                               |
-| ------------ | ------------------------------------------------- |
-| `webtoon`    | `scroll: true`, `spread: "never"`, `fit: "width"` |
-| `singlePage` | `scroll: false`, `spread: "never"`                |
-| `doublePage` | `scroll: false`, `spread: "always"`               |
+| Reading mode           | Readium preferences                               |
+| ---------------------- | ------------------------------------------------- |
+| `default`              | Resolves to `singlePage`                          |
+| `webtoon`              | `scroll: true`, `spread: "never"`, `fit: "width"` |
+| `continuousVertical`   | `scroll: true`, `spread: "never"`                 |
+| `continuousHorizontal` | `scroll: true`, `spread: "never"`                 |
+| `singlePage`           | `scroll: false`, `spread: "never"`                |
+| `doublePage`           | `scroll: false`, `spread: "always"`               |
+
+The legacy `canvasMode`, `readingDirection`, and `fit` settings are still accepted for existing callers.
 
 The native navigator owns pinch, double-tap, pointer/wheel, and keyboard navigation where supported by the platform. Sync remains app-owned: persist the `ComicProgress` payload locally or upload it as your encrypted/iCloud/Drive blob, then pass `comicLocatorFromProgress(progress)` as `file.initialLocation` when reopening.
 
