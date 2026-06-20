@@ -21,6 +21,7 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
   private var currentIndex = 0
   private var preferences: Preferences?
   private var isApplyingProgrammaticScroll = false
+  private var isClampingContentOffset = false
 
   init(
     publication: Publication,
@@ -86,8 +87,8 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
   private func configureScrollView() {
     scrollView.translatesAutoresizingMaskIntoConstraints = false
     scrollView.delegate = self
-    scrollView.alwaysBounceVertical = true
-    scrollView.alwaysBounceHorizontal = true
+    scrollView.contentInsetAdjustmentBehavior = .never
+    scrollView.isDirectionalLockEnabled = true
     view.addSubview(scrollView)
 
     stackView.translatesAutoresizingMaskIntoConstraints = false
@@ -196,8 +197,7 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     stackView.axis = isHorizontalScrollMode ? .horizontal : .vertical
     stackView.distribution = .fill
     scrollView.isPagingEnabled = isPaginatedMode
-    scrollView.showsVerticalScrollIndicator = !isHorizontalScrollMode
-    scrollView.showsHorizontalScrollIndicator = isHorizontalScrollMode
+    applyScrollAxisPolicy()
 
     if isPaginatedMode {
       rebuildPaginatedSubviewsIfNeeded()
@@ -227,6 +227,7 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     }
 
     NSLayoutConstraint.activate(imageSizeConstraints)
+    clampContentOffsetForCurrentMode()
   }
 
   private func rebuildPaginatedSubviewsIfNeeded() {
@@ -357,10 +358,57 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
   private var gap: CGFloat {
     CGFloat(max(preferences?.pageMargins ?? 0, 0) * 16)
   }
+
+  private func applyScrollAxisPolicy() {
+    if isPaginatedMode {
+      scrollView.alwaysBounceVertical = false
+      scrollView.alwaysBounceHorizontal = false
+      scrollView.bounces = false
+      scrollView.showsVerticalScrollIndicator = false
+      scrollView.showsHorizontalScrollIndicator = false
+      return
+    }
+
+    scrollView.bounces = true
+    if isHorizontalScrollMode {
+      scrollView.alwaysBounceVertical = false
+      scrollView.alwaysBounceHorizontal = true
+      scrollView.showsVerticalScrollIndicator = false
+      scrollView.showsHorizontalScrollIndicator = true
+    } else {
+      scrollView.alwaysBounceVertical = true
+      scrollView.alwaysBounceHorizontal = false
+      scrollView.showsVerticalScrollIndicator = true
+      scrollView.showsHorizontalScrollIndicator = false
+    }
+  }
+
+  private func clampContentOffsetForCurrentMode() {
+    guard !isClampingContentOffset else { return }
+
+    let maxX = max(scrollView.contentSize.width - scrollView.bounds.width, 0)
+    let maxY = max(scrollView.contentSize.height - scrollView.bounds.height, 0)
+    let current = scrollView.contentOffset
+    let clamped: CGPoint
+
+    if isPaginatedMode {
+      clamped = .zero
+    } else if isHorizontalScrollMode {
+      clamped = CGPoint(x: min(max(current.x, 0), maxX), y: 0)
+    } else {
+      clamped = CGPoint(x: 0, y: min(max(current.y, 0), maxY))
+    }
+
+    guard current != clamped else { return }
+    isClampingContentOffset = true
+    scrollView.setContentOffset(clamped, animated: false)
+    isClampingContentOffset = false
+  }
 }
 
 extension ComicImageViewController: UIScrollViewDelegate {
   func scrollViewDidScroll(_ scrollView: UIScrollView) {
+    clampContentOffsetForCurrentMode()
     guard !isApplyingProgrammaticScroll else { return }
     updateCurrentIndexFromScrollPosition()
   }
