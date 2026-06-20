@@ -31,4 +31,10 @@ export interface Preferences
   spread?: 'auto' | 'never' | 'always';
   textAlign?: 'center' | 'justify' | 'start' | 'end' | 'left' | 'right';
   theme?: 'light' | 'dark' | 'sepia';
+  comicReadingMode?:
+    | 'singlePage'
+    | 'doublePage'
+    | 'continuousVertical'
+    | 'continuousHorizontal'
+    | 'webtoon';
 }

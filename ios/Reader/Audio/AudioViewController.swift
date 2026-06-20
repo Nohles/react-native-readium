@@ -180,6 +180,21 @@ final class AudioViewController: UIViewController, AudioNavigatorDelegate, Logga
     Task { await audioNavigator.goForward() }
   }
 
+  @MainActor
+  func goTo(_ locator: ReadiumShared.Locator) async {
+    _ = await audioNavigator.go(to: locator, options: .animated)
+  }
+
+  @MainActor
+  func goForward() async {
+    _ = await audioNavigator.goForward(options: .animated)
+  }
+
+  @MainActor
+  func goBackward() async {
+    _ = await audioNavigator.goBackward(options: .animated)
+  }
+
   @objc private func rewind() {
     Task { await audioNavigator.seek(by: -10) }
   }

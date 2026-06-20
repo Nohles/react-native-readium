@@ -1,6 +1,7 @@
 import ReadiumShared
 
-/// CBZ publications use Readium's EPUB navigator path as recommended in 3.9.
+/// CBZ publications render their reading order as native images so continuous
+/// comic modes can scroll a whole chapter instead of one spine item at a time.
 final class CBZModule: ReaderFormatModule {
   weak var delegate: ReaderFormatModuleDelegate?
 
@@ -22,13 +23,11 @@ final class CBZModule: ReaderFormatModule {
     bookId: String,
     selectionActions: [SelectionActionData]?
   ) throws -> ReadiumReaderHosting {
-    let viewController = try EPUBViewController(
+    let viewController = ComicImageViewController(
       publication: publication,
       locator: locator,
-      bookId: bookId,
-      selectionActions: nil
+      bookId: bookId
     )
-    viewController.moduleDelegate = delegate
     return viewController
   }
 }

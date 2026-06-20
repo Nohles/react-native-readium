@@ -207,9 +207,14 @@ class HybridReadiumView: HybridReadiumViewSpec {
 
   private func updatePreferences() {
     guard readerHost != nil else { return }
-    guard let navigator = (readerHost as? ReaderViewController)?.navigator as? EPUBNavigatorViewController else { return }
     guard let prefs = preferences else { return }
 
+    if let comicReader = readerHost as? ComicImageViewController {
+      comicReader.updatePreferences(prefs)
+      return
+    }
+
+    guard let navigator = (readerHost as? ReaderViewController)?.navigator as? EPUBNavigatorViewController else { return }
     let epubPrefs = nitroPreferencesToEPUB(prefs)
     navigator.submitPreferences(epubPrefs)
   }
@@ -363,6 +368,9 @@ class HybridReadiumView: HybridReadiumViewSpec {
       case .failure:
         positions = []
       }
+      if positions.isEmpty, let comicReader = vc as? ComicImageViewController {
+        positions = comicReader.positions().map { readiumLocatorToNitro($0) }
+      }
 
       let metadata = readiumMetadataToNitro(vc.publication.metadata)
 
@@ -393,23 +401,20 @@ class HybridReadiumView: HybridReadiumViewSpec {
   func goTo(locator: Locator) {
     Task { @MainActor [weak self] in
       guard let self else { return }
-      guard let navigator = self.readerHost?.readiumNavigator else { return }
       guard let readiumLocator = nitroLocatorToReadium(locator) else { return }
-      _ = await navigator.go(to: readiumLocator, options: .animated)
+      await self.readerHost?.goTo(readiumLocator)
     }
   }
 
   func goForward() {
-    Task { @MainActor in
-      guard let navigator = readerHost?.readiumNavigator else { return }
-      _ = await navigator.goForward(options: .animated)
+    Task { @MainActor [weak self] in
+      await self?.readerHost?.goForward()
     }
   }
 
   func goBackward() {
-    Task { @MainActor in
-      guard let navigator = readerHost?.readiumNavigator else { return }
-      _ = await navigator.goBackward(options: .animated)
+    Task { @MainActor [weak self] in
+      await self?.readerHost?.goBackward()
     }
   }
 

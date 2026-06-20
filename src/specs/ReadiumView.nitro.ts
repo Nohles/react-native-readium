@@ -70,6 +70,7 @@ export interface Preferences {
   verticalText?: boolean;
   wordSpacing?: number;
   merging?: boolean;
+  comicReadingMode?: string;
 }
 
 // ── Decoration ───────────────────────────────────────────────────────────────

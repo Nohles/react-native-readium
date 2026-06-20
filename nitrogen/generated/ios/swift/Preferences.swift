@@ -18,7 +18,7 @@ public extension Preferences {
   /**
    * Create a new instance of `Preferences`.
    */
-  init(backgroundColor: String?, columnCount: String?, fit: String?, fontFamily: String?, fontSize: Double?, fontWeight: Double?, hyphens: Bool?, imageFilter: String?, language: String?, letterSpacing: Double?, ligatures: Bool?, lineHeight: Double?, pageMargins: Double?, paragraphIndent: Double?, paragraphSpacing: Double?, publisherStyles: Bool?, readingProgression: String?, scroll: Bool?, spread: String?, textAlign: String?, textColor: String?, textNormalization: Bool?, theme: String?, typeScale: Double?, verticalText: Bool?, wordSpacing: Double?, merging: Bool?) {
+  init(backgroundColor: String?, columnCount: String?, fit: String?, fontFamily: String?, fontSize: Double?, fontWeight: Double?, hyphens: Bool?, imageFilter: String?, language: String?, letterSpacing: Double?, ligatures: Bool?, lineHeight: Double?, pageMargins: Double?, paragraphIndent: Double?, paragraphSpacing: Double?, publisherStyles: Bool?, readingProgression: String?, scroll: Bool?, spread: String?, textAlign: String?, textColor: String?, textNormalization: Bool?, theme: String?, typeScale: Double?, verticalText: Bool?, wordSpacing: Double?, merging: Bool?, comicReadingMode: String?) {
     self.init({ () -> bridge.std__optional_std__string_ in
       if let __unwrappedValue = backgroundColor {
         return bridge.create_std__optional_std__string_(std.string(__unwrappedValue))
@@ -178,6 +178,12 @@ public extension Preferences {
     }(), { () -> bridge.std__optional_bool_ in
       if let __unwrappedValue = merging {
         return bridge.create_std__optional_bool_(__unwrappedValue)
+      } else {
+        return .init()
+      }
+    }(), { () -> bridge.std__optional_std__string_ in
+      if let __unwrappedValue = comicReadingMode {
+        return bridge.create_std__optional_std__string_(std.string(__unwrappedValue))
       } else {
         return .init()
       }
@@ -502,6 +508,18 @@ public extension Preferences {
       if bridge.has_value_std__optional_bool_(self.__merging) {
         let __unwrapped = bridge.get_std__optional_bool_(self.__merging)
         return __unwrapped
+      } else {
+        return nil
+      }
+    }()
+  }
+  
+  @inline(__always)
+  var comicReadingMode: String? {
+    return { () -> String? in
+      if bridge.has_value_std__optional_std__string_(self.__comicReadingMode) {
+        let __unwrapped = bridge.get_std__optional_std__string_(self.__comicReadingMode)
+        return String(__unwrapped)
       } else {
         return nil
       }

@@ -131,6 +131,7 @@ export function createComicPreferences(
     scroll: scrollMode,
     spread: readingMode === 'doublePage' ? 'always' : 'never',
     fit: toReadiumFit(scaleType),
+    comicReadingMode: readingMode,
     pageMargins: scrollMode
       ? Math.max(
           0,

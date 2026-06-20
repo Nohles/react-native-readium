@@ -6,23 +6,23 @@ import UIKit
 
 /// Common surface for EPUB and audiobook reader view controllers.
 protocol ReadiumReaderHosting: AnyObject {
-  var readiumNavigator: Navigator { get }
   var publication: Publication { get }
   var publisher: AnyPublisher<ReadiumShared.Locator, Never> { get }
   var viewController: UIViewController { get }
+
+  func goTo(_ locator: ReadiumShared.Locator) async
+  func goForward() async
+  func goBackward() async
 }
 
 extension ReaderViewController: ReadiumReaderHosting {
-  var readiumNavigator: Navigator { navigator }
   var viewController: UIViewController { self }
 }
 
 extension AudioViewController: ReadiumReaderHosting {
-  var readiumNavigator: Navigator { navigator }
   var viewController: UIViewController { self }
 }
 
 extension AudiobookViewController: ReadiumReaderHosting {
-  var readiumNavigator: Navigator { audioNavigator }
   var viewController: UIViewController { self }
 }

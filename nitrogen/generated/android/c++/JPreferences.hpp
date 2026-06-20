@@ -86,6 +86,8 @@ namespace margelo::nitro::readium {
       jni::local_ref<jni::JDouble> wordSpacing = this->getFieldValue(fieldWordSpacing);
       static const auto fieldMerging = clazz->getField<jni::JBoolean>("merging");
       jni::local_ref<jni::JBoolean> merging = this->getFieldValue(fieldMerging);
+      static const auto fieldComicReadingMode = clazz->getField<jni::JString>("comicReadingMode");
+      jni::local_ref<jni::JString> comicReadingMode = this->getFieldValue(fieldComicReadingMode);
       return Preferences(
         backgroundColor != nullptr ? std::make_optional(backgroundColor->toStdString()) : std::nullopt,
         columnCount != nullptr ? std::make_optional(columnCount->toStdString()) : std::nullopt,
@@ -113,7 +115,8 @@ namespace margelo::nitro::readium {
         typeScale != nullptr ? std::make_optional(typeScale->value()) : std::nullopt,
         verticalText != nullptr ? std::make_optional(static_cast<bool>(verticalText->value())) : std::nullopt,
         wordSpacing != nullptr ? std::make_optional(wordSpacing->value()) : std::nullopt,
-        merging != nullptr ? std::make_optional(static_cast<bool>(merging->value())) : std::nullopt
+        merging != nullptr ? std::make_optional(static_cast<bool>(merging->value())) : std::nullopt,
+        comicReadingMode != nullptr ? std::make_optional(comicReadingMode->toStdString()) : std::nullopt
       );
     }
 
@@ -123,7 +126,7 @@ namespace margelo::nitro::readium {
      */
     [[maybe_unused]]
     static jni::local_ref<JPreferences::javaobject> fromCpp(const Preferences& value) {
-      using JSignature = JPreferences(jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>);
+      using JSignature = JPreferences(jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>);
       static const auto clazz = javaClassStatic();
       static const auto create = clazz->getStaticMethod<JSignature>("fromCpp");
       return create(
@@ -154,7 +157,8 @@ namespace margelo::nitro::readium {
         value.typeScale.has_value() ? jni::JDouble::valueOf(value.typeScale.value()) : nullptr,
         value.verticalText.has_value() ? jni::JBoolean::valueOf(value.verticalText.value()) : nullptr,
         value.wordSpacing.has_value() ? jni::JDouble::valueOf(value.wordSpacing.value()) : nullptr,
-        value.merging.has_value() ? jni::JBoolean::valueOf(value.merging.value()) : nullptr
+        value.merging.has_value() ? jni::JBoolean::valueOf(value.merging.value()) : nullptr,
+        value.comicReadingMode.has_value() ? jni::make_jstring(value.comicReadingMode.value()) : nullptr
       );
     }
   };
