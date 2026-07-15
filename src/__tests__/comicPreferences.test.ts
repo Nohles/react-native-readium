@@ -80,14 +80,38 @@ describe('comic preferences', () => {
     ).toBe('toggle');
   });
 
-  it('hides progress below compact width and resolves position by mode', () => {
-    expect(shouldShowComicProgressBar({ width: 599 })).toBe(false);
+  it('keeps progress available at compact widths and resolves position by mode', () => {
+    expect(shouldShowComicProgressBar({ width: 320 })).toBe(true);
     expect(shouldShowComicProgressBar({ width: 600 })).toBe(true);
-    expect(shouldShowComicProgressBar({ width: 900, progressBarType: 'hidden' }))
-      .toBe(false);
+    expect(
+      shouldShowComicProgressBar({ width: 900, progressBarType: 'hidden' })
+    ).toBe(false);
     expect(comicProgressBarPosition('webtoon')).toBe('right');
     expect(comicProgressBarPosition('continuousVertical')).toBe('right');
     expect(comicProgressBarPosition('continuousHorizontal')).toBe('bottom');
     expect(comicProgressBarPosition('singlePage')).toBe('bottom');
+  });
+
+  it('maps the full native comic layout settings', () => {
+    expect(
+      createComicPreferences({
+        theme: 'sepia',
+        pageGapPx: 12,
+        stretchSmallPages: true,
+        widthLimitEnabled: true,
+        widthLimitPercent: 75,
+        scrollAmountPercent: 90,
+        imagePreloadAmount: 3,
+      })
+    ).toMatchObject({
+      theme: 'sepia',
+      backgroundColor: '#f4ecd8',
+      pageMargins: 0.75,
+      comicStretchSmallPages: true,
+      comicWidthLimitEnabled: true,
+      comicWidthLimitPercent: 75,
+      comicScrollAmountPercent: 90,
+      comicImagePreloadAmount: 3,
+    });
   });
 });

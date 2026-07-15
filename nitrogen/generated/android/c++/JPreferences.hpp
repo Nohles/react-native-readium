@@ -88,6 +88,18 @@ namespace margelo::nitro::readium {
       jni::local_ref<jni::JBoolean> merging = this->getFieldValue(fieldMerging);
       static const auto fieldComicReadingMode = clazz->getField<jni::JString>("comicReadingMode");
       jni::local_ref<jni::JString> comicReadingMode = this->getFieldValue(fieldComicReadingMode);
+      static const auto fieldComicScaleType = clazz->getField<jni::JString>("comicScaleType");
+      jni::local_ref<jni::JString> comicScaleType = this->getFieldValue(fieldComicScaleType);
+      static const auto fieldComicStretchSmallPages = clazz->getField<jni::JBoolean>("comicStretchSmallPages");
+      jni::local_ref<jni::JBoolean> comicStretchSmallPages = this->getFieldValue(fieldComicStretchSmallPages);
+      static const auto fieldComicWidthLimitEnabled = clazz->getField<jni::JBoolean>("comicWidthLimitEnabled");
+      jni::local_ref<jni::JBoolean> comicWidthLimitEnabled = this->getFieldValue(fieldComicWidthLimitEnabled);
+      static const auto fieldComicWidthLimitPercent = clazz->getField<jni::JDouble>("comicWidthLimitPercent");
+      jni::local_ref<jni::JDouble> comicWidthLimitPercent = this->getFieldValue(fieldComicWidthLimitPercent);
+      static const auto fieldComicScrollAmountPercent = clazz->getField<jni::JDouble>("comicScrollAmountPercent");
+      jni::local_ref<jni::JDouble> comicScrollAmountPercent = this->getFieldValue(fieldComicScrollAmountPercent);
+      static const auto fieldComicImagePreloadAmount = clazz->getField<jni::JDouble>("comicImagePreloadAmount");
+      jni::local_ref<jni::JDouble> comicImagePreloadAmount = this->getFieldValue(fieldComicImagePreloadAmount);
       return Preferences(
         backgroundColor != nullptr ? std::make_optional(backgroundColor->toStdString()) : std::nullopt,
         columnCount != nullptr ? std::make_optional(columnCount->toStdString()) : std::nullopt,
@@ -116,7 +128,13 @@ namespace margelo::nitro::readium {
         verticalText != nullptr ? std::make_optional(static_cast<bool>(verticalText->value())) : std::nullopt,
         wordSpacing != nullptr ? std::make_optional(wordSpacing->value()) : std::nullopt,
         merging != nullptr ? std::make_optional(static_cast<bool>(merging->value())) : std::nullopt,
-        comicReadingMode != nullptr ? std::make_optional(comicReadingMode->toStdString()) : std::nullopt
+        comicReadingMode != nullptr ? std::make_optional(comicReadingMode->toStdString()) : std::nullopt,
+        comicScaleType != nullptr ? std::make_optional(comicScaleType->toStdString()) : std::nullopt,
+        comicStretchSmallPages != nullptr ? std::make_optional(static_cast<bool>(comicStretchSmallPages->value())) : std::nullopt,
+        comicWidthLimitEnabled != nullptr ? std::make_optional(static_cast<bool>(comicWidthLimitEnabled->value())) : std::nullopt,
+        comicWidthLimitPercent != nullptr ? std::make_optional(comicWidthLimitPercent->value()) : std::nullopt,
+        comicScrollAmountPercent != nullptr ? std::make_optional(comicScrollAmountPercent->value()) : std::nullopt,
+        comicImagePreloadAmount != nullptr ? std::make_optional(comicImagePreloadAmount->value()) : std::nullopt
       );
     }
 
@@ -126,7 +144,7 @@ namespace margelo::nitro::readium {
      */
     [[maybe_unused]]
     static jni::local_ref<JPreferences::javaobject> fromCpp(const Preferences& value) {
-      using JSignature = JPreferences(jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>);
+      using JSignature = JPreferences(jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>);
       static const auto clazz = javaClassStatic();
       static const auto create = clazz->getStaticMethod<JSignature>("fromCpp");
       return create(
@@ -158,7 +176,13 @@ namespace margelo::nitro::readium {
         value.verticalText.has_value() ? jni::JBoolean::valueOf(value.verticalText.value()) : nullptr,
         value.wordSpacing.has_value() ? jni::JDouble::valueOf(value.wordSpacing.value()) : nullptr,
         value.merging.has_value() ? jni::JBoolean::valueOf(value.merging.value()) : nullptr,
-        value.comicReadingMode.has_value() ? jni::make_jstring(value.comicReadingMode.value()) : nullptr
+        value.comicReadingMode.has_value() ? jni::make_jstring(value.comicReadingMode.value()) : nullptr,
+        value.comicScaleType.has_value() ? jni::make_jstring(value.comicScaleType.value()) : nullptr,
+        value.comicStretchSmallPages.has_value() ? jni::JBoolean::valueOf(value.comicStretchSmallPages.value()) : nullptr,
+        value.comicWidthLimitEnabled.has_value() ? jni::JBoolean::valueOf(value.comicWidthLimitEnabled.value()) : nullptr,
+        value.comicWidthLimitPercent.has_value() ? jni::JDouble::valueOf(value.comicWidthLimitPercent.value()) : nullptr,
+        value.comicScrollAmountPercent.has_value() ? jni::JDouble::valueOf(value.comicScrollAmountPercent.value()) : nullptr,
+        value.comicImagePreloadAmount.has_value() ? jni::JDouble::valueOf(value.comicImagePreloadAmount.value()) : nullptr
       );
     }
   };

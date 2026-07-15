@@ -71,6 +71,12 @@ export interface Preferences {
   wordSpacing?: number;
   merging?: boolean;
   comicReadingMode?: string;
+  comicScaleType?: string;
+  comicStretchSmallPages?: boolean;
+  comicWidthLimitEnabled?: boolean;
+  comicWidthLimitPercent?: number;
+  comicScrollAmountPercent?: number;
+  comicImagePreloadAmount?: number;
 }
 
 // ── Decoration ───────────────────────────────────────────────────────────────

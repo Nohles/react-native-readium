@@ -18,7 +18,7 @@ public extension Preferences {
   /**
    * Create a new instance of `Preferences`.
    */
-  init(backgroundColor: String?, columnCount: String?, fit: String?, fontFamily: String?, fontSize: Double?, fontWeight: Double?, hyphens: Bool?, imageFilter: String?, language: String?, letterSpacing: Double?, ligatures: Bool?, lineHeight: Double?, pageMargins: Double?, paragraphIndent: Double?, paragraphSpacing: Double?, publisherStyles: Bool?, readingProgression: String?, scroll: Bool?, spread: String?, textAlign: String?, textColor: String?, textNormalization: Bool?, theme: String?, typeScale: Double?, verticalText: Bool?, wordSpacing: Double?, merging: Bool?, comicReadingMode: String?) {
+  init(backgroundColor: String?, columnCount: String?, fit: String?, fontFamily: String?, fontSize: Double?, fontWeight: Double?, hyphens: Bool?, imageFilter: String?, language: String?, letterSpacing: Double?, ligatures: Bool?, lineHeight: Double?, pageMargins: Double?, paragraphIndent: Double?, paragraphSpacing: Double?, publisherStyles: Bool?, readingProgression: String?, scroll: Bool?, spread: String?, textAlign: String?, textColor: String?, textNormalization: Bool?, theme: String?, typeScale: Double?, verticalText: Bool?, wordSpacing: Double?, merging: Bool?, comicReadingMode: String?, comicScaleType: String?, comicStretchSmallPages: Bool?, comicWidthLimitEnabled: Bool?, comicWidthLimitPercent: Double?, comicScrollAmountPercent: Double?, comicImagePreloadAmount: Double?) {
     self.init({ () -> bridge.std__optional_std__string_ in
       if let __unwrappedValue = backgroundColor {
         return bridge.create_std__optional_std__string_(std.string(__unwrappedValue))
@@ -187,6 +187,42 @@ public extension Preferences {
       } else {
         return .init()
       }
+    }(), { () -> bridge.std__optional_std__string_ in
+      if let __unwrappedValue = comicScaleType {
+        return bridge.create_std__optional_std__string_(std.string(__unwrappedValue))
+      } else {
+        return .init()
+      }
+    }(), { () -> bridge.std__optional_bool_ in
+      if let __unwrappedValue = comicStretchSmallPages {
+        return bridge.create_std__optional_bool_(__unwrappedValue)
+      } else {
+        return .init()
+      }
+    }(), { () -> bridge.std__optional_bool_ in
+      if let __unwrappedValue = comicWidthLimitEnabled {
+        return bridge.create_std__optional_bool_(__unwrappedValue)
+      } else {
+        return .init()
+      }
+    }(), { () -> bridge.std__optional_double_ in
+      if let __unwrappedValue = comicWidthLimitPercent {
+        return bridge.create_std__optional_double_(__unwrappedValue)
+      } else {
+        return .init()
+      }
+    }(), { () -> bridge.std__optional_double_ in
+      if let __unwrappedValue = comicScrollAmountPercent {
+        return bridge.create_std__optional_double_(__unwrappedValue)
+      } else {
+        return .init()
+      }
+    }(), { () -> bridge.std__optional_double_ in
+      if let __unwrappedValue = comicImagePreloadAmount {
+        return bridge.create_std__optional_double_(__unwrappedValue)
+      } else {
+        return .init()
+      }
     }())
   }
 
@@ -201,7 +237,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var columnCount: String? {
     return { () -> String? in
@@ -213,7 +249,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var fit: String? {
     return { () -> String? in
@@ -225,7 +261,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var fontFamily: String? {
     return { () -> String? in
@@ -237,7 +273,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var fontSize: Double? {
     return { () -> Double? in
@@ -249,7 +285,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var fontWeight: Double? {
     return { () -> Double? in
@@ -261,7 +297,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var hyphens: Bool? {
     return { () -> Bool? in
@@ -273,7 +309,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var imageFilter: String? {
     return { () -> String? in
@@ -285,7 +321,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var language: String? {
     return { () -> String? in
@@ -297,7 +333,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var letterSpacing: Double? {
     return { () -> Double? in
@@ -309,7 +345,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var ligatures: Bool? {
     return { () -> Bool? in
@@ -321,7 +357,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var lineHeight: Double? {
     return { () -> Double? in
@@ -333,7 +369,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var pageMargins: Double? {
     return { () -> Double? in
@@ -345,7 +381,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var paragraphIndent: Double? {
     return { () -> Double? in
@@ -357,7 +393,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var paragraphSpacing: Double? {
     return { () -> Double? in
@@ -369,7 +405,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var publisherStyles: Bool? {
     return { () -> Bool? in
@@ -381,7 +417,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var readingProgression: String? {
     return { () -> String? in
@@ -393,7 +429,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var scroll: Bool? {
     return { () -> Bool? in
@@ -405,7 +441,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var spread: String? {
     return { () -> String? in
@@ -417,7 +453,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var textAlign: String? {
     return { () -> String? in
@@ -429,7 +465,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var textColor: String? {
     return { () -> String? in
@@ -441,7 +477,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var textNormalization: Bool? {
     return { () -> Bool? in
@@ -453,7 +489,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var theme: String? {
     return { () -> String? in
@@ -465,7 +501,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var typeScale: Double? {
     return { () -> Double? in
@@ -477,7 +513,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var verticalText: Bool? {
     return { () -> Bool? in
@@ -489,7 +525,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var wordSpacing: Double? {
     return { () -> Double? in
@@ -501,7 +537,7 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var merging: Bool? {
     return { () -> Bool? in
@@ -513,13 +549,85 @@ public extension Preferences {
       }
     }()
   }
-  
+
   @inline(__always)
   var comicReadingMode: String? {
     return { () -> String? in
       if bridge.has_value_std__optional_std__string_(self.__comicReadingMode) {
         let __unwrapped = bridge.get_std__optional_std__string_(self.__comicReadingMode)
         return String(__unwrapped)
+      } else {
+        return nil
+      }
+    }()
+  }
+
+  @inline(__always)
+  var comicScaleType: String? {
+    return { () -> String? in
+      if bridge.has_value_std__optional_std__string_(self.__comicScaleType) {
+        let __unwrapped = bridge.get_std__optional_std__string_(self.__comicScaleType)
+        return String(__unwrapped)
+      } else {
+        return nil
+      }
+    }()
+  }
+
+  @inline(__always)
+  var comicStretchSmallPages: Bool? {
+    return { () -> Bool? in
+      if bridge.has_value_std__optional_bool_(self.__comicStretchSmallPages) {
+        let __unwrapped = bridge.get_std__optional_bool_(self.__comicStretchSmallPages)
+        return __unwrapped
+      } else {
+        return nil
+      }
+    }()
+  }
+
+  @inline(__always)
+  var comicWidthLimitEnabled: Bool? {
+    return { () -> Bool? in
+      if bridge.has_value_std__optional_bool_(self.__comicWidthLimitEnabled) {
+        let __unwrapped = bridge.get_std__optional_bool_(self.__comicWidthLimitEnabled)
+        return __unwrapped
+      } else {
+        return nil
+      }
+    }()
+  }
+
+  @inline(__always)
+  var comicWidthLimitPercent: Double? {
+    return { () -> Double? in
+      if bridge.has_value_std__optional_double_(self.__comicWidthLimitPercent) {
+        let __unwrapped = bridge.get_std__optional_double_(self.__comicWidthLimitPercent)
+        return __unwrapped
+      } else {
+        return nil
+      }
+    }()
+  }
+
+  @inline(__always)
+  var comicScrollAmountPercent: Double? {
+    return { () -> Double? in
+      if bridge.has_value_std__optional_double_(self.__comicScrollAmountPercent) {
+        let __unwrapped = bridge.get_std__optional_double_(self.__comicScrollAmountPercent)
+        return __unwrapped
+      } else {
+        return nil
+      }
+    }()
+  }
+
+  @inline(__always)
+  var comicImagePreloadAmount: Double? {
+    return { () -> Double? in
+      if bridge.has_value_std__optional_double_(self.__comicImagePreloadAmount) {
+        let __unwrapped = bridge.get_std__optional_double_(self.__comicImagePreloadAmount)
+        return __unwrapped
       } else {
         return nil
       }
