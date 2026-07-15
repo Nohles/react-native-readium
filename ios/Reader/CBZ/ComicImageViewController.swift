@@ -63,9 +63,8 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     applyTheme()
     if changedPagination {
       rebuildArrangedSubviews()
-    } else {
-      applyLayoutForCurrentPreferences()
     }
+    applyLayoutForCurrentPreferences()
     navigateToIndex(currentIndex, animated: false, emit: false)
     Task { await loadImages(around: currentIndex) }
   }
@@ -146,6 +145,7 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
         return imageView
       }
       rebuildArrangedSubviews()
+      applyLayoutForCurrentPreferences()
     }
 
     let startIndex = initialLocator.flatMap(index(for:)) ?? 0
@@ -189,53 +189,52 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
   }
 
   private func rebuildArrangedSubviews() {
-    stackView.arrangedSubviews.forEach {
-      stackView.removeArrangedSubview($0)
-      $0.removeFromSuperview()
-    }
+    clearImageSizeConstraints()
+    removeArrangedSubviews(from: stackView)
 
     if isPaginatedMode {
       addPaginatedSubviews()
     } else {
       imageViews.forEach { stackView.addArrangedSubview($0) }
     }
-
-    applyLayoutForCurrentPreferences()
   }
 
   private func addPaginatedSubviews() {
     guard !imageViews.isEmpty else { return }
-    let indices = visiblePageIndices
-    if isDoublePageMode, indices.count > 1 {
-      let spread = UIStackView(arrangedSubviews: indices.map { imageViews[$0] })
-      spread.axis = .horizontal
-      spread.alignment = .center
-      spread.distribution = .equalCentering
-      spread.spacing = gap
-      spread.translatesAutoresizingMaskIntoConstraints = false
-      stackView.addArrangedSubview(spread)
-    } else {
-      stackView.addArrangedSubview(imageViews[currentIndex])
+    for index in visiblePageIndices {
+      stackView.addArrangedSubview(imageViews[index])
     }
+  }
+
+  private func removeArrangedSubviews(from stack: UIStackView) {
+    for arrangedSubview in stack.arrangedSubviews {
+      if let nestedStack = arrangedSubview as? UIStackView {
+        removeArrangedSubviews(from: nestedStack)
+      }
+      stack.removeArrangedSubview(arrangedSubview)
+      arrangedSubview.removeFromSuperview()
+    }
+  }
+
+  private func clearImageSizeConstraints() {
+    NSLayoutConstraint.deactivate(imageSizeConstraints)
+    imageSizeConstraints.removeAll()
   }
 
   private func applyLayoutForCurrentPreferences() {
     guard isViewLoaded else { return }
 
-    imageSizeConstraints.forEach { $0.isActive = false }
-    imageSizeConstraints.removeAll()
+    clearImageSizeConstraints()
 
-    stackView.spacing = isPaginatedMode ? 0 : gap
-    stackView.axis = isHorizontalScrollMode ? .horizontal : .vertical
-    stackView.distribution = .fill
+    stackView.spacing = gap
+    stackView.axis = isPaginatedMode || isHorizontalScrollMode ? .horizontal : .vertical
+    stackView.distribution = isPaginatedMode ? .equalCentering : .fill
     scrollView.isPagingEnabled = isPaginatedMode
     applyTheme()
     applyScrollAxisPolicy()
 
     if isPaginatedMode {
-      if rebuildPaginatedSubviewsIfNeeded() {
-        return
-      }
+      rebuildPaginatedSubviewsIfNeeded()
     }
 
     let viewport = scrollView.bounds.size
@@ -244,11 +243,6 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     if isPaginatedMode {
       imageSizeConstraints.append(stackView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor))
       imageSizeConstraints.append(stackView.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor))
-      if let spread = stackView.arrangedSubviews.first as? UIStackView {
-        spread.spacing = gap
-        imageSizeConstraints.append(spread.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor))
-        imageSizeConstraints.append(spread.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor))
-      }
     } else if isHorizontalScrollMode {
       imageSizeConstraints.append(stackView.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor))
     } else {
@@ -266,25 +260,14 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     clampContentOffsetForCurrentMode()
   }
 
-  @discardableResult
-  private func rebuildPaginatedSubviewsIfNeeded() -> Bool {
-    let visibleTags = stackView.arrangedSubviews.flatMap { view -> [Int] in
-      if let imageView = view as? UIImageView {
-        return [imageView.tag]
-      }
-      if let spread = view as? UIStackView {
-        return spread.arrangedSubviews.compactMap { ($0 as? UIImageView)?.tag }
-      }
-      return []
-    }
+  private func rebuildPaginatedSubviewsIfNeeded() {
+    let visibleTags = stackView.arrangedSubviews.compactMap { ($0 as? UIImageView)?.tag }
 
     let expected = visiblePageIndices
 
     if visibleTags != expected {
       rebuildArrangedSubviews()
-      return true
     }
-    return false
   }
 
   private func navigateToIndex(_ index: Int, animated: Bool, emit: Bool = true) {
@@ -294,6 +277,7 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
 
     if isPaginatedMode {
       rebuildArrangedSubviews()
+      applyLayoutForCurrentPreferences()
       scrollView.setContentOffset(.zero, animated: false)
     } else if imageViews.indices.contains(currentIndex) {
       let targetView = imageViews[currentIndex]
