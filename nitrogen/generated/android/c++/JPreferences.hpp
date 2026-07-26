@@ -54,6 +54,8 @@ namespace margelo::nitro::readium {
       jni::local_ref<jni::JDouble> letterSpacing = this->getFieldValue(fieldLetterSpacing);
       static const auto fieldLigatures = clazz->getField<jni::JBoolean>("ligatures");
       jni::local_ref<jni::JBoolean> ligatures = this->getFieldValue(fieldLigatures);
+      static const auto fieldLinkColor = clazz->getField<jni::JString>("linkColor");
+      jni::local_ref<jni::JString> linkColor = this->getFieldValue(fieldLinkColor);
       static const auto fieldLineHeight = clazz->getField<jni::JDouble>("lineHeight");
       jni::local_ref<jni::JDouble> lineHeight = this->getFieldValue(fieldLineHeight);
       static const auto fieldPageMargins = clazz->getField<jni::JDouble>("pageMargins");
@@ -112,6 +114,7 @@ namespace margelo::nitro::readium {
         language != nullptr ? std::make_optional(language->toStdString()) : std::nullopt,
         letterSpacing != nullptr ? std::make_optional(letterSpacing->value()) : std::nullopt,
         ligatures != nullptr ? std::make_optional(static_cast<bool>(ligatures->value())) : std::nullopt,
+        linkColor != nullptr ? std::make_optional(linkColor->toStdString()) : std::nullopt,
         lineHeight != nullptr ? std::make_optional(lineHeight->value()) : std::nullopt,
         pageMargins != nullptr ? std::make_optional(pageMargins->value()) : std::nullopt,
         paragraphIndent != nullptr ? std::make_optional(paragraphIndent->value()) : std::nullopt,
@@ -144,7 +147,7 @@ namespace margelo::nitro::readium {
      */
     [[maybe_unused]]
     static jni::local_ref<JPreferences::javaobject> fromCpp(const Preferences& value) {
-      using JSignature = JPreferences(jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>);
+      using JSignature = JPreferences(jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>);
       static const auto clazz = javaClassStatic();
       static const auto create = clazz->getStaticMethod<JSignature>("fromCpp");
       return create(
@@ -160,6 +163,7 @@ namespace margelo::nitro::readium {
         value.language.has_value() ? jni::make_jstring(value.language.value()) : nullptr,
         value.letterSpacing.has_value() ? jni::JDouble::valueOf(value.letterSpacing.value()) : nullptr,
         value.ligatures.has_value() ? jni::JBoolean::valueOf(value.ligatures.value()) : nullptr,
+        value.linkColor.has_value() ? jni::make_jstring(value.linkColor.value()) : nullptr,
         value.lineHeight.has_value() ? jni::JDouble::valueOf(value.lineHeight.value()) : nullptr,
         value.pageMargins.has_value() ? jni::JDouble::valueOf(value.pageMargins.value()) : nullptr,
         value.paragraphIndent.has_value() ? jni::JDouble::valueOf(value.paragraphIndent.value()) : nullptr,

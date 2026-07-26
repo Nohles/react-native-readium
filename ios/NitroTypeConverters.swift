@@ -37,6 +37,7 @@ func nitroPreferencesToEPUB(_ prefs: Preferences) -> EPUBPreferences {
     language: prefs.language.map { Language(code: .bcp47($0)) },
     letterSpacing: prefs.letterSpacing,
     ligatures: prefs.ligatures,
+    linkColor: prefs.linkColor.flatMap { ReadiumNavigator.Color(hex: $0) },
     lineHeight: prefs.lineHeight,
     pageMargins: prefs.pageMargins,
     paragraphIndent: prefs.paragraphIndent,

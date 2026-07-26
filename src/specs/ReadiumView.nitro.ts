@@ -54,6 +54,7 @@ export interface Preferences {
   language?: string;
   letterSpacing?: number;
   ligatures?: boolean;
+  linkColor?: string;
   lineHeight?: number;
   pageMargins?: number;
   paragraphIndent?: number;
