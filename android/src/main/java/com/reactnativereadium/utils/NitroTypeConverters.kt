@@ -44,6 +44,7 @@ internal fun nitroPreferencesToEpub(prefs: Preferences): ReadiumEpubPreferences 
     language = prefs.language?.let { Language(it) },
     letterSpacing = prefs.letterSpacing,
     ligatures = prefs.ligatures,
+    linkColor = prefs.linkColor?.let { parseReadiumColor(it) },
     lineHeight = prefs.lineHeight,
     pageMargins = prefs.pageMargins,
     paragraphIndent = prefs.paragraphIndent,

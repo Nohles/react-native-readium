@@ -1,4 +1,5 @@
 import type { Preferences as SpecPreferences } from '../specs/ReadiumView.nitro';
+import type { ComicScaleType } from './Comic';
 
 /**
  * Preferences with refined string union types for better IDE autocompletion.
@@ -37,4 +38,10 @@ export interface Preferences
     | 'continuousVertical'
     | 'continuousHorizontal'
     | 'webtoon';
+  comicScaleType?: ComicScaleType;
+  comicStretchSmallPages?: boolean;
+  comicWidthLimitEnabled?: boolean;
+  comicWidthLimitPercent?: number;
+  comicScrollAmountPercent?: number;
+  comicImagePreloadAmount?: number;
 }

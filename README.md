@@ -466,6 +466,12 @@ const preferences = createComicPreferences({
   scaleType: 'fitWidth', // 'fitWidth' | 'fitHeight' | 'fitScreen' | 'originalSize'
   tapZones: 'rightAndLeft',
   pageGapPx: 5,
+  theme: 'dark',
+  stretchSmallPages: false,
+  widthLimitEnabled: false,
+  widthLimitPercent: 50,
+  scrollAmountPercent: 95,
+  imagePreloadAmount: 5,
 });
 
 <ReadiumView
@@ -483,16 +489,22 @@ const preferences = createComicPreferences({
 
 Preset mapping:
 
-| Reading mode           | Readium preferences                               |
-| ---------------------- | ------------------------------------------------- |
-| `default`              | Resolves to `singlePage`                          |
-| `webtoon`              | `scroll: true`, `spread: "never"`, `fit: "width"` |
-| `continuousVertical`   | `scroll: true`, `spread: "never"`                 |
-| `continuousHorizontal` | `scroll: true`, `spread: "never"`                 |
-| `singlePage`           | `scroll: false`, `spread: "never"`                |
-| `doublePage`           | `scroll: false`, `spread: "always"`               |
+| Reading mode           | Readium preferences                 |
+| ---------------------- | ----------------------------------- |
+| `default`              | Resolves to `singlePage`            |
+| `webtoon`              | `scroll: true`, `spread: "never"`   |
+| `continuousVertical`   | `scroll: true`, `spread: "never"`   |
+| `continuousHorizontal` | `scroll: true`, `spread: "never"`   |
+| `singlePage`           | `scroll: false`, `spread: "never"`  |
+| `doublePage`           | `scroll: false`, `spread: "always"` |
 
 The legacy `canvasMode`, `readingDirection`, and `fit` settings are still accepted for existing callers.
+
+The iOS comic navigator applies all five layouts, exact scale modes, page gap,
+reading direction, small-page stretching, width limiting, webtoon scroll amount,
+theme, and bounded image preloading. Tap-zone action resolution and progress-rail
+placement helpers are exported for host apps so their chrome can stay native to
+the app while matching Thorium behavior.
 
 The native navigator owns pinch, double-tap, pointer/wheel, and keyboard navigation where supported by the platform. Sync remains app-owned: persist the `ComicProgress` payload locally or upload it as your encrypted/iCloud/Drive blob, then pass `comicLocatorFromProgress(progress)` as `file.initialLocation` when reopening.
 

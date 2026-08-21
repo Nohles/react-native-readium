@@ -51,6 +51,7 @@ namespace margelo::nitro::readium {
     std::optional<std::string> language     SWIFT_PRIVATE;
     std::optional<double> letterSpacing     SWIFT_PRIVATE;
     std::optional<bool> ligatures     SWIFT_PRIVATE;
+    std::optional<std::string> linkColor     SWIFT_PRIVATE;
     std::optional<double> lineHeight     SWIFT_PRIVATE;
     std::optional<double> pageMargins     SWIFT_PRIVATE;
     std::optional<double> paragraphIndent     SWIFT_PRIVATE;
@@ -68,10 +69,16 @@ namespace margelo::nitro::readium {
     std::optional<double> wordSpacing     SWIFT_PRIVATE;
     std::optional<bool> merging     SWIFT_PRIVATE;
     std::optional<std::string> comicReadingMode     SWIFT_PRIVATE;
+    std::optional<std::string> comicScaleType     SWIFT_PRIVATE;
+    std::optional<bool> comicStretchSmallPages     SWIFT_PRIVATE;
+    std::optional<bool> comicWidthLimitEnabled     SWIFT_PRIVATE;
+    std::optional<double> comicWidthLimitPercent     SWIFT_PRIVATE;
+    std::optional<double> comicScrollAmountPercent     SWIFT_PRIVATE;
+    std::optional<double> comicImagePreloadAmount     SWIFT_PRIVATE;
 
   public:
     Preferences() = default;
-    explicit Preferences(std::optional<std::string> backgroundColor, std::optional<std::string> columnCount, std::optional<std::string> fit, std::optional<std::string> fontFamily, std::optional<double> fontSize, std::optional<double> fontWeight, std::optional<bool> hyphens, std::optional<std::string> imageFilter, std::optional<std::string> language, std::optional<double> letterSpacing, std::optional<bool> ligatures, std::optional<double> lineHeight, std::optional<double> pageMargins, std::optional<double> paragraphIndent, std::optional<double> paragraphSpacing, std::optional<bool> publisherStyles, std::optional<std::string> readingProgression, std::optional<bool> scroll, std::optional<std::string> spread, std::optional<std::string> textAlign, std::optional<std::string> textColor, std::optional<bool> textNormalization, std::optional<std::string> theme, std::optional<double> typeScale, std::optional<bool> verticalText, std::optional<double> wordSpacing, std::optional<bool> merging, std::optional<std::string> comicReadingMode): backgroundColor(backgroundColor), columnCount(columnCount), fit(fit), fontFamily(fontFamily), fontSize(fontSize), fontWeight(fontWeight), hyphens(hyphens), imageFilter(imageFilter), language(language), letterSpacing(letterSpacing), ligatures(ligatures), lineHeight(lineHeight), pageMargins(pageMargins), paragraphIndent(paragraphIndent), paragraphSpacing(paragraphSpacing), publisherStyles(publisherStyles), readingProgression(readingProgression), scroll(scroll), spread(spread), textAlign(textAlign), textColor(textColor), textNormalization(textNormalization), theme(theme), typeScale(typeScale), verticalText(verticalText), wordSpacing(wordSpacing), merging(merging), comicReadingMode(comicReadingMode) {}
+    explicit Preferences(std::optional<std::string> backgroundColor, std::optional<std::string> columnCount, std::optional<std::string> fit, std::optional<std::string> fontFamily, std::optional<double> fontSize, std::optional<double> fontWeight, std::optional<bool> hyphens, std::optional<std::string> imageFilter, std::optional<std::string> language, std::optional<double> letterSpacing, std::optional<bool> ligatures, std::optional<std::string> linkColor, std::optional<double> lineHeight, std::optional<double> pageMargins, std::optional<double> paragraphIndent, std::optional<double> paragraphSpacing, std::optional<bool> publisherStyles, std::optional<std::string> readingProgression, std::optional<bool> scroll, std::optional<std::string> spread, std::optional<std::string> textAlign, std::optional<std::string> textColor, std::optional<bool> textNormalization, std::optional<std::string> theme, std::optional<double> typeScale, std::optional<bool> verticalText, std::optional<double> wordSpacing, std::optional<bool> merging, std::optional<std::string> comicReadingMode, std::optional<std::string> comicScaleType, std::optional<bool> comicStretchSmallPages, std::optional<bool> comicWidthLimitEnabled, std::optional<double> comicWidthLimitPercent, std::optional<double> comicScrollAmountPercent, std::optional<double> comicImagePreloadAmount): backgroundColor(backgroundColor), columnCount(columnCount), fit(fit), fontFamily(fontFamily), fontSize(fontSize), fontWeight(fontWeight), hyphens(hyphens), imageFilter(imageFilter), language(language), letterSpacing(letterSpacing), ligatures(ligatures), linkColor(linkColor), lineHeight(lineHeight), pageMargins(pageMargins), paragraphIndent(paragraphIndent), paragraphSpacing(paragraphSpacing), publisherStyles(publisherStyles), readingProgression(readingProgression), scroll(scroll), spread(spread), textAlign(textAlign), textColor(textColor), textNormalization(textNormalization), theme(theme), typeScale(typeScale), verticalText(verticalText), wordSpacing(wordSpacing), merging(merging), comicReadingMode(comicReadingMode), comicScaleType(comicScaleType), comicStretchSmallPages(comicStretchSmallPages), comicWidthLimitEnabled(comicWidthLimitEnabled), comicWidthLimitPercent(comicWidthLimitPercent), comicScrollAmountPercent(comicScrollAmountPercent), comicImagePreloadAmount(comicImagePreloadAmount) {}
 
   public:
     friend bool operator==(const Preferences& lhs, const Preferences& rhs) = default;
@@ -98,6 +105,7 @@ namespace margelo::nitro {
         JSIConverter<std::optional<std::string>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "language"))),
         JSIConverter<std::optional<double>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "letterSpacing"))),
         JSIConverter<std::optional<bool>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "ligatures"))),
+        JSIConverter<std::optional<std::string>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "linkColor"))),
         JSIConverter<std::optional<double>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "lineHeight"))),
         JSIConverter<std::optional<double>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "pageMargins"))),
         JSIConverter<std::optional<double>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "paragraphIndent"))),
@@ -114,7 +122,13 @@ namespace margelo::nitro {
         JSIConverter<std::optional<bool>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "verticalText"))),
         JSIConverter<std::optional<double>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "wordSpacing"))),
         JSIConverter<std::optional<bool>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "merging"))),
-        JSIConverter<std::optional<std::string>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "comicReadingMode")))
+        JSIConverter<std::optional<std::string>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "comicReadingMode"))),
+        JSIConverter<std::optional<std::string>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "comicScaleType"))),
+        JSIConverter<std::optional<bool>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "comicStretchSmallPages"))),
+        JSIConverter<std::optional<bool>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "comicWidthLimitEnabled"))),
+        JSIConverter<std::optional<double>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "comicWidthLimitPercent"))),
+        JSIConverter<std::optional<double>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "comicScrollAmountPercent"))),
+        JSIConverter<std::optional<double>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "comicImagePreloadAmount")))
       );
     }
     static inline jsi::Value toJSI(jsi::Runtime& runtime, const margelo::nitro::readium::Preferences& arg) {
@@ -130,6 +144,7 @@ namespace margelo::nitro {
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "language"), JSIConverter<std::optional<std::string>>::toJSI(runtime, arg.language));
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "letterSpacing"), JSIConverter<std::optional<double>>::toJSI(runtime, arg.letterSpacing));
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "ligatures"), JSIConverter<std::optional<bool>>::toJSI(runtime, arg.ligatures));
+      obj.setProperty(runtime, PropNameIDCache::get(runtime, "linkColor"), JSIConverter<std::optional<std::string>>::toJSI(runtime, arg.linkColor));
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "lineHeight"), JSIConverter<std::optional<double>>::toJSI(runtime, arg.lineHeight));
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "pageMargins"), JSIConverter<std::optional<double>>::toJSI(runtime, arg.pageMargins));
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "paragraphIndent"), JSIConverter<std::optional<double>>::toJSI(runtime, arg.paragraphIndent));
@@ -147,6 +162,12 @@ namespace margelo::nitro {
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "wordSpacing"), JSIConverter<std::optional<double>>::toJSI(runtime, arg.wordSpacing));
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "merging"), JSIConverter<std::optional<bool>>::toJSI(runtime, arg.merging));
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "comicReadingMode"), JSIConverter<std::optional<std::string>>::toJSI(runtime, arg.comicReadingMode));
+      obj.setProperty(runtime, PropNameIDCache::get(runtime, "comicScaleType"), JSIConverter<std::optional<std::string>>::toJSI(runtime, arg.comicScaleType));
+      obj.setProperty(runtime, PropNameIDCache::get(runtime, "comicStretchSmallPages"), JSIConverter<std::optional<bool>>::toJSI(runtime, arg.comicStretchSmallPages));
+      obj.setProperty(runtime, PropNameIDCache::get(runtime, "comicWidthLimitEnabled"), JSIConverter<std::optional<bool>>::toJSI(runtime, arg.comicWidthLimitEnabled));
+      obj.setProperty(runtime, PropNameIDCache::get(runtime, "comicWidthLimitPercent"), JSIConverter<std::optional<double>>::toJSI(runtime, arg.comicWidthLimitPercent));
+      obj.setProperty(runtime, PropNameIDCache::get(runtime, "comicScrollAmountPercent"), JSIConverter<std::optional<double>>::toJSI(runtime, arg.comicScrollAmountPercent));
+      obj.setProperty(runtime, PropNameIDCache::get(runtime, "comicImagePreloadAmount"), JSIConverter<std::optional<double>>::toJSI(runtime, arg.comicImagePreloadAmount));
       return obj;
     }
     static inline bool canConvert(jsi::Runtime& runtime, const jsi::Value& value) {
@@ -168,6 +189,7 @@ namespace margelo::nitro {
       if (!JSIConverter<std::optional<std::string>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "language")))) return false;
       if (!JSIConverter<std::optional<double>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "letterSpacing")))) return false;
       if (!JSIConverter<std::optional<bool>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "ligatures")))) return false;
+      if (!JSIConverter<std::optional<std::string>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "linkColor")))) return false;
       if (!JSIConverter<std::optional<double>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "lineHeight")))) return false;
       if (!JSIConverter<std::optional<double>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "pageMargins")))) return false;
       if (!JSIConverter<std::optional<double>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "paragraphIndent")))) return false;
@@ -185,6 +207,12 @@ namespace margelo::nitro {
       if (!JSIConverter<std::optional<double>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "wordSpacing")))) return false;
       if (!JSIConverter<std::optional<bool>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "merging")))) return false;
       if (!JSIConverter<std::optional<std::string>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "comicReadingMode")))) return false;
+      if (!JSIConverter<std::optional<std::string>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "comicScaleType")))) return false;
+      if (!JSIConverter<std::optional<bool>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "comicStretchSmallPages")))) return false;
+      if (!JSIConverter<std::optional<bool>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "comicWidthLimitEnabled")))) return false;
+      if (!JSIConverter<std::optional<double>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "comicWidthLimitPercent")))) return false;
+      if (!JSIConverter<std::optional<double>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "comicScrollAmountPercent")))) return false;
+      if (!JSIConverter<std::optional<double>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "comicImagePreloadAmount")))) return false;
       return true;
     }
   };
