@@ -1,98 +1,99 @@
 version: 2.1
 
+orbs:
+  node: circleci/node@7.2.1
+
 executors:
-  default:
+  javascript:
     docker:
-      - image: circleci/node:10
+      - image: cimg/node:22.19
     working_directory: ~/project
 
 commands:
-  attach_project:
+  install_dependencies:
     steps:
-      - attach_workspace:
-          at: ~/project
+      - restore_cache:
+          keys:
+            - yarn-v2-{{ arch }}-{{ checksum "yarn.lock" }}
+            - yarn-v2-{{ arch }}-
+      - run:
+          name: Install workspace dependencies
+          command: yarn install --frozen-lockfile
+      - save_cache:
+          key: yarn-v2-{{ arch }}-{{ checksum "yarn.lock" }}
+          paths:
+            - ~/.cache/yarn
 
 jobs:
-  install-dependencies:
-    executor: default
+  javascript:
+    executor: javascript
     steps:
       - checkout
-      - attach_project
-      - restore_cache:
-          keys:
-            - dependencies-{{ checksum "package.json" }}
-            - dependencies-
-      - restore_cache:
-          keys:
-            - dependencies-example-{{ checksum "example/package.json" }}
-            - dependencies-example-
+      - install_dependencies
       - run:
-          name: Install dependencies
-          command: |
-            yarn install --cwd example --frozen-lockfile
-            yarn install --frozen-lockfile
-      - save_cache:
-          key: dependencies-{{ checksum "package.json" }}
-          paths: node_modules
-      - save_cache:
-          key: dependencies-example-{{ checksum "example/package.json" }}
-          paths: example/node_modules
-      - persist_to_workspace:
-          root: .
-          paths: .
-
-  lint:
-    executor: default
-    steps:
-      - attach_project
+          name: Lint
+          command: yarn lint
       - run:
-          name: Lint files
-          command: |
-            yarn lint
-
-  typescript:
-    executor: default
-    steps:
-      - attach_project
-      - run:
-          name: Typecheck files
+          name: Typecheck
           command: |
             yarn typescript
-
-  unit-tests:
-    executor: default
-    steps:
-      - attach_project
+            yarn tsc --noEmit -p apps/example-native/tsconfig.json
+            yarn tsc --noEmit -p apps/example-expo/tsconfig.json
       - run:
-          name: Run unit tests
-          command: |
-            yarn test --coverage
+          name: Unit tests
+          command: yarn test --coverage --runInBand
+      - run:
+          name: Build package
+          command: yarn prepare
       - store_artifacts:
           path: coverage
           destination: coverage
 
-  build-package:
-    executor: default
+  android-examples:
+    machine:
+      image: android:2026.05.1
+    resource_class: large
+    working_directory: ~/project
     steps:
-      - attach_project
+      - checkout
+      - node/install:
+          node-version: '22.19.0'
+          install-yarn: true
       - run:
-          name: Build package
-          command: |
-            yarn prepare
+          name: Initialize Kotlin toolkit fork
+          command: git submodule update --init --depth 1 external/kotlin-toolkit
+      - install_dependencies
+      - restore_cache:
+          keys:
+            - kotlin-toolkit-v2-{{ checksum ".gitmodules" }}-{{ checksum "external/kotlin-toolkit/gradle/libs.versions.toml" }}
+            - kotlin-toolkit-v2-
+      - run:
+          name: Publish Kotlin toolkit fork locally
+          command: SKIP_SIGNING=1 ./scripts/publish-kotlin-toolkit-maven-local.sh --no-daemon
+      - save_cache:
+          key: kotlin-toolkit-v2-{{ checksum ".gitmodules" }}-{{ checksum "external/kotlin-toolkit/gradle/libs.versions.toml" }}
+          paths:
+            - ~/.m2/repository/org/readium
+            - ~/.gradle/caches
+            - ~/.gradle/wrapper
+      - run:
+          name: Build native Android example
+          command: cd apps/example-native/android && ./gradlew :app:assembleDebug --no-daemon -PreactNativeArchitectures=x86_64
+      - run:
+          name: Generate Expo Android project
+          command: yarn workspace example-expo prebuild --platform android --no-install
+      - run:
+          name: Build Expo Android example
+          command: cd apps/example-expo/android && ./gradlew :app:assembleDebug --no-daemon -PreactNativeArchitectures=x86_64
+      - store_artifacts:
+          path: apps/example-native/android/app/build/outputs/apk/debug/app-debug.apk
+          destination: example-native-debug.apk
+      - store_artifacts:
+          path: apps/example-expo/android/app/build/outputs/apk/debug/app-debug.apk
+          destination: example-expo-debug.apk
 
 workflows:
   build-and-test:
     jobs:
-      - install-dependencies
-      - lint:
-          requires:
-            - install-dependencies
-      - typescript:
-          requires:
-            - install-dependencies
-      - unit-tests:
-          requires:
-            - install-dependencies
-      - build-package:
-          requires:
-            - install-dependencies
+      - javascript
+      - android-examples

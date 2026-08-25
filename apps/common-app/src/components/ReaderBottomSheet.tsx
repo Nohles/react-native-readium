@@ -12,6 +12,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Reader } from './Reader';
+import { AudiobookMiniPlayer } from './AudiobookMiniPlayer';
 import type { ReaderHandle } from './Reader';
 import type { BookOption } from '../types/reader.types';
 import type {
@@ -93,6 +94,8 @@ export const ReaderBottomSheet: React.FC<ReaderBottomSheetProps> = ({
 }) => {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [readerHandle, setReaderHandle] = useState<ReaderHandle | null>(null);
+  const [audiobookPlaybackState, setAudiobookPlaybackState] =
+    useState<AudiobookPlaybackState | null>(null);
   const [contentMode, setContentMode] = useState<ContentMode>('reader');
   const wasOpen = useRef(false);
   const isAudiobook =
@@ -138,6 +141,14 @@ export const ReaderBottomSheet: React.FC<ReaderBottomSheetProps> = ({
     [onReaderReady]
   );
 
+  const handleAudiobookPlaybackStateChange = useCallback(
+    (state: AudiobookPlaybackState) => {
+      setAudiobookPlaybackState(state);
+      onAudiobookPlaybackStateChange?.(state);
+    },
+    [onAudiobookPlaybackStateChange]
+  );
+
   React.useEffect(() => {
     return () => onReaderReady?.(null);
   }, [onReaderReady]);
@@ -157,7 +168,7 @@ export const ReaderBottomSheet: React.FC<ReaderBottomSheetProps> = ({
       <View style={styles.content}>
         {contentMode === 'reader' ? (
           <>
-            {book && !readerHandle && !isAudiobook ? (
+            {!book || !readerHandle || isAudiobook ? (
               <EmptyBar onClose={handleClose} />
             ) : null}
 
@@ -174,7 +185,7 @@ export const ReaderBottomSheet: React.FC<ReaderBottomSheetProps> = ({
                   initialPreferences={readerInitialPreferences}
                   onPreferencesChange={onPreferencesChange}
                   onAudiobookPlaybackStateChange={
-                    onAudiobookPlaybackStateChange
+                    handleAudiobookPlaybackStateChange
                   }
                   onPublicationTitleChange={onPublicationTitleChange}
                   audiobookBookmarks={audiobookBookmarks}
@@ -191,6 +202,14 @@ export const ReaderBottomSheet: React.FC<ReaderBottomSheetProps> = ({
                   >
                     <MaterialIcons name="info-outline" size={24} color="#FFF" />
                   </TouchableOpacity>
+                ) : audiobookPlaybackState ? (
+                  <AudiobookMiniPlayer
+                    playbackState={audiobookPlaybackState}
+                    title={book.title}
+                    onPlay={() => readerHandle?.play()}
+                    onPause={() => readerHandle?.pause()}
+                    onNext={() => readerHandle?.goForward()}
+                  />
                 ) : null}
               </View>
             ) : (

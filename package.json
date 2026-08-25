@@ -34,7 +34,7 @@
   "scripts": {
     "test": "jest",
     "typescript": "tsc --noEmit",
-    "lint": "eslint \"./src/**/*.{js,ts,tsx}\" \"./apps/**/src/**/*.{js,ts,tsx}\"",
+    "lint": "eslint \"./src/**/*.{js,ts,tsx}\" \"./apps/**/src/**/*.{js,ts,tsx}\" \"./apps/example-expo/*.{ts,tsx}\" \"./apps/example-expo/{helpers,screens}/**/*.{ts,tsx}\"",
     "lint:fix": "eslint ./src ./apps/*/src --fix",
     "prettier": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "prettier:fix": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",

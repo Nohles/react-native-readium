@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Platform, StyleSheet } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import {
   useAudiobookPlayer,
@@ -22,32 +22,13 @@ export default function App() {
     Record<string, AudiobookBookmark[]>
   >({});
 
-  const guardPlatform = (sample: Sample): boolean => {
-    if (Platform.OS === 'android' && sample.format !== 'epub') {
-      Alert.alert(
-        'iOS only in this release',
-        'Android audiobook, comic, and PDF support is planned for a later PR.'
-      );
-      return false;
-    }
-    return true;
-  };
-
   const openSample = (sample: Sample) => {
-    if (!guardPlatform(sample)) return;
     setRoute({ screen: 'reader', sample });
   };
 
   const openComic = async () => {
-    if (Platform.OS !== 'ios') {
-      Alert.alert(
-        'iOS only in this release',
-        'Android comic support is deferred.'
-      );
-      return;
-    }
     const result = await DocumentPicker.getDocumentAsync({
-      type: ['application/vnd.comicbook+zip', 'application/zip'],
+      type: ['application/vnd.comicbook+zip', 'application/zip', '*/*'],
       copyToCacheDirectory: true,
     });
     if (!result.canceled) {

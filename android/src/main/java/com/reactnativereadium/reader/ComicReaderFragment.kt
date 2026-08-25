@@ -366,7 +366,13 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
 
     val attachedIndices = if (paginated) visiblePageIndices else links.indices.toList()
     attachedIndices.forEach { index ->
-      imageViews.getOrNull(index)?.let { stack.addView(it) }
+      imageViews.getOrNull(index)?.let { imageView ->
+        // A preference update can rebuild the container without recreating
+        // the page views. Detach each page from the previous stack before
+        // moving it into the new one.
+        (imageView.parent as? ViewGroup)?.removeView(imageView)
+        stack.addView(imageView)
+      }
     }
 
     root.addView(scrollView, 0)
