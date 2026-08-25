@@ -4,3 +4,17 @@ extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autoli
 rootProject.name = 'ReadiumExample'
 include ':app'
 includeBuild('../../../node_modules/@react-native/gradle-plugin')
+
+// react-native-readium: consume Nohles/kotlin-toolkit as a source
+// dependency (git submodule at external/kotlin-toolkit) so fork-level
+// changes land without publishing artifacts.
+def kotlinToolkitDir = file('../../../external/kotlin-toolkit')
+if (kotlinToolkitDir.exists()) {
+    includeBuild(kotlinToolkitDir) {
+        dependencySubstitution {
+            substitute module('org.readium.kotlin-toolkit:readium-shared') using project(':readium:shared')
+            substitute module('org.readium.kotlin-toolkit:readium-streamer') using project(':readium:streamer')
+            substitute module('org.readium.kotlin-toolkit:readium-navigator') using project(':readium:navigator')
+        }
+    }
+}
