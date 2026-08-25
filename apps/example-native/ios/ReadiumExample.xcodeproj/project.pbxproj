@@ -17,6 +17,7 @@
 		A1B2C3D4E5F60718A1B2C3D5 /* the-brothers-karamazov.epub in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718A1B2C3D4 /* the-brothers-karamazov.epub */; };
 		A1B2C3D4E5F60718A1B2C3D9 /* one-piece-v01.cbz in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718A1B2C3D8 /* one-piece-v01.cbz */; };
 		A1B2C3D4E5F60718A1B2C3DB /* harry-potter-chamber-of-secrets.m4b in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718A1B2C3DA /* harry-potter-chamber-of-secrets.m4b */; };
+		B1C2D3E4F5A60718A1B2C3D1 /* sense-and-sensibility.pdf in Resources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5A60718A1B2C3D0 /* sense-and-sensibility.pdf */; };
 		E461B59F65233381FD4757D0 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 0F7A153113BA277AD9F4CA21 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
@@ -53,6 +54,7 @@
 		A1B2C3D4E5F60718A1B2C3D4 /* the-brothers-karamazov.epub */ = {isa = PBXFileReference; lastKnownFileType = file; name = "the-brothers-karamazov.epub"; path = "../resources/the-brothers-karamazov.epub"; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718A1B2C3D8 /* one-piece-v01.cbz */ = {isa = PBXFileReference; lastKnownFileType = archive.zip; name = "one-piece-v01.cbz"; path = "../resources/one-piece-v01.cbz"; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718A1B2C3DA /* harry-potter-chamber-of-secrets.m4b */ = {isa = PBXFileReference; lastKnownFileType = file; name = "harry-potter-chamber-of-secrets.m4b"; path = "../resources/harry-potter-chamber-of-secrets.m4b"; sourceTree = "<group>"; };
+		B1C2D3E4F5A60718A1B2C3D0 /* sense-and-sensibility.pdf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "sense-and-sensibility.pdf"; path = "../resources/sense-and-sensibility.pdf"; sourceTree = "<group>"; };
 		B334C6DBDA9937FDFBC060B8 /* Pods-ReadiumExample.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ReadiumExample.debug.xcconfig"; path = "Target Support Files/Pods-ReadiumExample/Pods-ReadiumExample.debug.xcconfig"; sourceTree = "<group>"; };
 		B862455935D64D3826D1780F /* libPods-ReadiumExample.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ReadiumExample.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -164,6 +166,7 @@
 				A1B2C3D4E5F60718A1B2C3D4 /* the-brothers-karamazov.epub */,
 				A1B2C3D4E5F60718A1B2C3D8 /* one-piece-v01.cbz */,
 				A1B2C3D4E5F60718A1B2C3DA /* harry-potter-chamber-of-secrets.m4b */,
+				B1C2D3E4F5A60718A1B2C3D0 /* sense-and-sensibility.pdf */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -318,6 +321,7 @@
 				A1B2C3D4E5F60718A1B2C3D5 /* the-brothers-karamazov.epub in Resources */,
 				A1B2C3D4E5F60718A1B2C3D9 /* one-piece-v01.cbz in Resources */,
 				A1B2C3D4E5F60718A1B2C3DB /* harry-potter-chamber-of-secrets.m4b in Resources */,
+				B1C2D3E4F5A60718A1B2C3D1 /* sense-and-sensibility.pdf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

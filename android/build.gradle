@@ -90,6 +90,8 @@ repositories {
   mavenLocal()
   mavenCentral()
   google()
+  // required by readium's pdfium adapter, which pulls com.github.marain87:*
+  maven { url "https://jitpack.io" }
 
   def found = false
   def defaultDir = null
@@ -174,6 +176,8 @@ dependencies {
     // transitive deps to avoid potential collisions with other projects.
     exclude group: "com.google.android.exoplayer"
   }
+  implementation "org.readium.kotlin-toolkit:readium-adapter-pdfium-navigator:$readium_version"
+  implementation "org.readium.kotlin-toolkit:readium-adapter-pdfium-document:$readium_version"
 
   // other deps
   implementation "androidx.core:core-ktx:1.13.1"

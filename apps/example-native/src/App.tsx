@@ -55,6 +55,15 @@ const books: BookOption[] = [
   },
 
   {
+    id: 'sense-and-sensibility',
+    title: 'Sense and Sensibility',
+    author: 'Jane Austen',
+    type: 'pdf',
+    format: 'pdf',
+    bundledAsset: 'sense-and-sensibility.pdf',
+    epubPath: `${RNFS.DocumentDirectoryPath}/sense-and-sensibility.pdf`,
+  },
+  {
     id: 'one-piece-v01',
     title: 'One Piece v01',
     author: 'Eiichiro Oda',
