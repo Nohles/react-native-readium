@@ -312,12 +312,22 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
     }
 
     scope.launch {
-      service.openPublication(path, initialLocator) { result ->
-        when (result) {
-          is ReaderService.OpenResult.Visual -> addFragment(result.fragment)
-          ReaderService.OpenResult.Audiobook -> hostAudiobook()
+      service.openPublication(
+        path,
+        initialLocator,
+        callback = { result ->
+          when (result) {
+            is ReaderService.OpenResult.Visual -> addFragment(result.fragment)
+            ReaderService.OpenResult.Audiobook -> hostAudiobook()
+          }
+        },
+        onFailure = { message ->
+          // Mirror of iOS loadBook onFailure reset: log and clear the build
+          // state so the same file can be retried (e.g. after re-attach).
+          Log.e(TAG, "Failed to open publication: $message")
+          isBuilding = false
         }
-      }
+      )
     }
   }
 

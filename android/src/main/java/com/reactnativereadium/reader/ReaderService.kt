@@ -4,11 +4,13 @@ import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.util.RNLog
 import com.reactnativereadium.audio.AudiobookSession
 import com.reactnativereadium.utils.LinkOrLocator
+import com.reactnativereadium.utils.PublicationUrlResolver
 import java.io.File
-import java.net.URI
 import java.util.Locale
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.Publication
+import org.readium.r2.shared.publication.services.isRestricted
+import org.readium.r2.shared.publication.services.protectionError
 import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.FileExtension
 import org.readium.r2.shared.util.Url
@@ -66,9 +68,24 @@ class ReaderService(
   suspend fun openPublication(
     fileName: String,
     initialLocation: LinkOrLocator?,
-    callback: suspend (result: OpenResult) -> Unit
+    callback: suspend (result: OpenResult) -> Unit,
+    onFailure: (message: String) -> Unit = {}
   ) {
-    val publication = retrievePublication(fileName) ?: return
+    val publication = retrievePublication(fileName)
+    if (publication == null) {
+      onFailure("Unable to retrieve or parse publication: $fileName")
+      return
+    }
+
+    // Port of iOS checkIsReadable (ios/Reader/ReaderService.swift:183-192):
+    // refuse DRM-restricted publications instead of opening a broken reader.
+    if (publication.isRestricted) {
+      val message = publication.protectionError?.message
+        ?: "Publication is protected by DRM and cannot be opened."
+      RNLog.w(reactContext, "Failed to open publication: $message")
+      onFailure(message)
+      return
+    }
 
     val locator = locatorFromLinkOrLocator(initialLocation, publication)
 
@@ -153,7 +170,7 @@ class ReaderService(
   }
 
   private fun publicationSource(fileName: String): PublicationSource? {
-    if (isRemoteUrl(fileName)) {
+    if (PublicationUrlResolver.isRemoteUrl(fileName)) {
       val remoteUrl = AbsoluteUrl(fileName)
       if (remoteUrl == null) {
         RNLog.e(reactContext, "Invalid publication URL: $fileName")
@@ -161,7 +178,7 @@ class ReaderService(
       }
       return PublicationSource(
         url = remoteUrl,
-        formatHints = formatHintsForUrl(fileName)
+        formatHints = PublicationUrlResolver.formatHintsForUrl(fileName)
       )
     }
 
@@ -190,21 +207,6 @@ class ReaderService(
       url = publicationUrl,
       formatHints = FormatHints(fileExtension = fileExtension?.let { FileExtension(it) })
     )
-  }
-
-  private fun isRemoteUrl(fileName: String): Boolean =
-    runCatching {
-      val uri = URI(fileName)
-      uri.scheme == "http" || uri.scheme == "https"
-    }.getOrDefault(false)
-
-  private fun formatHintsForUrl(url: String): FormatHints {
-    val path = url.substringBefore('?').substringBefore('#')
-    if (!path.endsWith("/manifest.json") && !path.endsWith("manifest.json")) {
-      return FormatHints()
-    }
-
-    return FormatHints(mediaType = MediaType("application/readium-webpub+json")!!)
   }
 
   private data class PublicationSource(
