@@ -9515,7 +9515,7 @@ __metadata:
     react-native: 0.83.1
     react-native-clean-project: ^4.0.1
     react-native-fs: ^2.20.0
-    react-native-gesture-handler: ^2.24.0
+    react-native-gesture-handler: ^2.32.0
     react-native-nitro-modules: ^0.35.0
     react-native-readium: "npm:@nohles/react-native-readium@workspace:*"
     react-native-reanimated: ^4.0.0
@@ -16031,6 +16031,21 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 130a1cc04879ea11808472dbe2f4e346baca0cb52713279f3d4b5fbd397324bef2379f1f60bf0ce1763e12a8656267abb0e879418fb37c81fc6bbdcdb7fc797d
+  languageName: node
+  linkType: hard
+
+"react-native-gesture-handler@npm:^2.32.0":
+  version: 2.32.0
+  resolution: "react-native-gesture-handler@npm:2.32.0"
+  dependencies:
+    "@egjs/hammerjs": ^2.0.17
+    "@types/react-test-renderer": ^19.1.0
+    hoist-non-react-statics: ^3.3.0
+    invariant: ^2.2.4
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 213362acc5489ba07bd648e1131547e71b53847949221c8ab7111115a77a98ad283b54203eb45097a39ef7e1685c74e212e91c6f1697adb1f42fa296dabf16de
   languageName: node
   linkType: hard
 
