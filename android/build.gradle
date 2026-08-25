@@ -1,6 +1,9 @@
 buildscript {
-  // Buildscript is evaluated before everything else so we can't use getExtOrDefault
-  def kotlin_version = rootProject.ext.has('kotlinVersion') ? rootProject.ext.get('kotlinVersion') : project.properties['Readium_kotlinVersion']
+  // Pinned: the toolkit 3.3.0 artifacts carry Kotlin 2.3 metadata, so this
+  // library must compile with Kotlin >= 2.3 regardless of the host app's
+  // kotlinVersion override (hosts overriding lower will fail their own
+  // compilation of app code that reads these classes).
+  def kotlin_version = project.properties['Readium_kotlinVersion']
   // Consumed as a source dependency (composite build) when the host app
   // wires `includeBuild` against external/kotlin-toolkit; this Maven
   // coordinate is the fallback for hosts that do not substitute.
@@ -82,6 +85,9 @@ android {
 }
 
 repositories {
+  // locally-published Nohles/kotlin-toolkit artifacts win over Maven
+  // Central (see scripts/publish-kotlin-toolkit-maven-local.sh)
+  mavenLocal()
   mavenCentral()
   google()
 
@@ -151,7 +157,8 @@ repositories {
   }
 }
 
-def kotlin_version = getExtOrDefault('kotlinVersion')
+// same pin as the buildscript: stdlib must match the compiler version
+def kotlin_version = project.properties['Readium_kotlinVersion']
 
 dependencies {
   // noinspection GradleDynamicVersion

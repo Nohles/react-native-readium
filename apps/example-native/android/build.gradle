@@ -14,7 +14,9 @@ buildscript {
     dependencies {
         classpath("com.android.tools.build:gradle")
         classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        // must be >= 2.3 to read kotlin-toolkit 3.3.0 metadata; pinned
+        // explicitly because RN's default constraint resolves older
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.20")
     }
 }
 

@@ -163,6 +163,17 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
 
   override fun goForward() { fragment?.goForward() }
   override fun goBackward() { fragment?.goBackward() }
+
+  // MARK: - Audiobook playback (implemented by the audiobook reader ticket;
+  // stubbed so the EPUB-only build satisfies the Nitro spec)
+
+  override fun play() { }
+  override fun pause() { }
+  override fun seekTo(position: Double) { }
+  override fun setPlaybackRate(rate: Double) { }
+  override fun setVolume(volume: Double) { }
+  override fun setSleepTimer(seconds: Double?) { }
+
   override fun destroy() {
     if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
       cleanup()

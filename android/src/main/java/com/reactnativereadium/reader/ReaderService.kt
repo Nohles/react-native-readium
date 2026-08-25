@@ -8,6 +8,7 @@ import java.net.URI
 import java.util.Locale
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.Publication
+import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.FileExtension
 import org.readium.r2.shared.util.Url
 import org.readium.r2.shared.util.asset.AssetRetriever
@@ -95,7 +96,7 @@ class ReaderService(
 
   private fun publicationSource(fileName: String): PublicationSource? {
     if (isRemoteUrl(fileName)) {
-      val remoteUrl = Url(fileName)
+      val remoteUrl = AbsoluteUrl(fileName)
       if (remoteUrl == null) {
         RNLog.e(reactContext, "Invalid publication URL: $fileName")
         return null
@@ -113,7 +114,7 @@ class ReaderService(
     }
 
     val publicationUrl = runCatching {
-      publicationFile.toUrl()
+      publicationFile.toUrl(isDirectory = false)
     }
       .onFailure {
         RNLog.e(
@@ -149,7 +150,7 @@ class ReaderService(
   }
 
   private data class PublicationSource(
-    val url: Url,
+    val url: AbsoluteUrl,
     val formatHints: FormatHints
   )
 
