@@ -42,7 +42,10 @@ ${substitutions}
 `;
 }
 
-function withReadiumAndroidToolkit(config) {
+function withReadiumAndroidToolkit(config, options = {}) {
+  if (!options.androidToolkitSource) {
+    return config;
+  }
   return withSettingsGradle(config, (modConfig) => {
     if (modConfig.modResults.language !== 'groovy') {
       throw new Error(
@@ -176,10 +179,10 @@ function withReadiumIosBackgroundAudio(config) {
   });
 }
 
-const withReadium = (config) => {
+const withReadium = (config, options = {}) => {
   config = withReadiumIosBackgroundAudio(config);
   config = withReadiumPods(config);
-  config = withReadiumAndroidToolkit(config);
+  config = withReadiumAndroidToolkit(config, options);
   return withReadiumAndroidDesugaring(config);
 };
 

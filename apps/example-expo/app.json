@@ -28,7 +28,12 @@
           }
         }
       ],
-      "../../app.plugin.js",
+      [
+        "../../app.plugin.js",
+        {
+          "androidToolkitSource": true
+        }
+      ],
       "expo-ios-scene-lifecycle-plugin"
     ]
   }
