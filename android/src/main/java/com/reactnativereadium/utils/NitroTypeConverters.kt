@@ -2,6 +2,8 @@ package com.reactnativereadium.utils
 
 import android.graphics.Color
 import com.margelo.nitro.reactnativereadium.*
+import com.reactnativereadium.audio.AudiobookSessionState as NativeAudioSessionState
+import com.reactnativereadium.audio.AudiobookStatus
 import com.reactnativereadium.reader.ComicPreferences
 import org.readium.r2.navigator.epub.EpubPreferences as ReadiumEpubPreferences
 import org.readium.r2.navigator.preferences.ColumnCount
@@ -339,3 +341,42 @@ internal fun readiumMetadataToNitro(meta: ReadiumMetadata): PublicationMetadata 
 }
 
 internal fun colorToHex(color: Int): String = String.format("#%08X", color)
+
+// MARK: - Audiobook session → Nitro converters
+
+private fun audiobookStatusToNitro(status: AudiobookStatus): AudiobookSessionStatus =
+  when (status) {
+    AudiobookStatus.IDLE -> AudiobookSessionStatus.IDLE
+    AudiobookStatus.LOADING -> AudiobookSessionStatus.LOADING
+    AudiobookStatus.READY -> AudiobookSessionStatus.READY
+    AudiobookStatus.PLAYING -> AudiobookSessionStatus.PLAYING
+    AudiobookStatus.PAUSED -> AudiobookSessionStatus.PAUSED
+    AudiobookStatus.ENDED -> AudiobookSessionStatus.ENDED
+    AudiobookStatus.ERROR -> AudiobookSessionStatus.ERROR
+  }
+
+internal fun NativeAudioSessionState.toNitroSessionState(): AudiobookSessionState =
+  AudiobookSessionState(
+    status = audiobookStatusToNitro(status),
+    publication = publication?.let { readiumMetadataToNitro(it.metadata) },
+    position = position,
+    duration = duration,
+    rate = rate,
+    volume = volume,
+    currentHref = currentHref,
+    currentTitle = currentTitle,
+    sleepTimerRemaining = sleepTimerRemaining,
+    error = error
+  )
+
+internal fun NativeAudioSessionState.toNitroPlaybackState(): AudiobookPlaybackState =
+  AudiobookPlaybackState(
+    isPlaying = status == AudiobookStatus.PLAYING,
+    position = position,
+    duration = duration,
+    rate = rate,
+    volume = volume,
+    currentHref = currentHref,
+    currentTitle = currentTitle,
+    sleepTimerRemaining = sleepTimerRemaining
+  )

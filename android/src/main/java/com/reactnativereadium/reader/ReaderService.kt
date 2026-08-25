@@ -2,6 +2,7 @@ package com.reactnativereadium.reader
 
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.util.RNLog
+import com.reactnativereadium.audio.AudiobookSession
 import com.reactnativereadium.utils.LinkOrLocator
 import java.io.File
 import java.net.URI
@@ -57,12 +58,60 @@ class ReaderService(
     return null
   }
 
+  sealed class OpenResult {
+    class Visual(val fragment: BaseReaderFragment) : OpenResult()
+    object Audiobook : OpenResult()
+  }
+
   suspend fun openPublication(
     fileName: String,
     initialLocation: LinkOrLocator?,
-    callback: suspend (fragment: BaseReaderFragment) -> Unit
+    callback: suspend (result: OpenResult) -> Unit
   ) {
-    val source = publicationSource(fileName) ?: return
+    val publication = retrievePublication(fileName) ?: return
+
+    val locator = locatorFromLinkOrLocator(initialLocation, publication)
+
+    // Audiobooks don't get a native reader fragment: playback is owned by the
+    // persistent [AudiobookSession] (mirroring iOS AudiobookSession), which
+    // survives view teardown/re-entry. The host view merely observes.
+    if (publication.conformsTo(Publication.Profile.AUDIOBOOK)) {
+      AudiobookSession.adopt(publication, fileName, locator)
+      callback.invoke(OpenResult.Audiobook)
+      return
+    }
+
+    val readerFragment: BaseReaderFragment = when {
+      // Mirror of iOS CBZModule.supports: DIVINA conformance or an
+      // all-bitmap reading order routes to the bespoke comic reader.
+      isComic(publication) -> {
+        val frag = ComicReaderFragment.newInstance()
+        frag.initFactory(publication, locator)
+        frag
+      }
+
+      publication.conformsTo(Publication.Profile.PDF) -> {
+        val frag = PdfReaderFragment.newInstance()
+        frag.initFactory(publication, locator)
+        frag
+      }
+
+      else -> {
+        val frag = EpubReaderFragment.newInstance()
+        frag.initFactory(publication, locator)
+        frag
+      }
+    }
+    callback.invoke(OpenResult.Visual(readerFragment))
+  }
+
+  /**
+   * Retrieves and parses a publication without deciding how it will be
+   * presented. Shared by the visual reader fragments and the audiobook
+   * session. Returns null (after logging) on retrieval or parse failure.
+   */
+  suspend fun retrievePublication(fileName: String): Publication? {
+    val source = publicationSource(fileName) ?: return null
 
     val asset = assetRetriever
       .retrieve(
@@ -73,38 +122,13 @@ class ReaderService(
         RNLog.w(reactContext, "Unable to retrieve publication asset: ${it.message}")
       }
       .getOrNull()
-      ?: return
+      ?: return null
 
-    publicationOpener
+    return publicationOpener
       .open(
         asset = asset,
         allowUserInteraction = false
       )
-      .onSuccess { publication ->
-        val locator = locatorFromLinkOrLocator(initialLocation, publication)
-        val readerFragment: BaseReaderFragment = when {
-          // Mirror of iOS CBZModule.supports: DIVINA conformance or an
-          // all-bitmap reading order routes to the bespoke comic reader.
-          isComic(publication) -> {
-            val frag = ComicReaderFragment.newInstance()
-            frag.initFactory(publication, locator)
-            frag
-          }
-
-          publication.conformsTo(Publication.Profile.PDF) -> {
-            val frag = PdfReaderFragment.newInstance()
-            frag.initFactory(publication, locator)
-            frag
-          }
-
-          else -> {
-            val frag = EpubReaderFragment.newInstance()
-            frag.initFactory(publication, locator)
-            frag
-          }
-        }
-        callback.invoke(readerFragment)
-      }
       .onFailure {
         RNLog.w(
           reactContext,
@@ -112,6 +136,7 @@ class ReaderService(
         )
         // TODO: implement failure event
       }
+      .getOrNull()
   }
 
   /**

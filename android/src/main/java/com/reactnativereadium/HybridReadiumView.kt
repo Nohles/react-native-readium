@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.fragment.app.FragmentActivity
 import com.reactnativereadium.ReaderHostView
+import com.reactnativereadium.audio.AudiobookSession
 import com.reactnativereadium.reader.BaseReaderFragment
 import com.reactnativereadium.reader.ComicReaderFragment
 import com.reactnativereadium.reader.EpubReaderFragment
@@ -22,6 +23,7 @@ import com.reactnativereadium.utils.readiumLinkToNitro
 import com.reactnativereadium.utils.flattenReadiumLinks
 import com.reactnativereadium.utils.readiumDecorationToNitro
 import com.reactnativereadium.utils.readiumMetadataToNitro
+import com.reactnativereadium.utils.toNitroPlaybackState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -48,6 +50,8 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
   private var scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
   private var svc: ReaderService? = null
   private var fragment: BaseReaderFragment? = null
+  private var audiobookJob: kotlinx.coroutines.Job? = null
+  private var hostedAudiobookPublication: org.readium.r2.shared.publication.Publication? = null
   private var isFragmentAdded = false
   private var isBuilding = false
   private var isAttached = false
@@ -171,21 +175,61 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
   override fun goForward() { fragment?.goForward() }
   override fun goBackward() { fragment?.goBackward() }
 
-  // MARK: - Audiobook playback (implemented by the audiobook reader ticket;
-  // stubbed so the EPUB-only build satisfies the Nitro spec)
+  // MARK: - Audiobook playback (delegated to the persistent session when this
+  // view hosts an audiobook; mirrors iOS view adoption of AudiobookSession)
 
-  override fun play() { }
-  override fun pause() { }
-  override fun seekTo(position: Double) { }
-  override fun setPlaybackRate(rate: Double) { }
-  override fun setVolume(volume: Double) { }
-  override fun setSleepTimer(seconds: Double?) { }
+  private fun withAudiobook(block: (AudiobookSession) -> Unit) {
+    if (isFragmentAdded && fragment == null) {
+      block(AudiobookSession)
+    }
+  }
+
+  override fun play() = withAudiobook { it.play() }
+  override fun pause() = withAudiobook { it.pause() }
+  override fun seekTo(position: Double) = withAudiobook { it.seekTo(position) }
+  override fun setPlaybackRate(rate: Double) = withAudiobook { it.setPlaybackRate(rate) }
+  override fun setVolume(volume: Double) = withAudiobook { it.setVolume(volume) }
+  override fun setSleepTimer(seconds: Double?) = withAudiobook { it.setSleepTimer(seconds) }
 
   override fun destroy() {
     if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
       cleanup()
     } else {
       hostView.post { cleanup() }
+    }
+  }
+
+  // MARK: - Audiobook hosting
+
+  /**
+   * The file routed to the persistent audiobook session instead of a reader
+   * fragment. Playback is owned by [AudiobookSession] and keeps running when
+   * this view tears down; we only observe state while mounted.
+   */
+  private fun hostAudiobook() {
+    if (isDestroyed) return
+    isFragmentAdded = true
+    isBuilding = false
+
+    audiobookJob?.cancel()
+    audiobookJob = scope.launch {
+      var readyFor: org.readium.r2.shared.publication.Publication? = null
+      AudiobookSession.state.collect { sessionState ->
+        val publication = sessionState.publication
+        if (publication != null && publication !== readyFor &&
+          sessionState.status != com.reactnativereadium.audio.AudiobookStatus.LOADING
+        ) {
+          readyFor = publication
+          hostedAudiobookPublication = publication
+          onPublicationReady?.invoke(PublicationReadyEvent(
+            tableOfContents = flattenReadiumLinks(publication.tableOfContents).toTypedArray(),
+            positions = publication.readingOrder.mapNotNull { publication.locatorFromLink(it) }
+              .map { readiumLocatorToNitro(it) }.toTypedArray(),
+            metadata = readiumMetadataToNitro(publication.metadata)
+          ))
+        }
+        onAudiobookPlaybackStateChange?.invoke(sessionState.toNitroPlaybackState())
+      }
     }
   }
 
@@ -223,6 +267,12 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
     fragment = null
     isFragmentAdded = false
     isBuilding = false
+
+    // Detach from audiobook playback but do NOT stop it: the persistent
+    // session keeps playing across reader close/reopen (iOS parity).
+    audiobookJob?.cancel()
+    audiobookJob = null
+    hostedAudiobookPublication = null
 
     scope.cancel()
     scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -262,8 +312,11 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
     }
 
     scope.launch {
-      service.openPublication(path, initialLocator) { frag ->
-        addFragment(frag)
+      service.openPublication(path, initialLocator) { result ->
+        when (result) {
+          is ReaderService.OpenResult.Visual -> addFragment(result.fragment)
+          ReaderService.OpenResult.Audiobook -> hostAudiobook()
+        }
       }
     }
   }

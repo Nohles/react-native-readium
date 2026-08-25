@@ -33,6 +33,11 @@ MODULES=(
   :readium:readium-shared:publishToMavenLocal
   :readium:readium-streamer:publishToMavenLocal
   :readium:readium-navigator:publishToMavenLocal
+  # audiobook playback (issue #9): AudioNavigator is Media3-based and lives
+  # outside readium-navigator; the ExoPlayer adapter provides the engine.
+  :readium:navigators:media:readium-navigator-media-common:publishToMavenLocal
+  :readium:navigators:media:readium-navigator-media-audio:publishToMavenLocal
+  :readium:adapters:exoplayer:readium-adapter-exoplayer-audio:publishToMavenLocal
 )
 
 EXTRA_ARGS=()

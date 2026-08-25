@@ -1,4 +1,3 @@
-import { Platform } from 'react-native';
 import { NitroModules } from 'react-native-nitro-modules';
 
 import type { File } from './interfaces';
@@ -20,14 +19,7 @@ const idleState: AudiobookSessionState = {
 };
 let currentState: AudiobookSessionState = idleState;
 
-const unsupportedError = () =>
-  new Error('Readium audiobook sessions are currently supported on iOS only.');
-
 function getNativeAudio(): NativeReadiumAudio {
-  if (Platform.OS !== 'ios') {
-    throw unsupportedError();
-  }
-
   if (!nativeAudio) {
     nativeAudio =
       NitroModules.createHybridObject<NativeReadiumAudio>('ReadiumAudio');
@@ -122,9 +114,7 @@ export const ReadiumAudio = {
   },
 
   close(): void {
-    if (Platform.OS === 'ios') {
-      getNativeAudio().close();
-    }
+    getNativeAudio().close();
     emitState(idleState);
   },
 

@@ -1,26 +1,53 @@
 package com.margelo.nitro.reactnativereadium
 
+import com.reactnativereadium.audio.AudiobookSession
+import com.reactnativereadium.utils.nitroLocatorToReadium
+import com.reactnativereadium.utils.toNitroSessionState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+
 /**
- * Audiobook playback is intentionally iOS-only until Android playback is
- * implemented with an appropriate media session and background service.
+ * Android implementation of the `ReadiumAudio` Nitro spec. A thin delegate to
+ * the persistent [AudiobookSession], mirroring iOS `HybridReadiumAudio.swift`.
  */
 class HybridReadiumAudio : HybridReadiumAudioSpec() {
-  override var onStateChange: ((state: AudiobookSessionState) -> Unit)? = null
 
-  private fun unsupported(): Nothing {
-    throw UnsupportedOperationException(
-      "Readium audiobook sessions are currently supported on iOS only."
+  private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+  private var observeJob: Job? = null
+
+  override var onStateChange: ((state: AudiobookSessionState) -> Unit)? = null
+    set(value) {
+      field = value
+      observeJob?.cancel()
+      observeJob = null
+      if (value != null) {
+        // Collecting the StateFlow replays the current state immediately,
+        // matching iOS `AudiobookSession.onStateChange` didSet semantics.
+        observeJob = scope.launch {
+          AudiobookSession.state.collect { sessionState ->
+            value(sessionState.toNitroSessionState())
+          }
+        }
+      }
+    }
+
+  override fun open(file: ReadiumFile) {
+    AudiobookSession.open(
+      fileUrl = file.url,
+      initialLocator = file.initialLocation?.let { nitroLocatorToReadium(it) }
     )
   }
 
-  override fun open(file: ReadiumFile) = unsupported()
-  override fun play() = unsupported()
-  override fun pause() = unsupported()
-  override fun seekTo(position: Double) = unsupported()
-  override fun goForward() = unsupported()
-  override fun goBackward() = unsupported()
-  override fun setPlaybackRate(rate: Double) = unsupported()
-  override fun setVolume(volume: Double) = unsupported()
-  override fun setSleepTimer(seconds: Double?) = unsupported()
-  override fun close() = unsupported()
+  override fun play() { AudiobookSession.play() }
+  override fun pause() { AudiobookSession.pause() }
+  override fun seekTo(position: Double) { AudiobookSession.seekTo(position) }
+  override fun goForward() { AudiobookSession.goForward() }
+  override fun goBackward() { AudiobookSession.goBackward() }
+  override fun setPlaybackRate(rate: Double) { AudiobookSession.setPlaybackRate(rate) }
+  override fun setVolume(volume: Double) { AudiobookSession.setVolume(volume) }
+  override fun setSleepTimer(seconds: Double?) { AudiobookSession.setSleepTimer(seconds) }
+  override fun close() { AudiobookSession.close() }
 }
