@@ -83,6 +83,14 @@ class ReaderService(
       .onSuccess { publication ->
         val locator = locatorFromLinkOrLocator(initialLocation, publication)
         val readerFragment: BaseReaderFragment = when {
+          // Mirror of iOS CBZModule.supports: DIVINA conformance or an
+          // all-bitmap reading order routes to the bespoke comic reader.
+          isComic(publication) -> {
+            val frag = ComicReaderFragment.newInstance()
+            frag.initFactory(publication, locator)
+            frag
+          }
+
           publication.conformsTo(Publication.Profile.PDF) -> {
             val frag = PdfReaderFragment.newInstance()
             frag.initFactory(publication, locator)
@@ -103,6 +111,19 @@ class ReaderService(
           "Error executing ReaderService.openPublication: ${it.message}"
         )
         // TODO: implement failure event
+      }
+  }
+
+  /**
+   * Port of `CBZModule.supports` (ios/Reader/CBZ/CBZModule.swift:12-18):
+   * DIVINA conformance, or every reading-order item is a bitmap/CBZ.
+   */
+  private fun isComic(publication: Publication): Boolean {
+    val cbz = MediaType.CBZ
+    return publication.conformsTo(Publication.Profile.DIVINA) ||
+      publication.metadata.conformsTo.contains(Publication.Profile.DIVINA) ||
+      publication.readingOrder.all { link ->
+        link.mediaType?.isBitmap == true || link.mediaType?.matches(cbz) == true
       }
   }
 

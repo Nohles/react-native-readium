@@ -8,11 +8,13 @@ import android.widget.FrameLayout
 import androidx.fragment.app.FragmentActivity
 import com.reactnativereadium.ReaderHostView
 import com.reactnativereadium.reader.BaseReaderFragment
+import com.reactnativereadium.reader.ComicReaderFragment
 import com.reactnativereadium.reader.EpubReaderFragment
 import com.reactnativereadium.reader.ReaderService
 import com.reactnativereadium.reader.ReaderViewModel
 import com.reactnativereadium.reader.SelectionAction as FragmentSelectionAction
 import com.reactnativereadium.utils.nitroPreferencesToEpub
+import com.reactnativereadium.utils.nitroPreferencesToComic
 import com.reactnativereadium.utils.nitroLocatorToReadium
 import com.reactnativereadium.utils.nitroDecorationToReadium
 import com.reactnativereadium.utils.readiumLocatorToNitro
@@ -123,8 +125,11 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
 
   private fun updatePreferences() {
     val prefs = preferences ?: return
-    val frag = fragment as? EpubReaderFragment ?: return
-    frag.updatePreferences(nitroPreferencesToEpub(prefs))
+    when (val frag = fragment) {
+      is EpubReaderFragment -> frag.updatePreferences(nitroPreferencesToEpub(prefs))
+      is ComicReaderFragment -> frag.updatePreferences(nitroPreferencesToComic(prefs))
+      else -> Unit
+    }
   }
 
   // MARK: - Decorations

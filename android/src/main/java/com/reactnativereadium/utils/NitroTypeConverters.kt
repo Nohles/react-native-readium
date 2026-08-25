@@ -2,6 +2,7 @@ package com.reactnativereadium.utils
 
 import android.graphics.Color
 import com.margelo.nitro.reactnativereadium.*
+import com.reactnativereadium.reader.ComicPreferences
 import org.readium.r2.navigator.epub.EpubPreferences as ReadiumEpubPreferences
 import org.readium.r2.navigator.preferences.ColumnCount
 import org.readium.r2.navigator.preferences.FontFamily
@@ -59,6 +60,23 @@ internal fun nitroPreferencesToEpub(prefs: Preferences): ReadiumEpubPreferences 
     typeScale = prefs.typeScale,
     verticalText = prefs.verticalText,
     wordSpacing = prefs.wordSpacing,
+  )
+}
+
+internal fun nitroPreferencesToComic(prefs: Preferences): ComicPreferences {
+  return ComicPreferences(
+    scroll = prefs.scroll,
+    spread = prefs.spread,
+    readingMode = prefs.comicReadingMode,
+    scaleType = prefs.comicScaleType,
+    readingProgression = prefs.readingProgression,
+    backgroundColor = prefs.backgroundColor,
+    pageMargins = prefs.pageMargins,
+    stretchSmallPages = prefs.comicStretchSmallPages,
+    widthLimitEnabled = prefs.comicWidthLimitEnabled,
+    widthLimitPercent = prefs.comicWidthLimitPercent,
+    scrollAmountPercent = prefs.comicScrollAmountPercent,
+    imagePreloadAmount = prefs.comicImagePreloadAmount
   )
 }
 
