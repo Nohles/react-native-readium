@@ -84,6 +84,9 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
   private var programmaticScrollAnimator: ValueAnimator? = null
   private var isApplyingProgrammaticScroll = false
 
+  private var touchDownX = 0f
+  private var touchDownY = 0f
+
   private var isLayoutDirty = true
   private var appliedViewportWidth = -1
   private var appliedViewportHeight = -1
@@ -222,6 +225,9 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
 
   private val isWebtoonMode: Boolean
     get() = preferences.readingMode == "webtoon"
+
+  private val pageTurnThresholdPx: Float
+    get() = 48f * resources.displayMetrics.density
 
   private val isRTL: Boolean
     get() = preferences.readingProgression == "rtl"
@@ -386,13 +392,43 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
     // Mirror of iOS scrollViewWillBeginDragging (:535-537): a user *drag* takes
     // over from an in-flight programmatic scroll; a mere tap does not.
     scrollView.setOnTouchListener { v, event ->
-      if (event.actionMasked == MotionEvent.ACTION_MOVE) {
-        programmaticScrollAnimator?.cancel()
-        programmaticScrollAnimator = null
-        isApplyingProgrammaticScroll = false
+      if (isPaginatedMode) {
+        when (event.actionMasked) {
+          MotionEvent.ACTION_DOWN -> {
+            touchDownX = event.x
+            touchDownY = event.y
+          }
+
+          MotionEvent.ACTION_UP -> {
+            val deltaX = event.x - touchDownX
+            val deltaY = event.y - touchDownY
+            val isHorizontalSwipe =
+              abs(deltaX) >= pageTurnThresholdPx && abs(deltaX) > abs(deltaY)
+
+            if (isHorizontalSwipe) {
+              // A left swipe advances an LTR publication; RTL reverses the
+              // physical direction while keeping the reading order semantic.
+              val goesForward = if (isRTL) deltaX > 0 else deltaX < 0
+              if (goesForward) goForward() else goBackward()
+            }
+
+            v.performClick()
+          }
+        }
+
+        // Paginated mode attaches only the current page, so the scroll view has
+        // no native horizontal movement to handle. Consume the gesture here
+        // and turn horizontal swipes into navigator page turns.
+        true
+      } else {
+        if (event.actionMasked == MotionEvent.ACTION_MOVE) {
+          programmaticScrollAnimator?.cancel()
+          programmaticScrollAnimator = null
+          isApplyingProgrammaticScroll = false
+        }
+        v.performClick()
+        false
       }
-      v.performClick()
-      false
     }
 
     applyTheme()
