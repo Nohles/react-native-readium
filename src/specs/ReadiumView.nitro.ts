@@ -206,6 +206,19 @@ export interface PublicationReadyEvent {
   tableOfContents: Link[];
   positions: Locator[];
   metadata: PublicationMetadata;
+  capabilities: PublicationCapabilities;
+}
+
+export interface PublicationCapabilities {
+  search: boolean;
+  searchHref?: string;
+}
+
+export interface PublicationSearchPage {
+  query: string;
+  locators: Locator[];
+  total?: number;
+  hasNext: boolean;
 }
 
 export interface DecorationActivatedEvent {
@@ -266,6 +279,7 @@ export interface ReadiumViewProps extends HybridViewProps {
   selectionActions?: SelectionAction[];
   audiobookBookmarks?: AudiobookBookmark[];
   onLocationChange?: (locator: Locator) => void;
+  onTap?: (point: Point) => void;
   onPublicationReady?: (event: PublicationReadyEvent) => void;
   onDecorationActivated?: (event: DecorationActivatedEvent) => void;
   onSelectionChange?: (event: SelectionEvent) => void;
@@ -278,6 +292,9 @@ export interface ReadiumViewMethods extends HybridViewMethods {
   goTo(locator: Locator): void;
   goForward(): void;
   goBackward(): void;
+  search(query: string): Promise<PublicationSearchPage>;
+  searchNext(): Promise<PublicationSearchPage>;
+  cancelSearch(): void;
   play(): void;
   pause(): void;
   seekTo(position: number): void;

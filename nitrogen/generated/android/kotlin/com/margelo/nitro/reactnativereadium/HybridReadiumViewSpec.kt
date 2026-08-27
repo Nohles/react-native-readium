@@ -10,6 +10,7 @@ package com.margelo.nitro.reactnativereadium
 import androidx.annotation.Keep
 import com.facebook.jni.HybridData
 import com.facebook.proguard.annotations.DoNotStrip
+import com.margelo.nitro.core.Promise
 import com.margelo.nitro.core.HybridObject
 import com.margelo.nitro.views.HybridView
 
@@ -74,6 +75,20 @@ abstract class HybridReadiumViewSpec: HybridView() {
     @DoNotStrip
     set(value) {
       onLocationChange = value?.let { it }
+    }
+  
+  abstract var onTap: ((point: Point) -> Unit)?
+  
+  private var onTap_cxx: Func_void_Point?
+    @Keep
+    @DoNotStrip
+    get() {
+      return onTap?.let { Func_void_Point_java(it) }
+    }
+    @Keep
+    @DoNotStrip
+    set(value) {
+      onTap = value?.let { it }
     }
   
   abstract var onPublicationReady: ((event: PublicationReadyEvent) -> Unit)?
@@ -172,6 +187,18 @@ abstract class HybridReadiumViewSpec: HybridView() {
   @DoNotStrip
   @Keep
   abstract fun goBackward(): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun search(query: String): Promise<PublicationSearchPage>
+  
+  @DoNotStrip
+  @Keep
+  abstract fun searchNext(): Promise<PublicationSearchPage>
+  
+  @DoNotStrip
+  @Keep
+  abstract fun cancelSearch(): Unit
   
   @DoNotStrip
   @Keep

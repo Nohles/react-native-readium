@@ -6,7 +6,7 @@ import ReadiumShared
 import SwiftSoup
 import WebKit
 
-/// This class is meant to be subclassed by each publication format view controller. It contains the shared behavior, eg. navigation bar toggling.
+/// This class is meant to be subclassed by each publication format view controller. It contains the shared behavior, eg. input observers.
 class ReaderViewController: UIViewController, Loggable {
 
   weak var moduleDelegate: ReaderFormatModuleDelegate?
@@ -20,6 +20,7 @@ class ReaderViewController: UIViewController, Loggable {
   private var subscriptions = Set<AnyCancellable>()
   private var subject = PassthroughSubject<ReadiumShared.Locator, Never>()
   lazy var publisher = subject.eraseToAnyPublisher()
+  var onTap: ((CGPoint) -> Void)?
   private var positionsCount: Int?
   private var positionsLoadingTask: Task<Void, Never>?
   private var lastKnownLocator: ReadiumShared.Locator?
@@ -90,16 +91,21 @@ class ReaderViewController: UIViewController, Loggable {
 
     stackView.addArrangedSubview(accessibilityToolbar)
 
-    positionLabel.translatesAutoresizingMaskIntoConstraints = false
-    positionLabel.font = .systemFont(ofSize: 12)
-    positionLabel.textColor = .darkGray
-    view.addSubview(positionLabel)
-    NSLayoutConstraint.activate([
-      positionLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-      positionLabel.bottomAnchor.constraint(equalTo: navigator.view.bottomAnchor, constant: -20)
-    ])
+    // Host apps render their own chrome. The built-in page label cannot be
+    // toggled with the JS overlay and would sit on top of the publication.
+    positionLabel.isHidden = true
 
     configureNavigatorInteractions()
+  }
+
+  override func viewWillAppear(_ animated: Bool) {
+    super.viewWillAppear(animated)
+    updateNavigationBar(animated: false)
+  }
+
+  override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    updateNavigationBar(animated: false)
   }
 
   override func willMove(toParent parent: UIViewController?) {
@@ -118,12 +124,14 @@ class ReaderViewController: UIViewController, Loggable {
   }
 
   func toggleNavigationBar() {
-    navigationBarHidden = !navigationBarHidden
+    // Host apps own reader chrome. Revealing UINavigationBar would show the
+    // embedding screen title (e.g. an Expo Router path) plus a system close
+    // control on top of the publication.
+    navigationBarHidden = true
   }
 
   func updateNavigationBar(animated: Bool = true) {
-    let hidden = navigationBarHidden && !UIAccessibility.isVoiceOverRunning
-    navigationController?.setNavigationBarHidden(hidden, animated: animated)
+    navigationController?.setNavigationBarHidden(true, animated: animated)
     setNeedsStatusBarAppearanceUpdate()
   }
 
@@ -206,7 +214,7 @@ class ReaderViewController: UIViewController, Loggable {
         return false
       }
 
-      self.toggleNavigationBar()
+      self.onTap?(event.location)
       return true
     })
     toggleToken.store(in: &navigatorInputObserverTokens)

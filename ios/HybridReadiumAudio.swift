@@ -18,6 +18,12 @@ final class HybridReadiumAudio: HybridReadiumAudioSpec {
   func goBackward() throws { AudiobookSession.shared.goBackward() }
   func setPlaybackRate(rate: Double) throws { AudiobookSession.shared.setPlaybackRate(rate) }
   func setVolume(volume: Double) throws { AudiobookSession.shared.setVolume(volume) }
+  func setNowPlayingInfoEnabled(enabled: Bool) throws {
+    AudiobookSession.shared.setNowPlayingInfoEnabled(enabled)
+  }
+  func setNowPlayingMetadataEnabled(enabled: Bool) throws {
+    AudiobookSession.shared.setNowPlayingMetadataEnabled(enabled)
+  }
   func setSleepTimer(seconds: Double?) throws { AudiobookSession.shared.setSleepTimer(seconds) }
   func close() throws { AudiobookSession.shared.close() }
 }

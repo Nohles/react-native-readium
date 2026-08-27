@@ -64,6 +64,8 @@ namespace margelo::nitro::readium {
     void setAudiobookBookmarks(const std::optional<std::vector<AudiobookBookmark>>& audiobookBookmarks) override;
     std::optional<std::function<void(const Locator& /* locator */)>> getOnLocationChange() override;
     void setOnLocationChange(const std::optional<std::function<void(const Locator& /* locator */)>>& onLocationChange) override;
+    std::optional<std::function<void(const Point& /* point */)>> getOnTap() override;
+    void setOnTap(const std::optional<std::function<void(const Point& /* point */)>>& onTap) override;
     std::optional<std::function<void(const PublicationReadyEvent& /* event */)>> getOnPublicationReady() override;
     void setOnPublicationReady(const std::optional<std::function<void(const PublicationReadyEvent& /* event */)>>& onPublicationReady) override;
     std::optional<std::function<void(const DecorationActivatedEvent& /* event */)>> getOnDecorationActivated() override;
@@ -82,6 +84,9 @@ namespace margelo::nitro::readium {
     void goTo(const Locator& locator) override;
     void goForward() override;
     void goBackward() override;
+    std::shared_ptr<Promise<PublicationSearchPage>> search(const std::string& query) override;
+    std::shared_ptr<Promise<PublicationSearchPage>> searchNext() override;
+    void cancelSearch() override;
     void play() override;
     void pause() override;
     void seekTo(double position) override;

@@ -39,6 +39,8 @@
 #include "JBelongsTo.hpp"
 #include "SeriesInfo.hpp"
 #include "JSeriesInfo.hpp"
+#include "PublicationCapabilities.hpp"
+#include "JPublicationCapabilities.hpp"
 
 namespace margelo::nitro::readium {
 

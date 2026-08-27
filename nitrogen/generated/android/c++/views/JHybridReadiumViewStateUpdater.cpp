@@ -65,6 +65,10 @@ void JHybridReadiumViewStateUpdater::updateViewProps(jni::alias_ref<jni::JClass>
     hybridView->setOnLocationChange(props->onLocationChange.value);
     props->onLocationChange.isDirty = false;
   }
+  if (props->onTap.isDirty) {
+    hybridView->setOnTap(props->onTap.value);
+    props->onTap.isDirty = false;
+  }
   if (props->onPublicationReady.isDirty) {
     hybridView->setOnPublicationReady(props->onPublicationReady.value);
     props->onPublicationReady.isDirty = false;

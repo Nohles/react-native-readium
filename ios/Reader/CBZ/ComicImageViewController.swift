@@ -104,6 +104,8 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     scrollView.delegate = self
     scrollView.contentInsetAdjustmentBehavior = .never
     scrollView.isDirectionalLockEnabled = true
+    scrollView.showsVerticalScrollIndicator = false
+    scrollView.showsHorizontalScrollIndicator = false
     view.addSubview(scrollView)
 
     stackView.translatesAutoresizingMaskIntoConstraints = false
@@ -464,8 +466,6 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
       scrollView.alwaysBounceVertical = false
       scrollView.alwaysBounceHorizontal = false
       scrollView.bounces = false
-      scrollView.showsVerticalScrollIndicator = false
-      scrollView.showsHorizontalScrollIndicator = false
       return
     }
 
@@ -473,13 +473,9 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     if isHorizontalScrollMode {
       scrollView.alwaysBounceVertical = false
       scrollView.alwaysBounceHorizontal = true
-      scrollView.showsVerticalScrollIndicator = false
-      scrollView.showsHorizontalScrollIndicator = true
     } else {
       scrollView.alwaysBounceVertical = true
       scrollView.alwaysBounceHorizontal = false
-      scrollView.showsVerticalScrollIndicator = true
-      scrollView.showsHorizontalScrollIndicator = false
     }
   }
 

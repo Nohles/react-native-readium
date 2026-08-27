@@ -33,6 +33,20 @@ private enum AudiobookScreenMode: Int {
 }
 
 final class AudiobookViewController: UIViewController, PublicationReaderViewController, Loggable {
+  var isNowPlayingInfoEnabled = true {
+    didSet {
+      if isNowPlayingInfoEnabled && isViewLoaded {
+        updateNowPlayingInfo()
+      }
+    }
+  }
+  var isNowPlayingMetadataEnabled = true {
+    didSet {
+      if isNowPlayingMetadataEnabled && isViewLoaded {
+        updateNowPlayingInfo()
+      }
+    }
+  }
   weak var moduleDelegate: ReaderFormatModuleDelegate?
   var onPlaybackStateChange: ((AudiobookPlaybackState) -> Void)?
   var onBookmarkChange: ((AudiobookBookmarkChangeEvent) -> Void)?
@@ -40,6 +54,7 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
   let publication: Publication
   let bookId: String
   let audioNavigator: AudioNavigator
+  private let initialLocation: ReadiumShared.Locator?
 
   private let subject = PassthroughSubject<ReadiumShared.Locator, Never>()
   lazy var publisher = subject.eraseToAnyPublisher()
@@ -98,6 +113,7 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
   init(publication: Publication, locator: ReadiumShared.Locator?, bookId: String) {
     self.publication = publication
     self.bookId = bookId
+    self.initialLocation = locator
     self.audioNavigator = AudioNavigator(publication: publication, initialLocation: locator)
     super.init(nibName: nil, bundle: nil)
     audioNavigator.delegate = self
@@ -119,9 +135,11 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     MPRemoteCommandCenter.shared().previousTrackCommand.removeTarget(self)
     MPRemoteCommandCenter.shared().nextTrackCommand.removeTarget(self)
     MPRemoteCommandCenter.shared().changePlaybackPositionCommand.removeTarget(self)
-    MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
-    if #available(iOS 13.0, *) {
-      MPNowPlayingInfoCenter.default().playbackState = .stopped
+    if isNowPlayingInfoEnabled {
+      MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+      if #available(iOS 13.0, *) {
+        MPNowPlayingInfoCenter.default().playbackState = .stopped
+      }
     }
     audioNavigator.pause()
   }
@@ -141,6 +159,15 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
   @MainActor
   func goTo(_ locator: ReadiumShared.Locator) async {
     _ = await audioNavigator.go(to: locator, options: .animated)
+  }
+
+  @MainActor
+  func preparePlayback() async {
+    if let initialLocation {
+      _ = await audioNavigator.go(to: initialLocation, options: .animated)
+    } else if let firstLink = publication.readingOrder.first {
+      _ = await audioNavigator.go(to: firstLink, options: .animated)
+    }
   }
 
   @MainActor
@@ -806,37 +833,41 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
   }
 
   private func updateNowPlayingInfo() {
+    guard isNowPlayingInfoEnabled else { return }
     let publicationTitle = publication.metadata.title ?? "Audiobook"
     let currentLink = readingOrderLinks.indices.contains(currentResourceIndex) ? readingOrderLinks[currentResourceIndex] : nil
     let chapterTitle = currentChapter()?.title ?? currentLink?.title
     let chapterWindow = currentChapterTimelineWindow()
-    var info: [String: Any] = [
-      MPMediaItemPropertyTitle: chapterTitle ?? publicationTitle,
-      MPMediaItemPropertyAlbumTitle: publicationTitle,
-      MPMediaItemPropertyGenre: "Audiobook",
-      MPMediaItemPropertyPlaybackDuration: chapterWindow?.duration ?? duration,
-      MPNowPlayingInfoPropertyElapsedPlaybackTime: chapterWindow?.position ?? currentPosition,
-      MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? playbackRate : 0,
-      MPNowPlayingInfoPropertyDefaultPlaybackRate: playbackRate,
-      MPNowPlayingInfoPropertyMediaType: MPNowPlayingInfoMediaType.audio.rawValue,
-      MPNowPlayingInfoPropertyIsLiveStream: false,
-      MPNowPlayingInfoPropertyExternalContentIdentifier: bookId,
-      MPNowPlayingInfoPropertyServiceIdentifier: "react-native-readium"
-    ]
+    var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
 
-    let authors = publication.metadata.authors.map(\.name).joined(separator: ", ")
-    if !authors.isEmpty {
-      info[MPMediaItemPropertyArtist] = authors
-      info[MPMediaItemPropertyAlbumArtist] = authors
-    }
+    info[MPMediaItemPropertyPlaybackDuration] = chapterWindow?.duration ?? duration
+    info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = chapterWindow?.position ?? currentPosition
+    info[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? playbackRate : 0
+    info[MPNowPlayingInfoPropertyDefaultPlaybackRate] = playbackRate
+    info[MPNowPlayingInfoPropertyMediaType] = MPNowPlayingInfoMediaType.audio.rawValue
+    info[MPNowPlayingInfoPropertyIsLiveStream] = false
+    info[MPNowPlayingInfoPropertyExternalContentIdentifier] = bookId
+    info[MPNowPlayingInfoPropertyServiceIdentifier] = "react-native-readium"
 
-    let narrators = publication.metadata.narrators.map(\.name).joined(separator: ", ")
-    if !narrators.isEmpty {
-      info[MPMediaItemPropertyComposer] = narrators
-    }
+    if isNowPlayingMetadataEnabled {
+      info[MPMediaItemPropertyTitle] = chapterTitle ?? publicationTitle
+      info[MPMediaItemPropertyAlbumTitle] = publicationTitle
+      info[MPMediaItemPropertyGenre] = "Audiobook"
 
-    if let artwork = nowPlayingArtwork {
-      info[MPMediaItemPropertyArtwork] = artwork
+      let authors = publication.metadata.authors.map(\.name).joined(separator: ", ")
+      if !authors.isEmpty {
+        info[MPMediaItemPropertyArtist] = authors
+        info[MPMediaItemPropertyAlbumArtist] = authors
+      }
+
+      let narrators = publication.metadata.narrators.map(\.name).joined(separator: ", ")
+      if !narrators.isEmpty {
+        info[MPMediaItemPropertyComposer] = narrators
+      }
+
+      if let artwork = nowPlayingArtwork {
+        info[MPMediaItemPropertyArtwork] = artwork
+      }
     }
 
     MPNowPlayingInfoCenter.default().nowPlayingInfo = info

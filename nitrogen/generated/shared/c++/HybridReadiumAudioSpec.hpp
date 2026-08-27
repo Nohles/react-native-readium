@@ -63,6 +63,8 @@ namespace margelo::nitro::readium {
       virtual void goBackward() = 0;
       virtual void setPlaybackRate(double rate) = 0;
       virtual void setVolume(double volume) = 0;
+      virtual void setNowPlayingInfoEnabled(bool enabled) = 0;
+      virtual void setNowPlayingMetadataEnabled(bool enabled) = 0;
       virtual void setSleepTimer(std::optional<double> seconds) = 0;
       virtual void close() = 0;
 

@@ -1,3 +1,11 @@
+# 5.0.0-rc.29 (2026-07-28)
+
+### Bug Fixes
+
+* **ios:** allow apps to own Now Playing metadata without competing updates
+
+
+
 # [5.0.0-rc.27](https://github.com/nohles/react-native-readium/compare/v5.0.0-rc.19...v5.0.0-rc.27) (2026-06-20)
 
 
@@ -504,6 +512,5 @@ Co-authored-by: tyukesz <nagy.szabolcs@sonrisa.hu>
 ### Features
 
 * **src, ios:** Basic functional implementation of epub reader for iOS ([47d18e2](https://github.com/nohles/react-native-readium/commit/47d18e28b8ee9a7e6cb83eb93837fbe6169d9180))
-
 
 

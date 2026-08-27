@@ -21,6 +21,8 @@ class HybridReadiumAudio : HybridReadiumAudioSpec() {
   override fun goBackward() = unsupported()
   override fun setPlaybackRate(rate: Double) = unsupported()
   override fun setVolume(volume: Double) = unsupported()
+  override fun setNowPlayingInfoEnabled(enabled: Boolean) = Unit
+  override fun setNowPlayingMetadataEnabled(enabled: Boolean) = Unit
   override fun setSleepTimer(seconds: Double?) = unsupported()
   override fun close() = unsupported()
 }

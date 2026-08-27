@@ -22,6 +22,7 @@
 #include "JLocator.hpp"
 #include "JLocatorLocations.hpp"
 #include "JLocatorText.hpp"
+#include "JPublicationCapabilities.hpp"
 #include "JPublicationMetadata.hpp"
 #include "JSeriesInfo.hpp"
 #include "JSubject.hpp"
@@ -29,6 +30,7 @@
 #include "Locator.hpp"
 #include "LocatorLocations.hpp"
 #include "LocatorText.hpp"
+#include "PublicationCapabilities.hpp"
 #include "PublicationMetadata.hpp"
 #include "SeriesInfo.hpp"
 #include "Subject.hpp"
@@ -61,6 +63,8 @@ namespace margelo::nitro::readium {
       jni::local_ref<jni::JArrayClass<JLocator>> positions = this->getFieldValue(fieldPositions);
       static const auto fieldMetadata = clazz->getField<JPublicationMetadata>("metadata");
       jni::local_ref<JPublicationMetadata> metadata = this->getFieldValue(fieldMetadata);
+      static const auto fieldCapabilities = clazz->getField<JPublicationCapabilities>("capabilities");
+      jni::local_ref<JPublicationCapabilities> capabilities = this->getFieldValue(fieldCapabilities);
       return PublicationReadyEvent(
         [&]() {
           size_t __size = tableOfContents->size();
@@ -82,7 +86,8 @@ namespace margelo::nitro::readium {
           }
           return __vector;
         }(),
-        metadata->toCpp()
+        metadata->toCpp(),
+        capabilities->toCpp()
       );
     }
 
@@ -92,7 +97,7 @@ namespace margelo::nitro::readium {
      */
     [[maybe_unused]]
     static jni::local_ref<JPublicationReadyEvent::javaobject> fromCpp(const PublicationReadyEvent& value) {
-      using JSignature = JPublicationReadyEvent(jni::alias_ref<jni::JArrayClass<JLink>>, jni::alias_ref<jni::JArrayClass<JLocator>>, jni::alias_ref<JPublicationMetadata>);
+      using JSignature = JPublicationReadyEvent(jni::alias_ref<jni::JArrayClass<JLink>>, jni::alias_ref<jni::JArrayClass<JLocator>>, jni::alias_ref<JPublicationMetadata>, jni::alias_ref<JPublicationCapabilities>);
       static const auto clazz = javaClassStatic();
       static const auto create = clazz->getStaticMethod<JSignature>("fromCpp");
       return create(
@@ -117,7 +122,8 @@ namespace margelo::nitro::readium {
           }
           return __array;
         }(),
-        JPublicationMetadata::fromCpp(value.metadata)
+        JPublicationMetadata::fromCpp(value.metadata),
+        JPublicationCapabilities::fromCpp(value.capabilities)
       );
     }
   };

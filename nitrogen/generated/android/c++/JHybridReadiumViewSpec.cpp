@@ -27,6 +27,8 @@ namespace margelo::nitro::readium { struct DecorationStyle; }
 namespace margelo::nitro::readium { struct SelectionAction; }
 // Forward declaration of `AudiobookBookmark` to properly resolve imports.
 namespace margelo::nitro::readium { struct AudiobookBookmark; }
+// Forward declaration of `Point` to properly resolve imports.
+namespace margelo::nitro::readium { struct Point; }
 // Forward declaration of `PublicationReadyEvent` to properly resolve imports.
 namespace margelo::nitro::readium { struct PublicationReadyEvent; }
 // Forward declaration of `Link` to properly resolve imports.
@@ -45,12 +47,12 @@ namespace margelo::nitro::readium { struct Subject; }
 namespace margelo::nitro::readium { struct BelongsTo; }
 // Forward declaration of `SeriesInfo` to properly resolve imports.
 namespace margelo::nitro::readium { struct SeriesInfo; }
+// Forward declaration of `PublicationCapabilities` to properly resolve imports.
+namespace margelo::nitro::readium { struct PublicationCapabilities; }
 // Forward declaration of `DecorationActivatedEvent` to properly resolve imports.
 namespace margelo::nitro::readium { struct DecorationActivatedEvent; }
 // Forward declaration of `Rect` to properly resolve imports.
 namespace margelo::nitro::readium { struct Rect; }
-// Forward declaration of `Point` to properly resolve imports.
-namespace margelo::nitro::readium { struct Point; }
 // Forward declaration of `SelectionEvent` to properly resolve imports.
 namespace margelo::nitro::readium { struct SelectionEvent; }
 // Forward declaration of `SelectionActionEvent` to properly resolve imports.
@@ -59,6 +61,8 @@ namespace margelo::nitro::readium { struct SelectionActionEvent; }
 namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
 // Forward declaration of `AudiobookBookmarkChangeEvent` to properly resolve imports.
 namespace margelo::nitro::readium { struct AudiobookBookmarkChangeEvent; }
+// Forward declaration of `PublicationSearchPage` to properly resolve imports.
+namespace margelo::nitro::readium { struct PublicationSearchPage; }
 
 #include <optional>
 #include "ReadiumFile.hpp"
@@ -87,6 +91,9 @@ namespace margelo::nitro::readium { struct AudiobookBookmarkChangeEvent; }
 #include <functional>
 #include "JFunc_void_Locator.hpp"
 #include <NitroModules/JNICallable.hpp>
+#include "Point.hpp"
+#include "JFunc_void_Point.hpp"
+#include "JPoint.hpp"
 #include "PublicationReadyEvent.hpp"
 #include "JFunc_void_PublicationReadyEvent.hpp"
 #include "JPublicationReadyEvent.hpp"
@@ -106,13 +113,13 @@ namespace margelo::nitro::readium { struct AudiobookBookmarkChangeEvent; }
 #include "JBelongsTo.hpp"
 #include "SeriesInfo.hpp"
 #include "JSeriesInfo.hpp"
+#include "PublicationCapabilities.hpp"
+#include "JPublicationCapabilities.hpp"
 #include "DecorationActivatedEvent.hpp"
 #include "JFunc_void_DecorationActivatedEvent.hpp"
 #include "JDecorationActivatedEvent.hpp"
 #include "Rect.hpp"
 #include "JRect.hpp"
-#include "Point.hpp"
-#include "JPoint.hpp"
 #include "SelectionEvent.hpp"
 #include "JFunc_void_SelectionEvent.hpp"
 #include "JSelectionEvent.hpp"
@@ -125,6 +132,10 @@ namespace margelo::nitro::readium { struct AudiobookBookmarkChangeEvent; }
 #include "AudiobookBookmarkChangeEvent.hpp"
 #include "JFunc_void_AudiobookBookmarkChangeEvent.hpp"
 #include "JAudiobookBookmarkChangeEvent.hpp"
+#include "PublicationSearchPage.hpp"
+#include <NitroModules/Promise.hpp>
+#include <NitroModules/JPromise.hpp>
+#include "JPublicationSearchPage.hpp"
 
 namespace margelo::nitro::readium {
 
@@ -281,6 +292,23 @@ namespace margelo::nitro::readium {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<JFunc_void_Locator::javaobject> /* onLocationChange */)>("setOnLocationChange_cxx");
     method(_javaPart, onLocationChange.has_value() ? JFunc_void_Locator_cxx::fromCpp(onLocationChange.value()) : nullptr);
   }
+  std::optional<std::function<void(const Point& /* point */)>> JHybridReadiumViewSpec::getOnTap() {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<JFunc_void_Point::javaobject>()>("getOnTap_cxx");
+    auto __result = method(_javaPart);
+    return __result != nullptr ? std::make_optional([&]() -> std::function<void(const Point& /* point */)> {
+      if (__result->isInstanceOf(JFunc_void_Point_cxx::javaClassStatic())) [[likely]] {
+        auto downcast = jni::static_ref_cast<JFunc_void_Point_cxx::javaobject>(__result);
+        return downcast->cthis()->getFunction();
+      } else {
+        auto __resultRef = jni::make_global(__result);
+        return JNICallable<JFunc_void_Point, void(Point)>(std::move(__resultRef));
+      }
+    }()) : std::nullopt;
+  }
+  void JHybridReadiumViewSpec::setOnTap(const std::optional<std::function<void(const Point& /* point */)>>& onTap) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<JFunc_void_Point::javaobject> /* onTap */)>("setOnTap_cxx");
+    method(_javaPart, onTap.has_value() ? JFunc_void_Point_cxx::fromCpp(onTap.value()) : nullptr);
+  }
   std::optional<std::function<void(const PublicationReadyEvent& /* event */)>> JHybridReadiumViewSpec::getOnPublicationReady() {
     static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<JFunc_void_PublicationReadyEvent::javaobject>()>("getOnPublicationReady_cxx");
     auto __result = method(_javaPart);
@@ -395,6 +423,42 @@ namespace margelo::nitro::readium {
   }
   void JHybridReadiumViewSpec::goBackward() {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void()>("goBackward");
+    method(_javaPart);
+  }
+  std::shared_ptr<Promise<PublicationSearchPage>> JHybridReadiumViewSpec::search(const std::string& query) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<jni::JString> /* query */)>("search");
+    auto __result = method(_javaPart, jni::make_jstring(query));
+    return [&]() {
+      auto __promise = Promise<PublicationSearchPage>::create();
+      __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& __boxedResult) {
+        auto __result = jni::static_ref_cast<JPublicationSearchPage>(__boxedResult);
+        __promise->resolve(__result->toCpp());
+      });
+      __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
+        jni::JniException __jniError(__throwable);
+        __promise->reject(std::make_exception_ptr(__jniError));
+      });
+      return __promise;
+    }();
+  }
+  std::shared_ptr<Promise<PublicationSearchPage>> JHybridReadiumViewSpec::searchNext() {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>()>("searchNext");
+    auto __result = method(_javaPart);
+    return [&]() {
+      auto __promise = Promise<PublicationSearchPage>::create();
+      __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& __boxedResult) {
+        auto __result = jni::static_ref_cast<JPublicationSearchPage>(__boxedResult);
+        __promise->resolve(__result->toCpp());
+      });
+      __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
+        jni::JniException __jniError(__throwable);
+        __promise->reject(std::make_exception_ptr(__jniError));
+      });
+      return __promise;
+    }();
+  }
+  void JHybridReadiumViewSpec::cancelSearch() {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void()>("cancelSearch");
     method(_javaPart);
   }
   void JHybridReadiumViewSpec::play() {

@@ -65,6 +65,9 @@ class HybridReadiumView: HybridReadiumViewSpec {
   }
 
   var onLocationChange: ((Locator) -> Void)? = nil
+  var onTap: ((Point) -> Void)? = nil {
+    didSet { bindReaderTapHandler() }
+  }
   var onPublicationReady: ((PublicationReadyEvent) -> Void)? = nil
   var onDecorationActivated: ((DecorationActivatedEvent) -> Void)? = nil
   var onSelectionChange: ((SelectionEvent) -> Void)? = nil
@@ -100,7 +103,11 @@ class HybridReadiumView: HybridReadiumViewSpec {
   private var hasNotifiedPublicationReady = false
   private var selectionActionsReceived = false
   private var activeDecorationGroups = Set<String>()
+  private var observedDecorationGroups = Set<String>()
   private var didConfigureHostView = false
+  private var searchIterator: SearchIterator?
+  private var searchQuery = ""
+  private var searchResultOffset = 0
 
   /// Resolves the parent view controller for embedding reader children.
   /// Falls back to the app root controller when the responder chain does not
@@ -185,6 +192,7 @@ class HybridReadiumView: HybridReadiumViewSpec {
         }
 
         self.addViewControllerAsSubview(host: vc)
+        self.bindReaderTapHandler()
       },
       onFailure: { [weak self] error in
         let reset = {
@@ -226,15 +234,28 @@ class HybridReadiumView: HybridReadiumViewSpec {
     guard let navigator = (readerHost as? ReaderViewController)?.navigator as? DecorableNavigator else { return }
     guard let groups = decorations else { return }
 
+    // Drop whole groups that are no longer requested so an empty decorations
+    // prop actually clears what was previously applied.
+    let requestedGroups = Set(groups.map(\.name))
+    for staleGroup in activeDecorationGroups.subtracting(requestedGroups) {
+      // This Readium fork has no removeDecorations API; applying an empty
+      // list clears the whole group.
+      navigator.apply(decorations: [], in: staleGroup)
+      activeDecorationGroups.remove(staleGroup)
+    }
     for group in groups {
       let readiumDecorations = group.decorations.compactMap { dec -> RDecoration? in
         return nitroDecorationToReadium(dec)
       }
 
+      // apply() replaces the entire group state, so removed ids and updated
+      // highlights are handled by the diff inside the navigator.
       navigator.apply(decorations: readiumDecorations, in: group.name)
 
-      if !activeDecorationGroups.contains(group.name) {
-        activeDecorationGroups.insert(group.name)
+      // Observer registration is deduped separately from applied groups so a
+      // removed-then-reapplied group never registers twice.
+      if !observedDecorationGroups.contains(group.name) {
+        observedDecorationGroups.insert(group.name)
 
         navigator.observeDecorationInteractions(inGroup: group.name) { [weak self] event in
           guard let self = self else { return }
@@ -308,6 +329,14 @@ class HybridReadiumView: HybridReadiumViewSpec {
 
     if preferences != nil { updatePreferences() }
     if decorations != nil { updateDecorations() }
+    bindReaderTapHandler()
+  }
+
+  private func bindReaderTapHandler() {
+    guard let readerVC = readerHost as? ReaderViewController else { return }
+    readerVC.onTap = { [weak self] point in
+      self?.onTap?(Point(x: Double(point.x), y: Double(point.y)))
+    }
   }
 
   private func attemptEmbedReaderView() {
@@ -373,11 +402,16 @@ class HybridReadiumView: HybridReadiumViewSpec {
       }
 
       let metadata = readiumMetadataToNitro(vc.publication.metadata)
+      let searchLink = vc.publication.linkWithRel(.search)
 
       let event = PublicationReadyEvent(
         tableOfContents: tocLinks,
         positions: positions,
-        metadata: metadata
+        metadata: metadata,
+        capabilities: PublicationCapabilities(
+          search: vc.publication.isSearchable || searchLink != nil,
+          searchHref: searchLink?.href
+        )
       )
 
       self.onPublicationReady?(event)
@@ -416,6 +450,84 @@ class HybridReadiumView: HybridReadiumViewSpec {
     Task { @MainActor [weak self] in
       await self?.readerHost?.goBackward()
     }
+  }
+
+  func search(query: String) -> Promise<PublicationSearchPage> {
+    Promise.async { [weak self] in
+      guard let self else {
+        throw NSError(
+          domain: "ReadiumSearch",
+          code: 1,
+          userInfo: [NSLocalizedDescriptionKey: "Reader is unavailable."]
+        )
+      }
+      self.cancelSearch()
+      guard let publication = self.readerHost?.publication else {
+        throw NSError(
+          domain: "ReadiumSearch",
+          code: 2,
+          userInfo: [NSLocalizedDescriptionKey: "Publication is not ready."]
+        )
+      }
+      let normalizedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+      guard !normalizedQuery.isEmpty else {
+        throw NSError(
+          domain: "ReadiumSearch",
+          code: 3,
+          userInfo: [NSLocalizedDescriptionKey: "Search query must not be empty."]
+        )
+      }
+      let iterator = try await publication.search(query: normalizedQuery).get()
+      self.searchIterator = iterator
+      self.searchQuery = normalizedQuery
+      self.searchResultOffset = 0
+      return try await self.nextSearchPage(iterator: iterator, query: normalizedQuery)
+    }
+  }
+
+  func searchNext() -> Promise<PublicationSearchPage> {
+    Promise.async { [weak self] in
+      guard let self, let iterator = self.searchIterator else {
+        return PublicationSearchPage(
+          query: self?.searchQuery ?? "",
+          locators: [],
+          total: nil,
+          hasNext: false
+        )
+      }
+      return try await self.nextSearchPage(iterator: iterator, query: self.searchQuery)
+    }
+  }
+
+  private func nextSearchPage(
+    iterator: SearchIterator,
+    query: String
+  ) async throws -> PublicationSearchPage {
+    guard let collection = try await iterator.next().get() else {
+      let total = iterator.resultCount.map(Double.init)
+      iterator.close()
+      if searchIterator === iterator { searchIterator = nil }
+      return PublicationSearchPage(
+        query: query,
+        locators: [],
+        total: total,
+        hasNext: false
+      )
+    }
+    searchResultOffset += collection.locators.count
+    let total = iterator.resultCount
+    return PublicationSearchPage(
+      query: query,
+      locators: collection.locators.map { readiumLocatorToNitro($0) },
+      total: total.map(Double.init),
+      hasNext: total.map { searchResultOffset < $0 } ?? !collection.locators.isEmpty
+    )
+  }
+
+  func cancelSearch() {
+    searchIterator?.close()
+    searchIterator = nil
+    searchResultOffset = 0
   }
 
   func play() {
@@ -466,6 +578,7 @@ class HybridReadiumView: HybridReadiumViewSpec {
 
   // Cleanup
   func cleanup() {
+    cancelSearch()
     detachEmbeddedReaderView()
     readerHost = nil
     hasLoadedBook = false
@@ -476,6 +589,7 @@ class HybridReadiumView: HybridReadiumViewSpec {
     }
     subscriptions = Set<AnyCancellable>()
     activeDecorationGroups.removeAll()
+    observedDecorationGroups.removeAll()
   }
 }
 

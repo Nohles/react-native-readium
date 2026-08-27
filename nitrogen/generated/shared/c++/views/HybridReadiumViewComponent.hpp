@@ -25,6 +25,7 @@
 #include "AudiobookBookmark.hpp"
 #include "Locator.hpp"
 #include <functional>
+#include "Point.hpp"
 #include "PublicationReadyEvent.hpp"
 #include "DecorationActivatedEvent.hpp"
 #include "SelectionEvent.hpp"
@@ -61,6 +62,7 @@ namespace margelo::nitro::readium::views {
     CachedProp<std::optional<std::vector<SelectionAction>>> selectionActions;
     CachedProp<std::optional<std::vector<AudiobookBookmark>>> audiobookBookmarks;
     CachedProp<std::optional<std::function<void(const Locator& /* locator */)>>> onLocationChange;
+    CachedProp<std::optional<std::function<void(const Point& /* point */)>>> onTap;
     CachedProp<std::optional<std::function<void(const PublicationReadyEvent& /* event */)>>> onPublicationReady;
     CachedProp<std::optional<std::function<void(const DecorationActivatedEvent& /* event */)>>> onDecorationActivated;
     CachedProp<std::optional<std::function<void(const SelectionEvent& /* event */)>>> onSelectionChange;

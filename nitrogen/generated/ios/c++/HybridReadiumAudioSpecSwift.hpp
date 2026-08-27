@@ -161,6 +161,18 @@ namespace margelo::nitro::readium {
         std::rethrow_exception(__result.error());
       }
     }
+    inline void setNowPlayingInfoEnabled(bool enabled) override {
+      auto __result = _swiftPart.setNowPlayingInfoEnabled(std::forward<decltype(enabled)>(enabled));
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void setNowPlayingMetadataEnabled(bool enabled) override {
+      auto __result = _swiftPart.setNowPlayingMetadataEnabled(std::forward<decltype(enabled)>(enabled));
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
     inline void setSleepTimer(std::optional<double> seconds) override {
       auto __result = _swiftPart.setSleepTimer(seconds);
       if (__result.hasError()) [[unlikely]] {

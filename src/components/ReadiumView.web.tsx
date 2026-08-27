@@ -1,13 +1,25 @@
-import React, { useEffect, useImperativeHandle, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 import type { CSSProperties } from 'react';
 import { View, StyleSheet } from 'react-native';
 
-import {
-  useNavigator,
-  usePreferencesObserver,
-  useDecorationsObserver,
-} from '../../web/hooks';
+import { useDecorationsObserver } from '../../web/hooks/useDecorationsObserver';
+import { useNavigator } from '../../web/hooks/useNavigator';
+import { usePreferencesObserver } from '../../web/hooks/usePreferencesObserver';
 import { convertToNavigatorLocator } from '../../web/utils/locationNormalizer';
+import {
+  expandSearchHref,
+  fetchRemoteSearchPage,
+} from '../utils/remotePublicationSearch';
+import type {
+  PublicationReadyEvent,
+  PublicationSearchPage,
+} from '../specs/ReadiumView.nitro';
 import type {
   ReadiumProps as BaseReadiumProps,
   ReadiumViewRef as BaseReadiumViewRef,
@@ -34,6 +46,7 @@ export const ReadiumView = React.forwardRef<ReadiumViewRef, ReadiumProps>(
       onLocationChange,
       onPublicationReady,
       onDecorationActivated,
+      onTap,
       style = {},
       height,
       width,
@@ -42,6 +55,57 @@ export const ReadiumView = React.forwardRef<ReadiumViewRef, ReadiumProps>(
   ) => {
     const [container, setContainer] = useState<HTMLElement | null>(null);
     const [currentPosition, setCurrentPosition] = useState<number | null>(null);
+    const searchHref = useRef<string | undefined>(undefined);
+    const searchNextHref = useRef<string | undefined>(undefined);
+    const searchQuery = useRef('');
+    const searchAbort = useRef<AbortController | null>(null);
+
+    const cancelSearch = useCallback(() => {
+      searchAbort.current?.abort();
+      searchAbort.current = null;
+      searchNextHref.current = undefined;
+    }, []);
+
+    const handlePublicationReady = useCallback(
+      (event: PublicationReadyEvent) => {
+        searchHref.current = event.capabilities.searchHref;
+        searchNextHref.current = undefined;
+        searchQuery.current = '';
+        onPublicationReady?.(event);
+      },
+      [onPublicationReady]
+    );
+
+    const runSearch = useCallback(
+      async (
+        query: string,
+        nextHref?: string
+      ): Promise<PublicationSearchPage> => {
+        const template = searchHref.current;
+        if (!template) throw new Error('Publication search is unavailable.');
+        const normalizedQuery = query.trim();
+        if (!normalizedQuery)
+          throw new Error('Search query must not be empty.');
+        cancelSearch();
+        const controller = new AbortController();
+        searchAbort.current = controller;
+        const href =
+          nextHref ?? expandSearchHref(template, file.url, normalizedQuery);
+        try {
+          const page = await fetchRemoteSearchPage({
+            href,
+            query: normalizedQuery,
+            signal: controller.signal,
+          });
+          searchQuery.current = normalizedQuery;
+          searchNextHref.current = page.nextHref;
+          return page;
+        } finally {
+          if (searchAbort.current === controller) searchAbort.current = null;
+        }
+      },
+      [cancelSearch, file.url]
+    );
 
     // Convert DecorationGroup[] to DecorationGroups record for web hooks
     const decorationsRecord = decorations
@@ -51,7 +115,8 @@ export const ReadiumView = React.forwardRef<ReadiumViewRef, ReadiumProps>(
     const { navigator, positions } = useNavigator({
       file,
       onLocationChange,
-      onPublicationReady,
+      onPublicationReady: handlePublicationReady,
+      onTap,
       container,
       onPositionChange: setCurrentPosition,
     });
@@ -73,6 +138,18 @@ export const ReadiumView = React.forwardRef<ReadiumViewRef, ReadiumProps>(
         goBackward: () => {
           navigator?.goBackward(true, () => {});
         },
+        search: (query) => runSearch(query),
+        searchNext: () => {
+          const nextHref = searchNextHref.current;
+          return nextHref
+            ? runSearch(searchQuery.current, nextHref)
+            : Promise.resolve({
+                query: searchQuery.current,
+                locators: [],
+                hasNext: false,
+              });
+        },
+        cancelSearch,
         play: () => {},
         pause: () => {},
         seekTo: () => {},
@@ -88,8 +165,14 @@ export const ReadiumView = React.forwardRef<ReadiumViewRef, ReadiumProps>(
           navigator?.goBackward(true, () => {});
         },
       }),
-      [navigator]
+      [cancelSearch, navigator, runSearch]
     );
+
+    useEffect(() => {
+      cancelSearch();
+      searchHref.current = undefined;
+      searchQuery.current = '';
+    }, [cancelSearch, file.url]);
 
     usePreferencesObserver(navigator, preferences);
     useDecorationsObserver(navigator, decorationsRecord, onDecorationActivated);
