@@ -107,6 +107,11 @@ using namespace margelo::nitro::readium::views;
     swiftPart.setOnLocationChange(newViewProps.onLocationChange.value);
     newViewProps.onLocationChange.isDirty = false;
   }
+  // onTap: optional
+  if (newViewProps.onTap.isDirty) {
+    swiftPart.setOnTap(newViewProps.onTap.value);
+    newViewProps.onTap.isDirty = false;
+  }
   // onPublicationReady: optional
   if (newViewProps.onPublicationReady.isDirty) {
     swiftPart.setOnPublicationReady(newViewProps.onPublicationReady.value);

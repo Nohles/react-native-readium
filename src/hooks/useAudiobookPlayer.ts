@@ -72,7 +72,6 @@ export function useAudiobookPlayer(
   } = options;
 
   const sessionStateRef = useRef(ReadiumAudio.getState());
-  const playbackStateRef = useRef<AudiobookPlaybackState | null>(null);
   const fileRef = useRef<File | undefined>(file);
   const onStateChangeRef = useRef(onStateChange);
   const onErrorRef = useRef(onError);
@@ -94,7 +93,6 @@ export function useAudiobookPlayer(
       setState((previousState) =>
         normalizeAudiobookPlayerState({
           sessionState: nextSessionState,
-          playbackState: playbackStateRef.current,
           previousState,
         })
       );
@@ -193,18 +191,15 @@ export function useAudiobookPlayer(
   }, []);
 
   const close = useCallback(() => {
-    playbackStateRef.current = null;
     ReadiumAudio.close();
     updateState();
   }, [updateState]);
 
   const handleAudiobookPlaybackStateChange = useCallback(
     (nextPlaybackState: AudiobookPlaybackState) => {
-      playbackStateRef.current = nextPlaybackState;
-      updateState();
       onAudiobookPlaybackStateChangeRef.current?.(nextPlaybackState);
     },
-    [updateState]
+    []
   );
 
   const readiumViewProps = useMemo<AudiobookPlayerReadiumViewProps>(

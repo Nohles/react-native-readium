@@ -25,31 +25,42 @@ func nitroPreferencesToEPUB(_ prefs: Preferences) -> EPUBPreferences {
   let txtColor = prefs.textColor.flatMap { ReadiumNavigator.Color(hex: $0) }
     ?? (isSepia && prefs.textColor == nil ? ReadiumNavigator.Color(hex: sepiaText) : nil)
 
+  let columnCount = prefs.columnCount.flatMap { ColumnCount(rawValue: $0) }
+  let fit = prefs.fit.flatMap { Fit(rawValue: $0) }
+  let fontFamily = prefs.fontFamily.map { FontFamily(rawValue: $0) }
+  let imageFilter = prefs.imageFilter.flatMap { ImageFilter(rawValue: $0) }
+  let language = prefs.language.map { Language(code: .bcp47($0)) }
+  let readingProgression = prefs.readingProgression.flatMap {
+    ReadiumNavigator.ReadingProgression(rawValue: $0)
+  }
+  let spread = prefs.spread.flatMap { Spread(rawValue: $0) }
+  let textAlign = prefs.textAlign.flatMap { TextAlignment(rawValue: $0) }
+  let theme = prefs.theme.flatMap { Theme(rawValue: $0) }
+
   return EPUBPreferences(
     backgroundColor: bgColor,
-    columnCount: prefs.columnCount.flatMap { ColumnCount(rawValue: $0) },
-    fit: prefs.fit.flatMap { Fit(rawValue: $0) },
-    fontFamily: prefs.fontFamily.map { FontFamily(rawValue: $0) },
+    columnCount: columnCount,
+    fit: fit,
+    fontFamily: fontFamily,
     fontSize: prefs.fontSize,
     fontWeight: prefs.fontWeight,
     hyphens: prefs.hyphens,
-    imageFilter: prefs.imageFilter.flatMap { ImageFilter(rawValue: $0) },
-    language: prefs.language.map { Language(code: .bcp47($0)) },
+    imageFilter: imageFilter,
+    language: language,
     letterSpacing: prefs.letterSpacing,
     ligatures: prefs.ligatures,
-    linkColor: prefs.linkColor.flatMap { ReadiumNavigator.Color(hex: $0) },
     lineHeight: prefs.lineHeight,
     pageMargins: prefs.pageMargins,
     paragraphIndent: prefs.paragraphIndent,
     paragraphSpacing: prefs.paragraphSpacing,
     publisherStyles: prefs.publisherStyles,
-    readingProgression: prefs.readingProgression.flatMap { ReadiumNavigator.ReadingProgression(rawValue: $0) },
+    readingProgression: readingProgression,
     scroll: prefs.scroll,
-    spread: prefs.spread.flatMap { Spread(rawValue: $0) },
-    textAlign: prefs.textAlign.flatMap { TextAlignment(rawValue: $0) },
+    spread: spread,
+    textAlign: textAlign,
     textColor: txtColor,
     textNormalization: prefs.textNormalization,
-    theme: prefs.theme.flatMap { Theme(rawValue: $0) },
+    theme: theme,
     typeScale: prefs.typeScale,
     verticalText: prefs.verticalText,
     wordSpacing: prefs.wordSpacing

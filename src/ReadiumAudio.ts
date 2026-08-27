@@ -110,6 +110,14 @@ export const ReadiumAudio = {
     getNativeAudio().setVolume(volume);
   },
 
+  setNowPlayingInfoEnabled(enabled: boolean): void {
+    getNativeAudio().setNowPlayingInfoEnabled(enabled);
+  },
+
+  setNowPlayingMetadataEnabled(enabled: boolean): void {
+    getNativeAudio().setNowPlayingMetadataEnabled(enabled);
+  },
+
   setSleepTimer(seconds?: number): void {
     getNativeAudio().setSleepTimer(seconds);
   },

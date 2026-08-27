@@ -17,7 +17,7 @@ import {
 interface RefProps
   extends Pick<
     ReadiumProps,
-    'file' | 'onLocationChange' | 'onPublicationReady'
+    'file' | 'onLocationChange' | 'onPublicationReady' | 'onTap'
   > {
   container: HTMLElement | null;
   onPositionChange?: (position: number | null) => void;
@@ -27,6 +27,7 @@ export const useNavigator = ({
   file,
   onLocationChange,
   onPublicationReady,
+  onTap,
   container,
   onPositionChange,
 }: RefProps) => {
@@ -120,7 +121,8 @@ export const useNavigator = ({
       // 5. Create navigator listeners
       const listeners = createNavigatorListeners(
         onLocationChangeWithTotalProgression,
-        onPositionChange
+        onPositionChange,
+        onTap
       );
 
       // 6. Process initial location, sanitizing the position number to match
@@ -153,6 +155,7 @@ export const useNavigator = ({
           tableOfContentsManifest ?? manifest
         );
         const metadata = normalizeMetadata(manifest.metadata);
+        const searchLink = publication.linkWithRel('search');
 
         // @ts-ignore - Type compatibility between Readium types and our interfaces
         onPublicationReady({
@@ -160,6 +163,10 @@ export const useNavigator = ({
           // @ts-ignore
           positions: positionsArray,
           metadata: metadata,
+          capabilities: {
+            search: Boolean(searchLink),
+            searchHref: searchLink?.href,
+          },
         });
       }
 

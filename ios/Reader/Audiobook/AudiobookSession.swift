@@ -14,6 +14,8 @@ final class AudiobookSession {
   private(set) var controller: AudiobookViewController?
   private(set) var fileURL: String?
   private var metadata: PublicationMetadata?
+  private var isNowPlayingInfoEnabled = true
+  private var isNowPlayingMetadataEnabled = true
   private var lastState = AudiobookSessionState(
     status: .idle,
     publication: nil,
@@ -53,9 +55,14 @@ final class AudiobookSession {
           self.emit(status: .error, error: "The publication is not an audiobook.")
           return
         }
-        self.adopt(audiobook, url: file.url)
+        self.adopt(audiobook, url: file.url, emitReady: false)
         audiobook.loadViewIfNeeded()
-        self.emit(status: .ready)
+        Task { @MainActor [weak self, weak audiobook] in
+          guard let self, let audiobook else { return }
+          await audiobook.preparePlayback()
+          guard self.controller === audiobook, self.fileURL == file.url else { return }
+          self.emit(status: .ready)
+        }
       }
     )
   }
@@ -68,17 +75,19 @@ final class AudiobookSession {
     controller
   }
 
-  func adopt(_ host: AudiobookViewController, url: String) {
+  func adopt(_ host: AudiobookViewController, url: String, emitReady: Bool = true) {
     if controller !== host {
       controller?.pause()
       controller = host
       fileURL = url
     }
     metadata = readiumMetadataToNitro(host.publication.metadata)
+    host.isNowPlayingInfoEnabled = isNowPlayingInfoEnabled
+    host.isNowPlayingMetadataEnabled = isNowPlayingMetadataEnabled
     host.onPlaybackStateChange = { [weak self] state in
       self?.receivePlayback(state)
     }
-    if lastState.status == .idle || lastState.status == .loading {
+    if emitReady && (lastState.status == .idle || lastState.status == .loading) {
       emit(status: .ready)
     }
   }
@@ -88,6 +97,14 @@ final class AudiobookSession {
   func seekTo(_ position: Double) { controller?.seekTo(position: position) }
   func setPlaybackRate(_ rate: Double) { controller?.setPlaybackRate(rate) }
   func setVolume(_ volume: Double) { controller?.setVolume(volume) }
+  func setNowPlayingInfoEnabled(_ enabled: Bool) {
+    isNowPlayingInfoEnabled = enabled
+    controller?.isNowPlayingInfoEnabled = enabled
+  }
+  func setNowPlayingMetadataEnabled(_ enabled: Bool) {
+    isNowPlayingMetadataEnabled = enabled
+    controller?.isNowPlayingMetadataEnabled = enabled
+  }
   func setSleepTimer(_ seconds: Double?) { controller?.setSleepTimer(seconds: seconds) }
 
   func goForward() {

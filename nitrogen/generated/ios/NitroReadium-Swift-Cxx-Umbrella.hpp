@@ -50,10 +50,14 @@ namespace margelo::nitro::readium { struct Locator; }
 namespace margelo::nitro::readium { struct Point; }
 // Forward declaration of `Preferences` to properly resolve imports.
 namespace margelo::nitro::readium { struct Preferences; }
+// Forward declaration of `PublicationCapabilities` to properly resolve imports.
+namespace margelo::nitro::readium { struct PublicationCapabilities; }
 // Forward declaration of `PublicationMetadata` to properly resolve imports.
 namespace margelo::nitro::readium { struct PublicationMetadata; }
 // Forward declaration of `PublicationReadyEvent` to properly resolve imports.
 namespace margelo::nitro::readium { struct PublicationReadyEvent; }
+// Forward declaration of `PublicationSearchPage` to properly resolve imports.
+namespace margelo::nitro::readium { struct PublicationSearchPage; }
 // Forward declaration of `ReadiumFile` to properly resolve imports.
 namespace margelo::nitro::readium { struct ReadiumFile; }
 // Forward declaration of `Rect` to properly resolve imports.
@@ -91,8 +95,10 @@ namespace margelo::nitro::readium { struct Subject; }
 #include "LocatorText.hpp"
 #include "Point.hpp"
 #include "Preferences.hpp"
+#include "PublicationCapabilities.hpp"
 #include "PublicationMetadata.hpp"
 #include "PublicationReadyEvent.hpp"
+#include "PublicationSearchPage.hpp"
 #include "ReadiumFile.hpp"
 #include "Rect.hpp"
 #include "SelectionAction.hpp"
@@ -100,6 +106,7 @@ namespace margelo::nitro::readium { struct Subject; }
 #include "SelectionEvent.hpp"
 #include "SeriesInfo.hpp"
 #include "Subject.hpp"
+#include <NitroModules/Promise.hpp>
 #include <NitroModules/Result.hpp>
 #include <exception>
 #include <functional>

@@ -6,6 +6,7 @@ export * from './Locator';
 export * from './Preferences';
 export * from './PublicationMetadata';
 export * from './PublicationReady';
+export * from './PublicationSearch';
 export * from './Selection';
 export * from './SelectionAction';
 export * from './AudiobookPlaybackState';

@@ -301,6 +301,38 @@ open class HybridReadiumViewSpec_cxx {
     }
   }
   
+  public final var onTap: bridge.std__optional_std__function_void_const_Point_____point______ {
+    @inline(__always)
+    get {
+      return { () -> bridge.std__optional_std__function_void_const_Point_____point______ in
+        if let __unwrappedValue = self.__implementation.onTap {
+          return bridge.create_std__optional_std__function_void_const_Point_____point______({ () -> bridge.Func_void_Point in
+            let __closureWrapper = Func_void_Point(__unwrappedValue)
+            return bridge.create_Func_void_Point(__closureWrapper.toUnsafe())
+          }())
+        } else {
+          return .init()
+        }
+      }()
+    }
+    @inline(__always)
+    set {
+      self.__implementation.onTap = { () -> ((_ point: Point) -> Void)? in
+        if bridge.has_value_std__optional_std__function_void_const_Point_____point______(newValue) {
+          let __unwrapped = bridge.get_std__optional_std__function_void_const_Point_____point______(newValue)
+          return { () -> (Point) -> Void in
+            let __wrappedFunction = bridge.wrap_Func_void_Point(__unwrapped)
+            return { (__point: Point) -> Void in
+              __wrappedFunction.call(__point)
+            }
+          }()
+        } else {
+          return nil
+        }
+      }()
+    }
+  }
+  
   public final var onPublicationReady: bridge.std__optional_std__function_void_const_PublicationReadyEvent_____event______ {
     @inline(__always)
     get {
@@ -520,6 +552,55 @@ open class HybridReadiumViewSpec_cxx {
   public final func goBackward() -> bridge.Result_void_ {
     do {
       try self.__implementation.goBackward()
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func search(query: std.string) -> bridge.Result_std__shared_ptr_Promise_PublicationSearchPage___ {
+    do {
+      let __result = try self.__implementation.search(query: String(query))
+      let __resultCpp = { () -> bridge.std__shared_ptr_Promise_PublicationSearchPage__ in
+        let __promise = bridge.create_std__shared_ptr_Promise_PublicationSearchPage__()
+        let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_PublicationSearchPage__(__promise)
+        __result
+          .then({ __result in __promiseHolder.resolve(__result) })
+          .catch({ __error in __promiseHolder.reject(__error.toCpp()) })
+        return __promise
+      }()
+      return bridge.create_Result_std__shared_ptr_Promise_PublicationSearchPage___(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_std__shared_ptr_Promise_PublicationSearchPage___(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func searchNext() -> bridge.Result_std__shared_ptr_Promise_PublicationSearchPage___ {
+    do {
+      let __result = try self.__implementation.searchNext()
+      let __resultCpp = { () -> bridge.std__shared_ptr_Promise_PublicationSearchPage__ in
+        let __promise = bridge.create_std__shared_ptr_Promise_PublicationSearchPage__()
+        let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_PublicationSearchPage__(__promise)
+        __result
+          .then({ __result in __promiseHolder.resolve(__result) })
+          .catch({ __error in __promiseHolder.reject(__error.toCpp()) })
+        return __promise
+      }()
+      return bridge.create_Result_std__shared_ptr_Promise_PublicationSearchPage___(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_std__shared_ptr_Promise_PublicationSearchPage___(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func cancelSearch() -> bridge.Result_void_ {
+    do {
+      try self.__implementation.cancelSearch()
       return bridge.create_Result_void_()
     } catch (let __error) {
       let __exceptionPtr = __error.toCpp()

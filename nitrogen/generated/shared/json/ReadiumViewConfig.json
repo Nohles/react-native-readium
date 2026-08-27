@@ -11,6 +11,7 @@
     "selectionActions": true,
     "audiobookBookmarks": true,
     "onLocationChange": true,
+    "onTap": true,
     "onPublicationReady": true,
     "onDecorationActivated": true,
     "onSelectionChange": true,

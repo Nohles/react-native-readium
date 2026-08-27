@@ -17,6 +17,7 @@ public protocol HybridReadiumViewSpec_protocol: HybridObject, HybridView {
   var selectionActions: [SelectionAction]? { get set }
   var audiobookBookmarks: [AudiobookBookmark]? { get set }
   var onLocationChange: ((_ locator: Locator) -> Void)? { get set }
+  var onTap: ((_ point: Point) -> Void)? { get set }
   var onPublicationReady: ((_ event: PublicationReadyEvent) -> Void)? { get set }
   var onDecorationActivated: ((_ event: DecorationActivatedEvent) -> Void)? { get set }
   var onSelectionChange: ((_ event: SelectionEvent) -> Void)? { get set }
@@ -28,6 +29,9 @@ public protocol HybridReadiumViewSpec_protocol: HybridObject, HybridView {
   func goTo(locator: Locator) throws -> Void
   func goForward() throws -> Void
   func goBackward() throws -> Void
+  func search(query: String) throws -> Promise<PublicationSearchPage>
+  func searchNext() throws -> Promise<PublicationSearchPage>
+  func cancelSearch() throws -> Void
   func play() throws -> Void
   func pause() throws -> Void
   func seekTo(position: Double) throws -> Void

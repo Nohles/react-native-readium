@@ -64,6 +64,7 @@ class PositionLabelManager(
         }
 
         containerView.addView(label, params)
+        label.visibility = android.view.View.GONE
         // Ensure label is above navigator fragment
         label.bringToFront()
     }

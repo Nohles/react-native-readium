@@ -24,12 +24,18 @@ import com.reactnativereadium.utils.flattenReadiumLinks
 import com.reactnativereadium.utils.readiumDecorationToNitro
 import com.reactnativereadium.utils.readiumMetadataToNitro
 import com.reactnativereadium.utils.toNitroPlaybackState
+import com.margelo.nitro.core.Promise
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import org.readium.r2.shared.ExperimentalReadiumApi
+import org.readium.r2.shared.publication.services.search.SearchIterator
+import org.readium.r2.shared.publication.services.search.isSearchable
+import org.readium.r2.shared.publication.services.search.search
 
+@OptIn(ExperimentalReadiumApi::class)
 class HybridReadiumView(private val context: android.content.Context) : HybridReadiumViewSpec() {
   companion object {
     private const val CONTAINER_ID_ATTEMPTS = 20
@@ -57,6 +63,9 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
   private var isAttached = false
   private var isDestroyed = false
   private var frameCallback: Choreographer.FrameCallback? = null
+  private var searchIterator: SearchIterator? = null
+  private var searchQuery = ""
+  private var searchResultOffset = 0
 
   override val view: View get() = hostView
 
@@ -109,6 +118,7 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
 
   override var audiobookBookmarks: Array<AudiobookBookmark>? = null
   override var onLocationChange: ((locator: Locator) -> Unit)? = null
+  override var onTap: ((point: Point) -> Unit)? = null
   override var onPublicationReady: ((event: PublicationReadyEvent) -> Unit)? = null
   override var onDecorationActivated: ((event: DecorationActivatedEvent) -> Unit)? = null
   override var onSelectionChange: ((event: SelectionEvent) -> Unit)? = null
@@ -191,6 +201,71 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
   override fun setVolume(volume: Double) = withAudiobook { it.setVolume(volume) }
   override fun setSleepTimer(seconds: Double?) = withAudiobook { it.setSleepTimer(seconds) }
 
+  override fun search(query: String): Promise<PublicationSearchPage> =
+    Promise.async(scope) {
+      cancelSearch()
+      val publication = fragment?.publication()
+        ?: throw IllegalStateException("Publication is not ready.")
+      val normalizedQuery = query.trim()
+      if (normalizedQuery.isEmpty()) {
+        throw IllegalArgumentException("Search query must not be empty.")
+      }
+      val iterator = publication.search(normalizedQuery)
+        ?: throw IllegalStateException("Publication search is unavailable.")
+      searchIterator = iterator
+      searchQuery = normalizedQuery
+      searchResultOffset = 0
+      nextSearchPage(iterator, normalizedQuery)
+    }
+
+  override fun searchNext(): Promise<PublicationSearchPage> =
+    Promise.async(scope) {
+      val iterator = searchIterator
+        ?: return@async PublicationSearchPage(
+          query = searchQuery,
+          locators = emptyArray(),
+          total = null,
+          hasNext = false
+        )
+      nextSearchPage(iterator, searchQuery)
+    }
+
+  private suspend fun nextSearchPage(
+    iterator: SearchIterator,
+    query: String
+  ): PublicationSearchPage {
+    val result = iterator.next()
+    val failure = result.failureOrNull()
+    if (failure != null) {
+      throw IllegalStateException(failure.message)
+    }
+    val collection = result.getOrNull()
+    if (collection == null) {
+      iterator.close()
+      if (searchIterator === iterator) searchIterator = null
+      return PublicationSearchPage(
+        query = query,
+        locators = emptyArray(),
+        total = iterator.resultCount?.toDouble(),
+        hasNext = false
+      )
+    }
+    searchResultOffset += collection.locators.size
+    val total = iterator.resultCount
+    return PublicationSearchPage(
+      query = query,
+      locators = collection.locators.map { readiumLocatorToNitro(it) }.toTypedArray(),
+      total = total?.toDouble(),
+      hasNext = total?.let { searchResultOffset < it } ?: collection.locators.isNotEmpty()
+    )
+  }
+
+  override fun cancelSearch() {
+    searchIterator?.close()
+    searchIterator = null
+    searchResultOffset = 0
+  }
+
   override fun destroy() {
     if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
       cleanup()
@@ -225,7 +300,10 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
             tableOfContents = flattenReadiumLinks(publication.tableOfContents).toTypedArray(),
             positions = publication.readingOrder.mapNotNull { publication.locatorFromLink(it) }
               .map { readiumLocatorToNitro(it) }.toTypedArray(),
-            metadata = readiumMetadataToNitro(publication.metadata)
+            metadata = readiumMetadataToNitro(publication.metadata),
+            // Search is currently implemented for visual fragments; audiobooks
+            // are hosted headlessly and have no fragment-backed search iterator.
+            capabilities = PublicationCapabilities(search = false, searchHref = null)
           ))
         }
         onAudiobookPlaybackStateChange?.invoke(sessionState.toNitroPlaybackState())
@@ -241,6 +319,7 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
    * tree — use [cleanup] for permanent removal.
    */
   private fun teardownFragment() {
+    cancelSearch()
     liveInstances.remove(instanceId)
 
     frameCallback?.let {
@@ -393,10 +472,16 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
           onLocationChange?.invoke(readiumLocatorToNitro(event.locator))
         }
         is ReaderViewModel.Event.PublicationReady -> {
+          val publication = frag.publication()
+          val searchLink = publication.linkWithRel("search")
           onPublicationReady?.invoke(PublicationReadyEvent(
             tableOfContents = flattenReadiumLinks(event.tableOfContents).toTypedArray(),
             positions = event.positions.map { readiumLocatorToNitro(it) }.toTypedArray(),
-            metadata = readiumMetadataToNitro(event.metadata)
+            metadata = readiumMetadataToNitro(event.metadata),
+            capabilities = PublicationCapabilities(
+              search = publication.isSearchable || searchLink != null,
+              searchHref = searchLink?.href?.toString()
+            )
           ))
         }
         is ReaderViewModel.Event.DecorationActivated -> {

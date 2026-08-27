@@ -63,6 +63,8 @@ namespace margelo::nitro::readium {
     void goBackward() override;
     void setPlaybackRate(double rate) override;
     void setVolume(double volume) override;
+    void setNowPlayingInfoEnabled(bool enabled) override;
+    void setNowPlayingMetadataEnabled(bool enabled) override;
     void setSleepTimer(std::optional<double> seconds) override;
     void close() override;
 

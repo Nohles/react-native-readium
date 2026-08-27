@@ -11,12 +11,16 @@ import type {
   AudiobookPlaybackState,
   AudiobookBookmark,
   AudiobookBookmarkChangeEvent,
+  PublicationSearchPage,
 } from '../interfaces';
 
 export type ReadiumViewRef = {
   goTo: (locator: Locator) => void;
   goForward: () => void;
   goBackward: () => void;
+  search: (query: string) => Promise<PublicationSearchPage>;
+  searchNext: () => Promise<PublicationSearchPage>;
+  cancelSearch: () => void;
   play: () => void;
   pause: () => void;
   seekTo: (position: number) => void;
@@ -34,6 +38,7 @@ export type ReadiumProps = {
   audiobookBookmarks?: AudiobookBookmark[];
   style?: any;
   onLocationChange?: (locator: Locator) => void;
+  onTap?: (point: { x: number; y: number }) => void;
   onPublicationReady?: (event: PublicationReadyEvent) => void;
   onDecorationActivated?: (event: DecorationActivatedEvent) => void;
   onSelectionChange?: (event: SelectionEvent) => void;

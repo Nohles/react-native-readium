@@ -19,6 +19,7 @@
 #include "JFunc_void_AudiobookSessionState.hpp"
 #include "JHybridReadiumViewSpec.hpp"
 #include "JFunc_void_Locator.hpp"
+#include "JFunc_void_Point.hpp"
 #include "JFunc_void_PublicationReadyEvent.hpp"
 #include "JFunc_void_DecorationActivatedEvent.hpp"
 #include "JFunc_void_SelectionEvent.hpp"
@@ -62,6 +63,7 @@ void registerAllNatives() {
   margelo::nitro::readium::JFunc_void_AudiobookSessionState_cxx::registerNatives();
   margelo::nitro::readium::JHybridReadiumViewSpec::CxxPart::registerNatives();
   margelo::nitro::readium::JFunc_void_Locator_cxx::registerNatives();
+  margelo::nitro::readium::JFunc_void_Point_cxx::registerNatives();
   margelo::nitro::readium::JFunc_void_PublicationReadyEvent_cxx::registerNatives();
   margelo::nitro::readium::JFunc_void_DecorationActivatedEvent_cxx::registerNatives();
   margelo::nitro::readium::JFunc_void_SelectionEvent_cxx::registerNatives();

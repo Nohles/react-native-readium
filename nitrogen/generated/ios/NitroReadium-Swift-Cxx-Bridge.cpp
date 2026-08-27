@@ -47,6 +47,14 @@ namespace margelo::nitro::readium::bridge::swift {
     };
   }
   
+  // pragma MARK: std::function<void(const Point& /* point */)>
+  Func_void_Point create_Func_void_Point(void* NON_NULL swiftClosureWrapper) noexcept {
+    auto swiftClosure = NitroReadium::Func_void_Point::fromUnsafe(swiftClosureWrapper);
+    return [swiftClosure = std::move(swiftClosure)](const Point& point) mutable -> void {
+      swiftClosure.call(point);
+    };
+  }
+  
   // pragma MARK: std::function<void(const PublicationReadyEvent& /* event */)>
   Func_void_PublicationReadyEvent create_Func_void_PublicationReadyEvent(void* NON_NULL swiftClosureWrapper) noexcept {
     auto swiftClosure = NitroReadium::Func_void_PublicationReadyEvent::fromUnsafe(swiftClosureWrapper);
@@ -92,6 +100,22 @@ namespace margelo::nitro::readium::bridge::swift {
     auto swiftClosure = NitroReadium::Func_void_AudiobookBookmarkChangeEvent::fromUnsafe(swiftClosureWrapper);
     return [swiftClosure = std::move(swiftClosure)](const AudiobookBookmarkChangeEvent& event) mutable -> void {
       swiftClosure.call(event);
+    };
+  }
+  
+  // pragma MARK: std::function<void(const PublicationSearchPage& /* result */)>
+  Func_void_PublicationSearchPage create_Func_void_PublicationSearchPage(void* NON_NULL swiftClosureWrapper) noexcept {
+    auto swiftClosure = NitroReadium::Func_void_PublicationSearchPage::fromUnsafe(swiftClosureWrapper);
+    return [swiftClosure = std::move(swiftClosure)](const PublicationSearchPage& result) mutable -> void {
+      swiftClosure.call(result);
+    };
+  }
+  
+  // pragma MARK: std::function<void(const std::exception_ptr& /* error */)>
+  Func_void_std__exception_ptr create_Func_void_std__exception_ptr(void* NON_NULL swiftClosureWrapper) noexcept {
+    auto swiftClosure = NitroReadium::Func_void_std__exception_ptr::fromUnsafe(swiftClosureWrapper);
+    return [swiftClosure = std::move(swiftClosure)](const std::exception_ptr& error) mutable -> void {
+      swiftClosure.call(error);
     };
   }
   

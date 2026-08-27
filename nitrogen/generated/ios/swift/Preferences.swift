@@ -243,7 +243,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var columnCount: String? {
     return { () -> String? in
@@ -255,7 +255,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var fit: String? {
     return { () -> String? in
@@ -267,7 +267,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var fontFamily: String? {
     return { () -> String? in
@@ -279,7 +279,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var fontSize: Double? {
     return { () -> Double? in
@@ -291,7 +291,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var fontWeight: Double? {
     return { () -> Double? in
@@ -303,7 +303,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var hyphens: Bool? {
     return { () -> Bool? in
@@ -315,7 +315,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var imageFilter: String? {
     return { () -> String? in
@@ -327,7 +327,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var language: String? {
     return { () -> String? in
@@ -339,7 +339,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var letterSpacing: Double? {
     return { () -> Double? in
@@ -351,7 +351,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var ligatures: Bool? {
     return { () -> Bool? in
@@ -363,7 +363,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var linkColor: String? {
     return { () -> String? in
@@ -375,7 +375,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var lineHeight: Double? {
     return { () -> Double? in
@@ -387,7 +387,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var pageMargins: Double? {
     return { () -> Double? in
@@ -399,7 +399,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var paragraphIndent: Double? {
     return { () -> Double? in
@@ -411,7 +411,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var paragraphSpacing: Double? {
     return { () -> Double? in
@@ -423,7 +423,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var publisherStyles: Bool? {
     return { () -> Bool? in
@@ -435,7 +435,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var readingProgression: String? {
     return { () -> String? in
@@ -447,7 +447,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var scroll: Bool? {
     return { () -> Bool? in
@@ -459,7 +459,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var spread: String? {
     return { () -> String? in
@@ -471,7 +471,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var textAlign: String? {
     return { () -> String? in
@@ -483,7 +483,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var textColor: String? {
     return { () -> String? in
@@ -495,7 +495,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var textNormalization: Bool? {
     return { () -> Bool? in
@@ -507,7 +507,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var theme: String? {
     return { () -> String? in
@@ -519,7 +519,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var typeScale: Double? {
     return { () -> Double? in
@@ -531,7 +531,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var verticalText: Bool? {
     return { () -> Bool? in
@@ -543,7 +543,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var wordSpacing: Double? {
     return { () -> Double? in
@@ -555,7 +555,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var merging: Bool? {
     return { () -> Bool? in
@@ -567,7 +567,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var comicReadingMode: String? {
     return { () -> String? in
@@ -579,7 +579,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var comicScaleType: String? {
     return { () -> String? in
@@ -591,7 +591,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var comicStretchSmallPages: Bool? {
     return { () -> Bool? in
@@ -603,7 +603,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var comicWidthLimitEnabled: Bool? {
     return { () -> Bool? in
@@ -615,7 +615,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var comicWidthLimitPercent: Double? {
     return { () -> Double? in
@@ -627,7 +627,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var comicScrollAmountPercent: Double? {
     return { () -> Double? in
@@ -639,7 +639,7 @@ public extension Preferences {
       }
     }()
   }
-
+  
   @inline(__always)
   var comicImagePreloadAmount: Double? {
     return { () -> Double? in

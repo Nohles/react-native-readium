@@ -25,6 +25,8 @@ namespace margelo::nitro::readium { struct SelectionAction; }
 namespace margelo::nitro::readium { struct AudiobookBookmark; }
 // Forward declaration of `Locator` to properly resolve imports.
 namespace margelo::nitro::readium { struct Locator; }
+// Forward declaration of `Point` to properly resolve imports.
+namespace margelo::nitro::readium { struct Point; }
 // Forward declaration of `PublicationReadyEvent` to properly resolve imports.
 namespace margelo::nitro::readium { struct PublicationReadyEvent; }
 // Forward declaration of `DecorationActivatedEvent` to properly resolve imports.
@@ -37,6 +39,8 @@ namespace margelo::nitro::readium { struct SelectionActionEvent; }
 namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
 // Forward declaration of `AudiobookBookmarkChangeEvent` to properly resolve imports.
 namespace margelo::nitro::readium { struct AudiobookBookmarkChangeEvent; }
+// Forward declaration of `PublicationSearchPage` to properly resolve imports.
+namespace margelo::nitro::readium { struct PublicationSearchPage; }
 
 #include <optional>
 #include "ReadiumFile.hpp"
@@ -47,12 +51,16 @@ namespace margelo::nitro::readium { struct AudiobookBookmarkChangeEvent; }
 #include "AudiobookBookmark.hpp"
 #include "Locator.hpp"
 #include <functional>
+#include "Point.hpp"
 #include "PublicationReadyEvent.hpp"
 #include "DecorationActivatedEvent.hpp"
 #include "SelectionEvent.hpp"
 #include "SelectionActionEvent.hpp"
 #include "AudiobookPlaybackState.hpp"
 #include "AudiobookBookmarkChangeEvent.hpp"
+#include "PublicationSearchPage.hpp"
+#include <NitroModules/Promise.hpp>
+#include <string>
 
 namespace margelo::nitro::readium {
 
@@ -95,6 +103,8 @@ namespace margelo::nitro::readium {
       virtual void setAudiobookBookmarks(const std::optional<std::vector<AudiobookBookmark>>& audiobookBookmarks) = 0;
       virtual std::optional<std::function<void(const Locator& /* locator */)>> getOnLocationChange() = 0;
       virtual void setOnLocationChange(const std::optional<std::function<void(const Locator& /* locator */)>>& onLocationChange) = 0;
+      virtual std::optional<std::function<void(const Point& /* point */)>> getOnTap() = 0;
+      virtual void setOnTap(const std::optional<std::function<void(const Point& /* point */)>>& onTap) = 0;
       virtual std::optional<std::function<void(const PublicationReadyEvent& /* event */)>> getOnPublicationReady() = 0;
       virtual void setOnPublicationReady(const std::optional<std::function<void(const PublicationReadyEvent& /* event */)>>& onPublicationReady) = 0;
       virtual std::optional<std::function<void(const DecorationActivatedEvent& /* event */)>> getOnDecorationActivated() = 0;
@@ -113,6 +123,9 @@ namespace margelo::nitro::readium {
       virtual void goTo(const Locator& locator) = 0;
       virtual void goForward() = 0;
       virtual void goBackward() = 0;
+      virtual std::shared_ptr<Promise<PublicationSearchPage>> search(const std::string& query) = 0;
+      virtual std::shared_ptr<Promise<PublicationSearchPage>> searchNext() = 0;
+      virtual void cancelSearch() = 0;
       virtual void play() = 0;
       virtual void pause() = 0;
       virtual void seekTo(double position) = 0;

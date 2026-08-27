@@ -48,6 +48,8 @@ class HybridReadiumAudio : HybridReadiumAudioSpec() {
   override fun goBackward() { AudiobookSession.goBackward() }
   override fun setPlaybackRate(rate: Double) { AudiobookSession.setPlaybackRate(rate) }
   override fun setVolume(volume: Double) { AudiobookSession.setVolume(volume) }
+  override fun setNowPlayingInfoEnabled(enabled: Boolean) = Unit
+  override fun setNowPlayingMetadataEnabled(enabled: Boolean) = Unit
   override fun setSleepTimer(seconds: Double?) { AudiobookSession.setSleepTimer(seconds) }
   override fun close() { AudiobookSession.close() }
 }

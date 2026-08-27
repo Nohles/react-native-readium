@@ -6,14 +6,16 @@ import {
   SuspiciousActivityEvent,
 } from '@readium/navigator-html-injectables';
 import { EpubNavigatorListeners } from '@readium/navigator';
-import { Locator } from '@readium/shared';
+import type { Locator } from '@readium/shared';
+import type { Point } from '../../src/interfaces';
 
 /**
  * Creates navigator listeners for handling navigation events
  */
 export function createNavigatorListeners(
   onLocationChangeWithTotalProgression: (locator: Locator) => void,
-  onPositionChange?: (position: number | null) => void
+  onPositionChange?: (position: number | null) => void,
+  onTap?: (point: Point) => void
 ): EpubNavigatorListeners {
   return {
     frameLoaded: function (_wnd: Window): void {
@@ -26,8 +28,10 @@ export function createNavigatorListeners(
       }
       window.focus();
     },
-    tap: function (_e: FrameClickEvent): boolean {
-      return false;
+    tap: function (e: FrameClickEvent): boolean {
+      if (!onTap) return false;
+      onTap({ x: e.x, y: e.y });
+      return true;
     },
     click: function (_e: FrameClickEvent): boolean {
       return false;

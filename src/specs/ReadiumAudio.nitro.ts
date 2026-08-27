@@ -34,6 +34,8 @@ export interface ReadiumAudio
   goBackward(): void;
   setPlaybackRate(rate: number): void;
   setVolume(volume: number): void;
+  setNowPlayingInfoEnabled(enabled: boolean): void;
+  setNowPlayingMetadataEnabled(enabled: boolean): void;
   setSleepTimer(seconds?: number): void;
   close(): void;
 }

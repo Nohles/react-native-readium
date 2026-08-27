@@ -148,6 +148,14 @@ namespace margelo::nitro::readium {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void(double /* volume */)>("setVolume");
     method(_javaPart, volume);
   }
+  void JHybridReadiumAudioSpec::setNowPlayingInfoEnabled(bool enabled) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jboolean /* enabled */)>("setNowPlayingInfoEnabled");
+    method(_javaPart, enabled);
+  }
+  void JHybridReadiumAudioSpec::setNowPlayingMetadataEnabled(bool enabled) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jboolean /* enabled */)>("setNowPlayingMetadataEnabled");
+    method(_javaPart, enabled);
+  }
   void JHybridReadiumAudioSpec::setSleepTimer(std::optional<double> seconds) {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JDouble> /* seconds */)>("setSleepTimer");
     method(_javaPart, seconds.has_value() ? jni::JDouble::valueOf(seconds.value()) : nullptr);

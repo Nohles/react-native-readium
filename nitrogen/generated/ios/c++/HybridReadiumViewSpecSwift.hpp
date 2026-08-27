@@ -32,6 +32,8 @@ namespace margelo::nitro::readium { struct DecorationStyle; }
 namespace margelo::nitro::readium { struct SelectionAction; }
 // Forward declaration of `AudiobookBookmark` to properly resolve imports.
 namespace margelo::nitro::readium { struct AudiobookBookmark; }
+// Forward declaration of `Point` to properly resolve imports.
+namespace margelo::nitro::readium { struct Point; }
 // Forward declaration of `PublicationReadyEvent` to properly resolve imports.
 namespace margelo::nitro::readium { struct PublicationReadyEvent; }
 // Forward declaration of `Link` to properly resolve imports.
@@ -50,12 +52,12 @@ namespace margelo::nitro::readium { struct Subject; }
 namespace margelo::nitro::readium { struct BelongsTo; }
 // Forward declaration of `SeriesInfo` to properly resolve imports.
 namespace margelo::nitro::readium { struct SeriesInfo; }
+// Forward declaration of `PublicationCapabilities` to properly resolve imports.
+namespace margelo::nitro::readium { struct PublicationCapabilities; }
 // Forward declaration of `DecorationActivatedEvent` to properly resolve imports.
 namespace margelo::nitro::readium { struct DecorationActivatedEvent; }
 // Forward declaration of `Rect` to properly resolve imports.
 namespace margelo::nitro::readium { struct Rect; }
-// Forward declaration of `Point` to properly resolve imports.
-namespace margelo::nitro::readium { struct Point; }
 // Forward declaration of `SelectionEvent` to properly resolve imports.
 namespace margelo::nitro::readium { struct SelectionEvent; }
 // Forward declaration of `SelectionActionEvent` to properly resolve imports.
@@ -64,6 +66,8 @@ namespace margelo::nitro::readium { struct SelectionActionEvent; }
 namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
 // Forward declaration of `AudiobookBookmarkChangeEvent` to properly resolve imports.
 namespace margelo::nitro::readium { struct AudiobookBookmarkChangeEvent; }
+// Forward declaration of `PublicationSearchPage` to properly resolve imports.
+namespace margelo::nitro::readium { struct PublicationSearchPage; }
 
 #include <optional>
 #include "ReadiumFile.hpp"
@@ -80,6 +84,7 @@ namespace margelo::nitro::readium { struct AudiobookBookmarkChangeEvent; }
 #include "SelectionAction.hpp"
 #include "AudiobookBookmark.hpp"
 #include <functional>
+#include "Point.hpp"
 #include "PublicationReadyEvent.hpp"
 #include "Link.hpp"
 #include "PublicationMetadata.hpp"
@@ -89,13 +94,15 @@ namespace margelo::nitro::readium { struct AudiobookBookmarkChangeEvent; }
 #include "Subject.hpp"
 #include "BelongsTo.hpp"
 #include "SeriesInfo.hpp"
+#include "PublicationCapabilities.hpp"
 #include "DecorationActivatedEvent.hpp"
 #include "Rect.hpp"
-#include "Point.hpp"
 #include "SelectionEvent.hpp"
 #include "SelectionActionEvent.hpp"
 #include "AudiobookPlaybackState.hpp"
 #include "AudiobookBookmarkChangeEvent.hpp"
+#include "PublicationSearchPage.hpp"
+#include <NitroModules/Promise.hpp>
 
 #include "NitroReadium-Swift-Cxx-Umbrella.hpp"
 
@@ -192,6 +199,13 @@ namespace margelo::nitro::readium {
     inline void setOnLocationChange(const std::optional<std::function<void(const Locator& /* locator */)>>& onLocationChange) noexcept override {
       _swiftPart.setOnLocationChange(onLocationChange);
     }
+    inline std::optional<std::function<void(const Point& /* point */)>> getOnTap() noexcept override {
+      auto __result = _swiftPart.getOnTap();
+      return __result;
+    }
+    inline void setOnTap(const std::optional<std::function<void(const Point& /* point */)>>& onTap) noexcept override {
+      _swiftPart.setOnTap(onTap);
+    }
     inline std::optional<std::function<void(const PublicationReadyEvent& /* event */)>> getOnPublicationReady() noexcept override {
       auto __result = _swiftPart.getOnPublicationReady();
       return __result;
@@ -251,6 +265,28 @@ namespace margelo::nitro::readium {
     }
     inline void goBackward() override {
       auto __result = _swiftPart.goBackward();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline std::shared_ptr<Promise<PublicationSearchPage>> search(const std::string& query) override {
+      auto __result = _swiftPart.search(query);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline std::shared_ptr<Promise<PublicationSearchPage>> searchNext() override {
+      auto __result = _swiftPart.searchNext();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline void cancelSearch() override {
+      auto __result = _swiftPart.cancelSearch();
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }
