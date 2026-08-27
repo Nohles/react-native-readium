@@ -162,14 +162,29 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
 
     if (!isContentBuilt) return
 
+    val targetIndex = currentIndex
+    val targetPreferences = this.preferences
     applyTheme()
     if (changedPagination) {
       rebuildContent()
     } else {
       invalidateLayout()
     }
-    navigateToIndex(currentIndex, animated = false, emit = false)
-    loadImagesAround(currentIndex)
+    navigateToIndex(targetIndex, animated = false, emit = false)
+    if (changedPagination && !isPaginatedMode) {
+      // A newly-created ScrollView has no measured child bounds yet. Retry
+      // after the layout pass so a mode switch preserves the current page.
+      rootView?.post {
+        if (isContentBuilt && this.preferences == targetPreferences) {
+          navigateToIndex(targetIndex, animated = false, emit = false)
+          // The first non-animated offset pass can inspect the new stack
+          // before its children have valid positions and emit the old page.
+          // Publish the restored target after the layout pass completes.
+          emitLocator(targetIndex)
+        }
+      }
+    }
+    loadImagesAround(targetIndex)
   }
 
   override suspend fun computePositions(): List<Locator> =
