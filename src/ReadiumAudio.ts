@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { NitroModules } from 'react-native-nitro-modules';
 
 import type { File } from './interfaces';
@@ -121,6 +122,9 @@ export const ReadiumAudio = {
   subscribe(listener: Listener): () => void {
     listeners.add(listener);
     listener(currentState);
+    if (Platform.OS === 'android' || Platform.OS === 'ios') {
+      getNativeAudio();
+    }
     return () => listeners.delete(listener);
   },
 };

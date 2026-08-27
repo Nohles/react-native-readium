@@ -283,7 +283,7 @@ The example apps maintain longer lists of sample URLs:
 
 For a proxied audiobook sample (The Martian), see [`apps/example-expo/README.md`](apps/example-expo/README.md).
 
-### Persistent Audiobook Playback (iOS)
+### Persistent Audiobook Playback (Android and iOS)
 
 Use `useAudiobookPlayer` to build your own audiobook UI while keeping playback
 state and controls connected to Readium. The hook can drive a mini-player while
@@ -336,8 +336,9 @@ title, author, duration, elapsed time, playback rate, and remote transport contr
 When using the Expo config plugin, the required `UIBackgroundModes` audio entry is
 added during prebuild.
 
-`ReadiumAudio`, audiobook rendering, PDF, and CBZ are iOS-only for this release.
-Android continues to support EPUB reading; non-EPUB Android support is deferred.
+`ReadiumAudio`, audiobook rendering, PDF, and CBZ are supported on Android and iOS
+in this release. Android CBZ rendering uses the experimental image navigator, so
+validate comic reading modes on the target device.
 
 When reopening the full reader from a mini-player, pass
 `reopenActiveAudiobook` through `useAudiobookPlayer` or directly to

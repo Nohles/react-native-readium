@@ -21,6 +21,7 @@ import {
   type SelectionActionEvent,
   type AudiobookBookmark,
   type AudiobookBookmarkChangeEvent,
+  type AudiobookPlaybackState,
 } from 'react-native-readium';
 import {
   audiobookDebug,
@@ -40,6 +41,7 @@ type ReaderScreenProps = {
   onBack: () => void;
   onAudiobookMinimize: (file: File) => void;
   onAudiobookReady: (file: File) => void;
+  onAudiobookPlaybackStateChange?: (state: AudiobookPlaybackState) => void;
   audiobookBookmarks: AudiobookBookmark[];
   onAudiobookBookmarkChange: (event: AudiobookBookmarkChangeEvent) => void;
   /** When true, navigation chrome is omitted (parent bottom sheet provides close). */
@@ -51,6 +53,7 @@ export function ReaderScreen({
   onBack,
   onAudiobookMinimize,
   onAudiobookReady,
+  onAudiobookPlaybackStateChange,
   audiobookBookmarks,
   onAudiobookBookmarkChange,
   embeddedInSheet = false,
@@ -374,6 +377,9 @@ export function ReaderScreen({
             setLocation(locator);
           }}
           onPublicationReady={onPublicationReady}
+          onAudiobookPlaybackStateChange={
+            format === 'audiobook' ? onAudiobookPlaybackStateChange : undefined
+          }
           onSelectionAction={onSelectionAction}
           audiobookBookmarks={
             format === 'audiobook' ? audiobookBookmarks : undefined
