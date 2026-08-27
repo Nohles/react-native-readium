@@ -51,10 +51,10 @@ export function HomeScreen({
           </Pressable>
         ))}
         <Pressable style={styles.button} onPress={onOpenComic}>
-          <Text>Open local CBZ (iOS)</Text>
+          <Text>Open local CBZ</Text>
         </Pressable>
         <Text style={styles.hint}>
-          Audiobook, CBZ, and PDF readers are iOS-only in this release.{'\n'}
+          All publication formats use the same controls on Android and iOS.
           Streamed WebPub samples open manifest.json URLs directly (no local
           download). Proxied Martian needs Reader web on localhost:3000 (see
           apps/example-expo/.env.example).

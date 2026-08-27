@@ -155,7 +155,7 @@ android {
 }
 
 dependencies {
-  coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.2"
+  coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.5"
 }
 ```
 
@@ -257,7 +257,7 @@ export function WebPubReader() {
 
 - **Web** — `File.url` must be an HTTPS `manifest.json` URL. The reader fetches the manifest and resources from its base URL. The server must allow your origin via CORS.
 - **iOS** — `File.url` can be a remote `manifest.json` URL (streamed WebPub) or a local path to a packaged EPUB, CBZ, PDF, or audiobook file.
-- **Android** — `File.url` must be a local path to a packaged EPUB on disk. Streamed manifest URLs are not supported yet; download the EPUB first if needed.
+- **Android** — `File.url` can be a remote `manifest.json` URL (streamed WebPub) or a local path to a packaged EPUB, CBZ, PDF, or audiobook file. The manifest should include a `rel: "self"` link (with `type: application/webpub+json`) so the toolkit can resolve the publication's base URL — manifests served by the Readium publication server do. Unlike web, no synthetic self link is injected.
 
 **Self-hosting**
 
@@ -283,7 +283,7 @@ The example apps maintain longer lists of sample URLs:
 
 For a proxied audiobook sample (The Martian), see [`apps/example-expo/README.md`](apps/example-expo/README.md).
 
-### Persistent Audiobook Playback (iOS)
+### Persistent Audiobook Playback (Android and iOS)
 
 Use `useAudiobookPlayer` to build your own audiobook UI while keeping playback
 state and controls connected to Readium. The hook can drive a mini-player while
@@ -336,8 +336,9 @@ title, author, duration, elapsed time, playback rate, and remote transport contr
 When using the Expo config plugin, the required `UIBackgroundModes` audio entry is
 added during prebuild.
 
-`ReadiumAudio`, audiobook rendering, PDF, and CBZ are iOS-only for this release.
-Android continues to support EPUB reading; non-EPUB Android support is deferred.
+`ReadiumAudio`, audiobook rendering, PDF, and CBZ are supported on Android and iOS
+in this release. Android CBZ rendering uses the experimental image navigator, so
+validate comic reading modes on the target device.
 
 When reopening the full reader from a mini-player, pass
 `reopenActiveAudiobook` through `useAudiobookPlayer` or directly to
@@ -441,10 +442,10 @@ Key concepts:
 
 | Format     | Platforms    | Notes                                                                                                                                                                                                                                      |
 | ---------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| EPUB 2 / 3 | iOS, Android | Rendering, navigation, preferences, highlights, and selection actions. Packaged EPUB on all platforms; streamed WebPub via `manifest.json` on web and iOS only (see [Streamed Web Publications](#streamed-web-publications-manifestjson)). |
-| Audiobook  | iOS          | Playback and persistent `ReadiumAudio` session; Android is deferred.                                                                                                                                                                       |
-| PDF        | iOS          | Rendering and navigation; Android is deferred.                                                                                                                                                                                             |
-| CBZ        | iOS          | Rendering, navigation, comic canvas presets, fit, spread, and reading direction through Readium's EPUB navigator; Android is deferred.                                                                                                     |
+| EPUB 2 / 3 | iOS, Android | Rendering, navigation, preferences, highlights, and selection actions. Packaged EPUB on all platforms; streamed WebPub via `manifest.json` supported everywhere (see [Streamed Web Publications](#streamed-web-publications-manifestjson)). |
+| Audiobook  | iOS, Android | Playback and persistent `ReadiumAudio` session.                                                                                                                                                                                             |
+| PDF        | iOS, Android | Rendering and navigation.                                                                                                                                                                                                                  |
+| CBZ        | iOS, Android | Rendering, navigation, comic canvas presets, fit, spread, and reading direction through Readium's EPUB navigator.                                                                                                                            |
 
 **Missing a format you need?** Reach out and see if it can be added to the roadmap.
 

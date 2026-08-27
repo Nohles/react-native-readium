@@ -66,17 +66,10 @@ abstract class BaseReaderFragment : Fragment() {
 
     // Emit PublicationReady event with all metadata
     viewScope.launch {
-      // positions() is a suspending function that returns List<Locator>
-      val positions = try {
-        model.publication.positions()
-      } catch (e: Exception) {
-        emptyList<Locator>()
-      }
-
       channel.send(
         ReaderViewModel.Event.PublicationReady(
           tableOfContents = model.publication.tableOfContents,
-          positions = positions,
+          positions = computePositions(),
           metadata = model.publication.metadata
         )
       )
@@ -92,6 +85,18 @@ abstract class BaseReaderFragment : Fragment() {
     // Start monitoring text selection
     startSelectionMonitoring()
   }
+
+  /**
+   * Positions reported in the PublicationReady event. Readers whose locator
+   * model differs from the publication's positions service (e.g. comics,
+   * mirroring the iOS comic reader) override this.
+   */
+  protected open suspend fun computePositions(): List<Locator> =
+    try {
+      model.publication.positions()
+    } catch (e: Exception) {
+      emptyList<Locator>()
+    }
 
   override fun onHiddenChanged(hidden: Boolean) {
     super.onHiddenChanged(hidden)
@@ -129,13 +134,13 @@ abstract class BaseReaderFragment : Fragment() {
     return navigator.go(locator, animated)
   }
 
-  fun goForward(): Boolean {
+  open fun goForward(): Boolean {
     if (!isNavigatorReady) return false
     val overflowNav = navigator as? OverflowableNavigator ?: return false
     return overflowNav.goForward(animated = true)
   }
 
-  fun goBackward(): Boolean {
+  open fun goBackward(): Boolean {
     if (!isNavigatorReady) return false
     val overflowNav = navigator as? OverflowableNavigator ?: return false
     return overflowNav.goBackward(animated = true)

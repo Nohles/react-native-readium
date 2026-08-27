@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
+import { Asset } from 'expo-asset';
 import {
   ReadiumAudio,
   ReadiumView,
@@ -20,15 +21,15 @@ import {
   type SelectionActionEvent,
   type AudiobookBookmark,
   type AudiobookBookmarkChangeEvent,
+  type AudiobookPlaybackState,
 } from 'react-native-readium';
-import { audiobookDebug } from '../lib/audiobook-debug';
 import {
+  audiobookDebug,
   publicationDebug,
   publicationNetworkHints,
-} from '../lib/publication-debug';
-import { prepareProxiedAudiobook } from '../lib/proxied-audiobook';
-import { isWebPubManifestUrl } from '../lib/webpub-manifest';
-import { probeWebPubManifest } from '../lib/webpub-probe';
+} from '../helpers/debug';
+import { prepareProxiedAudiobook } from '../helpers/proxied-audiobook';
+import { isWebPubManifestUrl, probeWebPubManifest } from '../helpers/webpub';
 import type { Format, Sample } from '../types';
 
 const selectionActions: SelectionAction[] = [
@@ -40,6 +41,7 @@ type ReaderScreenProps = {
   onBack: () => void;
   onAudiobookMinimize: (file: File) => void;
   onAudiobookReady: (file: File) => void;
+  onAudiobookPlaybackStateChange?: (state: AudiobookPlaybackState) => void;
   audiobookBookmarks: AudiobookBookmark[];
   onAudiobookBookmarkChange: (event: AudiobookBookmarkChangeEvent) => void;
   /** When true, navigation chrome is omitted (parent bottom sheet provides close). */
@@ -51,6 +53,7 @@ export function ReaderScreen({
   onBack,
   onAudiobookMinimize,
   onAudiobookReady,
+  onAudiobookPlaybackStateChange,
   audiobookBookmarks,
   onAudiobookBookmarkChange,
   embeddedInSheet = false,
@@ -59,9 +62,9 @@ export function ReaderScreen({
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [publicationTitle, setPublicationTitle] = useState<string>();
-  const [tocCount, setTocCount] = useState(0);
-  const [location, setLocation] = useState<Locator>();
+  const [, setPublicationTitle] = useState<string>();
+  const [, setTocCount] = useState(0);
+  const [, setLocation] = useState<Locator>();
   const [decorations, setDecorations] = useState<DecorationGroup[]>([
     { name: 'highlights', decorations: [] },
   ]);
@@ -69,14 +72,16 @@ export function ReaderScreen({
   const format: Format = sample.format;
   const isProxiedAudiobook = sample.format === 'audiobook' && sample.proxied;
   const isStreamedWebPub = isWebPubManifestUrl(sample.url);
-  const [manifestProbeStatus, setManifestProbeStatus] = useState<string>();
+  const [, setManifestProbeStatus] = useState<string>();
   const [nativeReady, setNativeReady] = useState(false);
+  const nativeReadyRef = useRef(false);
 
   useEffect(() => {
     if (!file || nativeReady || !isStreamedWebPub) return;
     const timer = setTimeout(() => {
+      if (nativeReadyRef.current) return;
       publicationDebug(
-        'watchdog: onPublicationReady not received within 12s — look for an iOS alert, Metro [ReadiumNative], or Xcode "Failed to open publication"'
+        'watchdog: onPublicationReady not received within 12s — check Metro [ReadiumNative] and native platform logs'
       );
     }, 12_000);
     return () => clearTimeout(timer);
@@ -100,6 +105,7 @@ export function ReaderScreen({
       setFile(null);
       setManifestProbeStatus(undefined);
       setNativeReady(false);
+      nativeReadyRef.current = false;
 
       publicationDebug('ReaderScreen: prepare', {
         title: sample.title,
@@ -110,6 +116,23 @@ export function ReaderScreen({
       });
 
       try {
+        if (sample.asset) {
+          const asset = Asset.fromModule(sample.asset);
+          await asset.downloadAsync();
+          if (cancelled) return;
+          const assetUrl = asset.localUri ?? asset.uri;
+          const localUri = `${FileSystem.documentDirectory}${sample.url}`;
+          await FileSystem.copyAsync({ from: assetUrl, to: localUri });
+          if (cancelled) return;
+          const localUrl = localUri.replace(/^file:\/\//, '');
+          publicationDebug('prepare: opening bundled asset', {
+            name: sample.url,
+            localUrl,
+          });
+          setFile({ url: localUrl });
+          return;
+        }
+
         if (isProxiedAudiobook) {
           audiobookDebug('prepare: proxied audiobook');
           const result = await prepareProxiedAudiobook({
@@ -217,6 +240,7 @@ export function ReaderScreen({
     };
   }, [
     sample.url,
+    sample.asset,
     sample.format,
     sample.initialLocation,
     isProxiedAudiobook,
@@ -225,6 +249,7 @@ export function ReaderScreen({
   ]);
 
   const onPublicationReady = (event: PublicationReadyEvent) => {
+    nativeReadyRef.current = true;
     if (isProxiedAudiobook) {
       audiobookDebug('onPublicationReady', {
         metadata: event.metadata,
@@ -352,6 +377,9 @@ export function ReaderScreen({
             setLocation(locator);
           }}
           onPublicationReady={onPublicationReady}
+          onAudiobookPlaybackStateChange={
+            format === 'audiobook' ? onAudiobookPlaybackStateChange : undefined
+          }
           onSelectionAction={onSelectionAction}
           audiobookBookmarks={
             format === 'audiobook' ? audiobookBookmarks : undefined

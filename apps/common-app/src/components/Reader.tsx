@@ -321,20 +321,20 @@ export const Reader: React.FC<ReaderProps> = ({
     onClose != null &&
     onClearBook != null;
 
-  if (isLoading || !file) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text>Loading {loadingLabel}...</Text>
-      </View>
-    );
-  }
-
   if (error) {
     return (
       <View style={styles.loadingContainer}>
         <Text>
           Error loading {loadingLabel}: {error.message}
         </Text>
+      </View>
+    );
+  }
+
+  if (isLoading || !file) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Loading {loadingLabel}...</Text>
       </View>
     );
   }

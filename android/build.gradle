@@ -1,7 +1,13 @@
 buildscript {
-  // Buildscript is evaluated before everything else so we can't use getExtOrDefault
-  def kotlin_version = rootProject.ext.has('kotlinVersion') ? rootProject.ext.get('kotlinVersion') : project.properties['Readium_kotlinVersion']
-  ext.readium_version = '3.1.0'
+  // Pinned: the toolkit 3.3.0 artifacts carry Kotlin 2.3 metadata, so this
+  // library must compile with Kotlin >= 2.3 regardless of the host app's
+  // kotlinVersion override (hosts overriding lower will fail their own
+  // compilation of app code that reads these classes).
+  def kotlin_version = project.properties['Readium_kotlinVersion']
+  // Consumed as a source dependency (composite build) when the host app
+  // wires `includeBuild` against external/kotlin-toolkit; this Maven
+  // coordinate is the fallback for hosts that do not substitute.
+  ext.readium_version = '3.3.0'
 
   repositories {
     google()
@@ -26,6 +32,13 @@ def getExtOrIntegerDefault(name) {
   return rootProject.ext.has(name) ? rootProject.ext.get(name) : (project.properties['Readium_' + name]).toInteger()
 }
 
+def reactNativeArchitectures() {
+  def architectures = project.properties['reactNativeArchitectures']
+  return architectures
+    ? architectures.split(',')
+    : ['x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a']
+}
+
 android {
   compileSdkVersion getExtOrIntegerDefault('compileSdkVersion')
   namespace "com.reactnativereadium"
@@ -39,7 +52,7 @@ android {
       cmake {
         cppFlags "-O2 -frtti -fexceptions -Wall -fstack-protector-all"
         arguments "-DANDROID_STL=c++_shared", "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
-        abiFilters "x86", "x86_64", "armeabi-v7a", "arm64-v8a"
+        abiFilters(*reactNativeArchitectures())
       }
     }
   }
@@ -79,8 +92,13 @@ android {
 }
 
 repositories {
+  // locally-published Nohles/kotlin-toolkit artifacts win over Maven
+  // Central (see scripts/publish-kotlin-toolkit-maven-local.sh)
+  mavenLocal()
   mavenCentral()
   google()
+  // required by readium's pdfium adapter, which pulls com.github.marain87:*
+  maven { url "https://jitpack.io" }
 
   def found = false
   def defaultDir = null
@@ -148,7 +166,8 @@ repositories {
   }
 }
 
-def kotlin_version = getExtOrDefault('kotlinVersion')
+// same pin as the buildscript: stdlib must match the compiler version
+def kotlin_version = project.properties['Readium_kotlinVersion']
 
 dependencies {
   // noinspection GradleDynamicVersion
@@ -159,11 +178,13 @@ dependencies {
   // readium deps
   implementation "org.readium.kotlin-toolkit:readium-shared:$readium_version"
   implementation "org.readium.kotlin-toolkit:readium-streamer:$readium_version"
-  implementation ("org.readium.kotlin-toolkit:readium-navigator:$readium_version") {
-    // this package doesn't provide audio playback, so remove exoplayer
-    // transitive deps to avoid potential collisions with other projects.
-    exclude group: "com.google.android.exoplayer"
-  }
+  implementation "org.readium.kotlin-toolkit:readium-navigator:$readium_version"
+  // audiobook playback: AudioNavigator is Media3-based and lives outside
+  // readium-navigator; the ExoPlayer adapter provides the playback engine.
+  implementation "org.readium.kotlin-toolkit:readium-navigator-media-audio:$readium_version"
+  implementation "org.readium.kotlin-toolkit:readium-adapter-exoplayer-audio:$readium_version"
+  implementation "org.readium.kotlin-toolkit:readium-adapter-pdfium-navigator:$readium_version"
+  implementation "org.readium.kotlin-toolkit:readium-adapter-pdfium-document:$readium_version"
 
   // other deps
   implementation "androidx.core:core-ktx:1.13.1"
@@ -183,6 +204,10 @@ dependencies {
   implementation "androidx.viewpager2:viewpager2:1.1.0"
   implementation "androidx.webkit:webkit:1.8.0"
   implementation "com.google.android.material:material:1.11.0"
+  // media3 session is required by our AudiobookMediaService (lock-screen /
+  // background playback controls); the toolkit marks it `implementation`, so
+  // declare it explicitly. Version must match the toolkit's pin.
+  implementation "androidx.media3:media3-session:1.10.0"
   implementation "com.jakewharton.timber:timber:5.0.1"
   // AM NOTE: needs to stay this version for now (June 24,2020)
   //noinspection GradleDependency
