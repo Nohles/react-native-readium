@@ -13,6 +13,7 @@ public protocol HybridReadiumViewSpec_protocol: HybridObject, HybridView {
   var reopenActiveAudiobook: Bool? { get set }
   var file: ReadiumFile? { get set }
   var preferences: Preferences? { get set }
+  var customFonts: [CustomFont]? { get set }
   var decorations: [DecorationGroup]? { get set }
   var selectionActions: [SelectionAction]? { get set }
   var audiobookBookmarks: [AudiobookBookmark]? { get set }

@@ -21,15 +21,21 @@ import org.readium.r2.navigator.epub.EpubNavigatorFragment
 import org.readium.r2.navigator.Navigator
 import org.readium.r2.navigator.epub.EpubPreferences
 import org.readium.r2.navigator.epub.EpubNavigatorFactory
-import org.readium.r2.shared.publication.Locator
+import org.readium.r2.shared.ExperimentalReadiumApi
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.navigator.preferences.Theme
+import org.readium.r2.navigator.preferences.FontFamily
+import org.readium.r2.navigator.epub.css.FontStyle
+import org.readium.r2.navigator.epub.css.FontWeight
+import com.margelo.nitro.reactnativereadium.CustomFont
+import android.net.Uri
 
 data class SelectionAction(
     val id: String,
     val label: String
 )
 
+@OptIn(ExperimentalReadiumApi::class)
 class EpubReaderFragment : VisualReaderFragment() {
 
     override lateinit var model: ReaderViewModel
@@ -47,6 +53,7 @@ class EpubReaderFragment : VisualReaderFragment() {
 
     // Selection actions configuration
     private var selectionActions: List<SelectionAction> = emptyList()
+    private var customFonts: Array<CustomFont>? = null
 
     // Custom selection action mode callback for adding custom action buttons
     val customSelectionActionModeCallback: ActionMode.Callback by lazy {
@@ -65,12 +72,14 @@ class EpubReaderFragment : VisualReaderFragment() {
 
     fun initFactory(
       publication: Publication,
-      initialLocation: Locator?
+      initialLocation: Locator?,
+      customFonts: Array<CustomFont>? = null
     ) {
       factory = ReaderViewModel.Factory(
         publication,
         initialLocation
       )
+      this.customFonts = customFonts
       navigatorFactory = EpubNavigatorFactory(publication)
     }
 
@@ -122,6 +131,16 @@ class EpubReaderFragment : VisualReaderFragment() {
               configuration = EpubNavigatorFragment.Configuration {
                 if (selectionActions.isNotEmpty()) {
                   selectionActionModeCallback = customSelectionActionModeCallback
+                }
+                customFonts?.forEach { font ->
+                  val path = Uri.parse(font.fileUri).path ?: font.fileUri
+                  addFontFamilyDeclaration(FontFamily(font.family)) {
+                    addFontFace {
+                      addSource(path)
+                      setFontStyle(FontStyle.NORMAL)
+                      setFontWeight(FontWeight.NORMAL)
+                    }
+                  }
                 }
               }
             )

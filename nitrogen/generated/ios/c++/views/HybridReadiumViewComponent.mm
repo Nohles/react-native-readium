@@ -87,6 +87,11 @@ using namespace margelo::nitro::readium::views;
     swiftPart.setPreferences(newViewProps.preferences.value);
     newViewProps.preferences.isDirty = false;
   }
+  // customFonts: optional
+  if (newViewProps.customFonts.isDirty) {
+    swiftPart.setCustomFonts(newViewProps.customFonts.value);
+    newViewProps.customFonts.isDirty = false;
+  }
   // decorations: optional
   if (newViewProps.decorations.isDirty) {
     swiftPart.setDecorations(newViewProps.decorations.value);

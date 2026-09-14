@@ -26,6 +26,8 @@ namespace margelo::nitro::readium { enum class AudiobookSessionStatus; }
 namespace margelo::nitro::readium { struct BelongsTo; }
 // Forward declaration of `Contributor` to properly resolve imports.
 namespace margelo::nitro::readium { struct Contributor; }
+// Forward declaration of `CustomFont` to properly resolve imports.
+namespace margelo::nitro::readium { struct CustomFont; }
 // Forward declaration of `DecorationActivatedEvent` to properly resolve imports.
 namespace margelo::nitro::readium { struct DecorationActivatedEvent; }
 // Forward declaration of `DecorationGroup` to properly resolve imports.
@@ -83,6 +85,7 @@ namespace margelo::nitro::readium { struct Subject; }
 #include "AudiobookSessionStatus.hpp"
 #include "BelongsTo.hpp"
 #include "Contributor.hpp"
+#include "CustomFont.hpp"
 #include "Decoration.hpp"
 #include "DecorationActivatedEvent.hpp"
 #include "DecorationGroup.hpp"

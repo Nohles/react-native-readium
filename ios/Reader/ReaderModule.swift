@@ -11,7 +11,8 @@ protocol ReaderModuleAPI {
     for publication: Publication,
     bookId: String,
     locator: ReadiumShared.Locator?,
-    selectionActions: [SelectionActionData]?
+    selectionActions: [SelectionActionData]?,
+    customFonts: [CustomFont]?
   ) -> ReadiumReaderHosting?
 }
 
@@ -42,7 +43,8 @@ final class ReaderModule: ReaderModuleAPI {
     for publication: Publication,
     bookId: String,
     locator: ReadiumShared.Locator?,
-    selectionActions: [SelectionActionData]?
+    selectionActions: [SelectionActionData]?,
+    customFonts: [CustomFont]?
   ) -> ReadiumReaderHosting? {
     guard let module = self.formatModules.first(
       where:{ $0.supports(publication) }
@@ -52,6 +54,15 @@ final class ReaderModule: ReaderModuleAPI {
     }
 
     do {
+      if let epubModule = module as? EPUBModule {
+        return try epubModule.makeReaderViewController(
+          for: publication,
+          locator: locator,
+          bookId: bookId,
+          selectionActions: selectionActions,
+          customFonts: customFonts
+        )
+      }
       return try module.makeReaderViewController(
         for: publication,
         locator: locator,

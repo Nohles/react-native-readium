@@ -96,6 +96,8 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
       updatePreferences()
     }
 
+  override var customFonts: Array<CustomFont>? = null
+
   override var decorations: Array<DecorationGroup>? = null
     set(value) {
       field = value
@@ -321,7 +323,7 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
     }
 
     scope.launch {
-      service.openPublication(path, initialLocator) { frag ->
+      service.openPublication(path, initialLocator, customFonts) { frag ->
         addFragment(frag)
       }
     }

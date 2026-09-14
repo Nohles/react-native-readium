@@ -12,6 +12,7 @@ import type {
   AudiobookBookmark,
   AudiobookBookmarkChangeEvent,
   PublicationSearchPage,
+  CustomFont,
 } from '../interfaces';
 
 export type ReadiumViewRef = {
@@ -33,6 +34,7 @@ export type ReadiumProps = {
   file: File;
   reopenActiveAudiobook?: boolean;
   preferences: Preferences;
+  customFonts?: CustomFont[];
   decorations?: DecorationGroup[];
   selectionActions?: SelectionAction[];
   audiobookBookmarks?: AudiobookBookmark[];

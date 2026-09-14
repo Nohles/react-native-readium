@@ -19,7 +19,8 @@ class EPUBViewController: ReaderViewController, SelectionActionHandlerDelegate {
       publication: Publication,
       locator: ReadiumShared.Locator?,
       bookId: String,
-      selectionActions: [SelectionActionData]? = nil
+      selectionActions: [SelectionActionData]? = nil,
+      customFonts: [CustomFont]? = nil
     ) throws {
       // Convert typed selection actions directly to EditingActions (no JSON)
       var editingActions: [EditingAction] = []
@@ -49,7 +50,8 @@ class EPUBViewController: ReaderViewController, SelectionActionHandlerDelegate {
         publication: publication,
         initialLocation: locator,
         config: EPUBNavigatorViewController.Configuration(
-          editingActions: editingActions
+          editingActions: editingActions,
+          fontFamilyDeclarations: EPUBViewController.fontFamilyDeclarations(from: customFonts)
         )
       )
 
@@ -136,6 +138,26 @@ extension EPUBViewController: UIGestureRecognizerDelegate {
 
   func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
     return true
+  }
+
+  private static func fontFamilyDeclarations(
+    from fonts: [CustomFont]?
+  ) -> [AnyHTMLFontFamilyDeclaration] {
+    guard let fonts, !fonts.isEmpty else { return [] }
+    return fonts.compactMap { font in
+      let url = URL(string: font.fileUri) ?? URL(fileURLWithPath: font.fileUri)
+      guard let fileURL = FileURL(url: url) else { return nil }
+      return CSSFontFamilyDeclaration(
+        fontFamily: FontFamily(rawValue: font.family),
+        fontFaces: [
+          CSSFontFace(
+            file: fileURL,
+            style: .normal,
+            weight: .standard(.normal)
+          )
+        ]
+      ).eraseToAnyHTMLFontFamilyDeclaration()
+    }
   }
 
 }

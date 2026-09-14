@@ -48,6 +48,7 @@ final class AudiobookSession {
       bookId: file.url,
       locator: initialLocation,
       selectionActions: nil,
+      customFonts: nil,
       sender: sender,
       completion: { [weak self] host in
         guard let self else { return }

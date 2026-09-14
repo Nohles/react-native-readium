@@ -49,6 +49,10 @@ void JHybridReadiumViewStateUpdater::updateViewProps(jni::alias_ref<jni::JClass>
     hybridView->setPreferences(props->preferences.value);
     props->preferences.isDirty = false;
   }
+  if (props->customFonts.isDirty) {
+    hybridView->setCustomFonts(props->customFonts.value);
+    props->customFonts.isDirty = false;
+  }
   if (props->decorations.isDirty) {
     hybridView->setDecorations(props->decorations.value);
     props->decorations.isDirty = false;

@@ -26,6 +26,8 @@ namespace margelo::nitro::readium { enum class AudiobookSessionStatus; }
 namespace margelo::nitro::readium { struct BelongsTo; }
 // Forward declaration of `Contributor` to properly resolve imports.
 namespace margelo::nitro::readium { struct Contributor; }
+// Forward declaration of `CustomFont` to properly resolve imports.
+namespace margelo::nitro::readium { struct CustomFont; }
 // Forward declaration of `DecorationActivatedEvent` to properly resolve imports.
 namespace margelo::nitro::readium { struct DecorationActivatedEvent; }
 // Forward declaration of `DecorationGroup` to properly resolve imports.
@@ -89,6 +91,7 @@ namespace NitroReadium { class HybridReadiumViewSpec_cxx; }
 #include "AudiobookSessionStatus.hpp"
 #include "BelongsTo.hpp"
 #include "Contributor.hpp"
+#include "CustomFont.hpp"
 #include "Decoration.hpp"
 #include "DecorationActivatedEvent.hpp"
 #include "DecorationGroup.hpp"
@@ -468,6 +471,32 @@ namespace margelo::nitro::readium::bridge::swift {
     return optional.has_value();
   }
   inline Preferences get_std__optional_Preferences_(const std::optional<Preferences>& optional) noexcept {
+    return optional.value();
+  }
+  
+  // pragma MARK: std::vector<CustomFont>
+  /**
+   * Specialized version of `std::vector<CustomFont>`.
+   */
+  using std__vector_CustomFont_ = std::vector<CustomFont>;
+  inline std::vector<CustomFont> create_std__vector_CustomFont_(size_t size) noexcept {
+    std::vector<CustomFont> vector;
+    vector.reserve(size);
+    return vector;
+  }
+  
+  // pragma MARK: std::optional<std::vector<CustomFont>>
+  /**
+   * Specialized version of `std::optional<std::vector<CustomFont>>`.
+   */
+  using std__optional_std__vector_CustomFont__ = std::optional<std::vector<CustomFont>>;
+  inline std::optional<std::vector<CustomFont>> create_std__optional_std__vector_CustomFont__(const std::vector<CustomFont>& value) noexcept {
+    return std::optional<std::vector<CustomFont>>(value);
+  }
+  inline bool has_value_std__optional_std__vector_CustomFont__(const std::optional<std::vector<CustomFont>>& optional) noexcept {
+    return optional.has_value();
+  }
+  inline std::vector<CustomFont> get_std__optional_std__vector_CustomFont__(const std::optional<std::vector<CustomFont>>& optional) noexcept {
     return optional.value();
   }
   

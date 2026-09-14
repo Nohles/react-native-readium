@@ -58,6 +58,7 @@ class ReaderService(
   suspend fun openPublication(
     fileName: String,
     initialLocation: LinkOrLocator?,
+    customFonts: Array<com.margelo.nitro.reactnativereadium.CustomFont>? = null,
     callback: suspend (fragment: BaseReaderFragment) -> Unit
   ) {
     val source = publicationSource(fileName) ?: return
@@ -81,7 +82,7 @@ class ReaderService(
       .onSuccess {
         val locator = locatorFromLinkOrLocator(initialLocation, it)
         val readerFragment = EpubReaderFragment.newInstance()
-        readerFragment.initFactory(it, locator)
+        readerFragment.initFactory(it, locator, customFonts)
         callback.invoke(readerFragment)
       }
       .onFailure {

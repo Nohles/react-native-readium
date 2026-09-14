@@ -20,6 +20,8 @@ namespace margelo::nitro::readium {
       prototype.registerHybridSetter("file", &HybridReadiumViewSpec::setFile);
       prototype.registerHybridGetter("preferences", &HybridReadiumViewSpec::getPreferences);
       prototype.registerHybridSetter("preferences", &HybridReadiumViewSpec::setPreferences);
+      prototype.registerHybridGetter("customFonts", &HybridReadiumViewSpec::getCustomFonts);
+      prototype.registerHybridSetter("customFonts", &HybridReadiumViewSpec::setCustomFonts);
       prototype.registerHybridGetter("decorations", &HybridReadiumViewSpec::getDecorations);
       prototype.registerHybridSetter("decorations", &HybridReadiumViewSpec::setDecorations);
       prototype.registerHybridGetter("selectionActions", &HybridReadiumViewSpec::getSelectionActions);

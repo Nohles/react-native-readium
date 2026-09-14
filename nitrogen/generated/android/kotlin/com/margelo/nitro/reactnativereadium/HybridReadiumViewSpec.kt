@@ -49,6 +49,12 @@ abstract class HybridReadiumViewSpec: HybridView() {
   @get:Keep
   @set:DoNotStrip
   @set:Keep
+  abstract var customFonts: Array<CustomFont>?
+  
+  @get:DoNotStrip
+  @get:Keep
+  @set:DoNotStrip
+  @set:Keep
   abstract var decorations: Array<DecorationGroup>?
   
   @get:DoNotStrip
