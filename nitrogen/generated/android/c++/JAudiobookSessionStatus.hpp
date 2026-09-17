@@ -15,11 +15,11 @@ namespace margelo::nitro::readium {
   using namespace facebook;
 
   /**
-   * The C++ JNI bridge between the C++ enum "AudiobookSessionStatus" and the the Kotlin enum "AudiobookSessionStatus".
+   * The C++ JNI bridge between the C++ enum "AudiobookSessionStatus" and the Kotlin enum "AudiobookSessionStatus".
    */
   struct JAudiobookSessionStatus final: public jni::JavaClass<JAudiobookSessionStatus> {
   public:
-    static auto constexpr kJavaDescriptor = "Lcom/margelo/nitro/reactnativereadium/AudiobookSessionStatus;";
+    static constexpr auto kJavaDescriptor = "Lcom/margelo/nitro/reactnativereadium/AudiobookSessionStatus;";
 
   public:
     /**

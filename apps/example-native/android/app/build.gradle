@@ -2,11 +2,7 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
-project.ext.vectoricons = [
-    iconFontsDir: "../../../../node_modules/react-native-vector-icons/Fonts"
-]
-
-apply from: "../../../../node_modules/react-native-vector-icons/fonts.gradle"
+def vectorIconsFontsDir = file("../../../../node_modules/react-native-vector-icons/Fonts")
 
 /**
  * This is the configuration block to customize your React Native Android app.
@@ -85,7 +81,15 @@ android {
 
     sourceSets {
         main {
-            assets.srcDirs += ["../../resources"]
+            assets.srcDirs = ["../../resources", "$buildDir/generated/vector-icons"]
+        }
+    }
+
+    if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+        externalNativeBuild {
+            cmake {
+                buildStagingDirectory file("../../../../.cxx/example")
+            }
         }
     }
 
@@ -114,11 +118,22 @@ android {
             // see https://reactnative.dev/docs/signed-apk-android.
             signingConfig signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
-            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
     }
     compileOptions {
         coreLibraryDesugaringEnabled true
+    }
+}
+
+tasks.register("copyReactNativeVectorIconFonts", Sync) {
+    from(vectorIconsFontsDir)
+    into("$buildDir/generated/vector-icons/fonts")
+}
+
+tasks.configureEach { task ->
+    if (task.name.startsWith("merge") && task.name.endsWith("Assets")) {
+        task.dependsOn("copyReactNativeVectorIconFonts")
     }
 }
 

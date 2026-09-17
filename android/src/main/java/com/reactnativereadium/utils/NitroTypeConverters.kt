@@ -33,6 +33,10 @@ internal fun nitroPreferencesToEpub(prefs: Preferences): ReadiumEpubPreferences 
   val txtColor = prefs.textColor?.let { parseReadiumColor(it) }
     ?: if (prefs.theme == "sepia" && prefs.textColor == null) parseReadiumColor(SEPIA_TEXT) else null
 
+  if (prefs.linkColor != null) {
+    android.util.Log.w("Readium", "linkColor is not supported by Readium Android 3.1.0 preferences")
+  }
+
   return ReadiumEpubPreferences(
     backgroundColor = bgColor,
     columnCount = prefs.columnCount?.let { parseColumnCount(it) },
@@ -44,7 +48,6 @@ internal fun nitroPreferencesToEpub(prefs: Preferences): ReadiumEpubPreferences 
     language = prefs.language?.let { Language(it) },
     letterSpacing = prefs.letterSpacing,
     ligatures = prefs.ligatures,
-    linkColor = prefs.linkColor?.let { parseReadiumColor(it) },
     lineHeight = prefs.lineHeight,
     pageMargins = prefs.pageMargins,
     paragraphIndent = prefs.paragraphIndent,

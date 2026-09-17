@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "ios": {
       "bundleIdentifier": "com.example.readiumexpo",
-      "deploymentTarget": "17.0",
+      "deploymentTarget": "16.4",
       "infoPlist": {
         "UIBackgroundModes": ["audio"],
         "NSAppTransportSecurity": {
@@ -24,12 +24,11 @@
         "expo-build-properties",
         {
           "ios": {
-            "deploymentTarget": "17.0"
+            "deploymentTarget": "16.4"
           }
         }
       ],
-      "../../app.plugin.js",
-      "expo-ios-scene-lifecycle-plugin"
+      "../../app.plugin.js"
     ]
   }
 }
