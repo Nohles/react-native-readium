@@ -165,10 +165,10 @@ If your app uses Expo managed workflow (native `android/` is generated via `preb
 apply the desugaring settings through an Expo config plugin (or `expo-build-properties`) so
 they persist across builds.
 
-#### Expo SDK 56 / development builds
+#### Expo SDK 58 / development builds
 
 This package contains native Readium and Nitro code and therefore does **not** run in Expo Go.
-Use an Expo development build or an EAS build. Expo SDK 56 apps must target iOS 16.4 or newer.
+Use an Expo development build or an EAS build. Expo SDK 58 apps must target iOS 16.4 or newer.
 
 The package exports a config plugin that installs the Readium CocoaPods source/helpers,
 enables iOS background audio, and applies Android EPUB desugaring setup during
@@ -185,7 +185,7 @@ enables iOS background audio, and applies Android EPUB desugaring setup during
 }
 ```
 
-See `apps/example-expo` for an Expo SDK 56 development-build consumer.
+See `apps/example-expo` for an Expo SDK 58 development-build consumer.
 
 ## Usage
 
@@ -277,7 +277,7 @@ Copy any of these into `File.url` for quick testing:
 
 The example apps maintain longer lists of sample URLs:
 
-- [`apps/example-expo/types.ts`](apps/example-expo/types.ts) — Expo SDK 56 development build
+- [`apps/example-expo/types.ts`](apps/example-expo/types.ts) — Expo SDK 58 development build
 - [`apps/example-native/src/App.tsx`](apps/example-native/src/App.tsx) — native example
 - [`apps/example-nextjs/components/ReaderApp.tsx`](apps/example-nextjs/components/ReaderApp.tsx) — web (CDN-hosted manifests)
 

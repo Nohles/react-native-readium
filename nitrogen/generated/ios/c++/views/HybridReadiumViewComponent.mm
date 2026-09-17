@@ -17,6 +17,13 @@
 #import "HybridReadiumViewSpecSwift.hpp"
 #import "NitroReadium-Swift-Cxx-Umbrella.hpp"
 
+#if __has_include(<cxxreact/ReactNativeVersion.h>)
+#include <cxxreact/ReactNativeVersion.h>
+#if REACT_NATIVE_VERSION_MINOR >= 82
+#define ENABLE_RCT_COMPONENT_VIEW_INVALIDATE
+#endif
+#endif
+
 using namespace facebook;
 using namespace margelo::nitro::readium;
 using namespace margelo::nitro::readium::views;
@@ -30,6 +37,7 @@ using namespace margelo::nitro::readium::views;
 
 @implementation HybridReadiumViewComponent {
   std::shared_ptr<HybridReadiumViewSpecSwift> _hybridView;
+  BOOL _didDropView;
 }
 
 + (void) load {
@@ -43,6 +51,7 @@ using namespace margelo::nitro::readium::views;
 
 - (instancetype) init {
   if (self = [super init]) {
+    _props = HybridReadiumViewShadowNode::defaultSharedProps();
     std::shared_ptr<HybridReadiumViewSpec> hybridView = NitroReadium::NitroReadiumAutolinking::createReadiumView();
     _hybridView = std::dynamic_pointer_cast<HybridReadiumViewSpecSwift>(hybridView);
     [self updateView];
@@ -62,105 +71,139 @@ using namespace margelo::nitro::readium::views;
   [self setContentView:view];
 }
 
+- (void) notifyOnDropView {
+  // A recycled component can later be invalidated. Notify only once per mount.
+  if (_didDropView) {
+    return;
+  }
+  NitroReadium::HybridReadiumViewSpec_cxx& swiftPart = _hybridView->getSwiftPart();
+  swiftPart.onDropView();
+  _didDropView = YES;
+}
+
 - (void) updateProps:(const std::shared_ptr<const react::Props>&)props
             oldProps:(const std::shared_ptr<const react::Props>&)oldProps {
+  // A props update marks a newly mounted or still-active component.
+  _didDropView = NO;
+
   // 1. Downcast props
-  const auto& newViewPropsConst = *std::static_pointer_cast<HybridReadiumViewProps const>(props);
-  auto& newViewProps = const_cast<HybridReadiumViewProps&>(newViewPropsConst);
+  const auto& newViewProps = *std::static_pointer_cast<const HybridReadiumViewProps>(props);
+  const auto* oldViewProps = static_cast<const HybridReadiumViewProps*>(oldProps.get());
   NitroReadium::HybridReadiumViewSpec_cxx& swiftPart = _hybridView->getSwiftPart();
 
-  // 2. Update each prop individually
-  swiftPart.beforeUpdate();
+  // 2. Update only props that differ from the previous Props snapshot.
+  const bool hasTransactionPropChanges = oldViewProps == nullptr
+      ? newViewProps.hasAnyProvidedProps()
+      : !newViewProps.hasSameProps(*oldViewProps);
+  if (hasTransactionPropChanges) {
+    swiftPart.beforeUpdate();
 
-  // reopenActiveAudiobook: optional
-  if (newViewProps.reopenActiveAudiobook.isDirty) {
-    swiftPart.setReopenActiveAudiobook(newViewProps.reopenActiveAudiobook.value);
-    newViewProps.reopenActiveAudiobook.isDirty = false;
-  }
-  // file: optional
-  if (newViewProps.file.isDirty) {
-    swiftPart.setFile(newViewProps.file.value);
-    newViewProps.file.isDirty = false;
-  }
-  // preferences: optional
-  if (newViewProps.preferences.isDirty) {
-    swiftPart.setPreferences(newViewProps.preferences.value);
-    newViewProps.preferences.isDirty = false;
-  }
-  // customFonts: optional
-  if (newViewProps.customFonts.isDirty) {
-    swiftPart.setCustomFonts(newViewProps.customFonts.value);
-    newViewProps.customFonts.isDirty = false;
-  }
-  // decorations: optional
-  if (newViewProps.decorations.isDirty) {
-    swiftPart.setDecorations(newViewProps.decorations.value);
-    newViewProps.decorations.isDirty = false;
-  }
-  // selectionActions: optional
-  if (newViewProps.selectionActions.isDirty) {
-    swiftPart.setSelectionActions(newViewProps.selectionActions.value);
-    newViewProps.selectionActions.isDirty = false;
-  }
-  // audiobookBookmarks: optional
-  if (newViewProps.audiobookBookmarks.isDirty) {
-    swiftPart.setAudiobookBookmarks(newViewProps.audiobookBookmarks.value);
-    newViewProps.audiobookBookmarks.isDirty = false;
-  }
-  // onLocationChange: optional
-  if (newViewProps.onLocationChange.isDirty) {
-    swiftPart.setOnLocationChange(newViewProps.onLocationChange.value);
-    newViewProps.onLocationChange.isDirty = false;
-  }
-  // onTap: optional
-  if (newViewProps.onTap.isDirty) {
-    swiftPart.setOnTap(newViewProps.onTap.value);
-    newViewProps.onTap.isDirty = false;
-  }
-  // onPublicationReady: optional
-  if (newViewProps.onPublicationReady.isDirty) {
-    swiftPart.setOnPublicationReady(newViewProps.onPublicationReady.value);
-    newViewProps.onPublicationReady.isDirty = false;
-  }
-  // onDecorationActivated: optional
-  if (newViewProps.onDecorationActivated.isDirty) {
-    swiftPart.setOnDecorationActivated(newViewProps.onDecorationActivated.value);
-    newViewProps.onDecorationActivated.isDirty = false;
-  }
-  // onSelectionChange: optional
-  if (newViewProps.onSelectionChange.isDirty) {
-    swiftPart.setOnSelectionChange(newViewProps.onSelectionChange.value);
-    newViewProps.onSelectionChange.isDirty = false;
-  }
-  // onSelectionAction: optional
-  if (newViewProps.onSelectionAction.isDirty) {
-    swiftPart.setOnSelectionAction(newViewProps.onSelectionAction.value);
-    newViewProps.onSelectionAction.isDirty = false;
-  }
-  // onAudiobookPlaybackStateChange: optional
-  if (newViewProps.onAudiobookPlaybackStateChange.isDirty) {
-    swiftPart.setOnAudiobookPlaybackStateChange(newViewProps.onAudiobookPlaybackStateChange.value);
-    newViewProps.onAudiobookPlaybackStateChange.isDirty = false;
-  }
-  // onAudiobookBookmarkChange: optional
-  if (newViewProps.onAudiobookBookmarkChange.isDirty) {
-    swiftPart.setOnAudiobookBookmarkChange(newViewProps.onAudiobookBookmarkChange.value);
-    newViewProps.onAudiobookBookmarkChange.isDirty = false;
-  }
-
-  swiftPart.afterUpdate();
-
-  // 3. Update hybridRef if it changed
-  if (newViewProps.hybridRef.isDirty) {
-    // hybridRef changed - call it with new this
-    const auto& maybeFunc = newViewProps.hybridRef.value;
-    if (maybeFunc.has_value()) {
-      maybeFunc.value()(_hybridView);
+    // reopenActiveAudiobook: optional
+    if (oldViewProps == nullptr
+          ? newViewProps.reopenActiveAudiobook.isProvided()
+          : !newViewProps.reopenActiveAudiobook.hasSameValue(oldViewProps->reopenActiveAudiobook)) {
+      swiftPart.setReopenActiveAudiobook(newViewProps.reopenActiveAudiobook.get());
     }
-    newViewProps.hybridRef.isDirty = false;
+    // file: optional
+    if (oldViewProps == nullptr
+          ? newViewProps.file.isProvided()
+          : !newViewProps.file.hasSameValue(oldViewProps->file)) {
+      swiftPart.setFile(newViewProps.file.get());
+    }
+    // preferences: optional
+    if (oldViewProps == nullptr
+          ? newViewProps.preferences.isProvided()
+          : !newViewProps.preferences.hasSameValue(oldViewProps->preferences)) {
+      swiftPart.setPreferences(newViewProps.preferences.get());
+    }
+    // customFonts: optional
+    if (oldViewProps == nullptr
+          ? newViewProps.customFonts.isProvided()
+          : !newViewProps.customFonts.hasSameValue(oldViewProps->customFonts)) {
+      swiftPart.setCustomFonts(newViewProps.customFonts.get());
+    }
+    // decorations: optional
+    if (oldViewProps == nullptr
+          ? newViewProps.decorations.isProvided()
+          : !newViewProps.decorations.hasSameValue(oldViewProps->decorations)) {
+      swiftPart.setDecorations(newViewProps.decorations.get());
+    }
+    // selectionActions: optional
+    if (oldViewProps == nullptr
+          ? newViewProps.selectionActions.isProvided()
+          : !newViewProps.selectionActions.hasSameValue(oldViewProps->selectionActions)) {
+      swiftPart.setSelectionActions(newViewProps.selectionActions.get());
+    }
+    // audiobookBookmarks: optional
+    if (oldViewProps == nullptr
+          ? newViewProps.audiobookBookmarks.isProvided()
+          : !newViewProps.audiobookBookmarks.hasSameValue(oldViewProps->audiobookBookmarks)) {
+      swiftPart.setAudiobookBookmarks(newViewProps.audiobookBookmarks.get());
+    }
+    // onLocationChange: optional
+    if (oldViewProps == nullptr
+          ? newViewProps.onLocationChange.isProvided()
+          : !newViewProps.onLocationChange.hasSameValue(oldViewProps->onLocationChange)) {
+      swiftPart.setOnLocationChange(newViewProps.onLocationChange.get());
+    }
+    // onTap: optional
+    if (oldViewProps == nullptr
+          ? newViewProps.onTap.isProvided()
+          : !newViewProps.onTap.hasSameValue(oldViewProps->onTap)) {
+      swiftPart.setOnTap(newViewProps.onTap.get());
+    }
+    // onPublicationReady: optional
+    if (oldViewProps == nullptr
+          ? newViewProps.onPublicationReady.isProvided()
+          : !newViewProps.onPublicationReady.hasSameValue(oldViewProps->onPublicationReady)) {
+      swiftPart.setOnPublicationReady(newViewProps.onPublicationReady.get());
+    }
+    // onDecorationActivated: optional
+    if (oldViewProps == nullptr
+          ? newViewProps.onDecorationActivated.isProvided()
+          : !newViewProps.onDecorationActivated.hasSameValue(oldViewProps->onDecorationActivated)) {
+      swiftPart.setOnDecorationActivated(newViewProps.onDecorationActivated.get());
+    }
+    // onSelectionChange: optional
+    if (oldViewProps == nullptr
+          ? newViewProps.onSelectionChange.isProvided()
+          : !newViewProps.onSelectionChange.hasSameValue(oldViewProps->onSelectionChange)) {
+      swiftPart.setOnSelectionChange(newViewProps.onSelectionChange.get());
+    }
+    // onSelectionAction: optional
+    if (oldViewProps == nullptr
+          ? newViewProps.onSelectionAction.isProvided()
+          : !newViewProps.onSelectionAction.hasSameValue(oldViewProps->onSelectionAction)) {
+      swiftPart.setOnSelectionAction(newViewProps.onSelectionAction.get());
+    }
+    // onAudiobookPlaybackStateChange: optional
+    if (oldViewProps == nullptr
+          ? newViewProps.onAudiobookPlaybackStateChange.isProvided()
+          : !newViewProps.onAudiobookPlaybackStateChange.hasSameValue(oldViewProps->onAudiobookPlaybackStateChange)) {
+      swiftPart.setOnAudiobookPlaybackStateChange(newViewProps.onAudiobookPlaybackStateChange.get());
+    }
+    // onAudiobookBookmarkChange: optional
+    if (oldViewProps == nullptr
+          ? newViewProps.onAudiobookBookmarkChange.isProvided()
+          : !newViewProps.onAudiobookBookmarkChange.hasSameValue(oldViewProps->onAudiobookBookmarkChange)) {
+      swiftPart.setOnAudiobookBookmarkChange(newViewProps.onAudiobookBookmarkChange.get());
+    }
+
+    // Update hybridRef if it changed
+    if (oldViewProps == nullptr
+          ? newViewProps.hybridRef.isProvided()
+          : !newViewProps.hybridRef.hasSameValue(oldViewProps->hybridRef)) {
+      // hybridRef changed - call it with new this
+      const auto& maybeFunc = newViewProps.hybridRef.get();
+      if (maybeFunc.has_value()) {
+        maybeFunc.value()(_hybridView);
+      }
+    }
+
+    swiftPart.afterUpdate();
   }
 
-  // 4. Continue in base class
+  // 3. Continue in base class
   [super updateProps:props oldProps:oldProps];
 }
 
@@ -169,9 +212,17 @@ using namespace margelo::nitro::readium::views;
 }
 
 - (void)prepareForRecycle {
+  [self notifyOnDropView];
   [super prepareForRecycle];
   NitroReadium::HybridReadiumViewSpec_cxx& swiftPart = _hybridView->getSwiftPart();
   swiftPart.maybePrepareForRecycle();
 }
+
+#ifdef ENABLE_RCT_COMPONENT_VIEW_INVALIDATE
+- (void)invalidate {
+  [self notifyOnDropView];
+  [super invalidate];
+}
+#endif
 
 @end

@@ -7,14 +7,15 @@
 
 #pragma once
 
-#include <optional>
-#include <NitroModules/NitroDefines.hpp>
-#include <NitroModules/NitroHash.hpp>
-#include <NitroModules/CachedProp.hpp>
-#include <react/renderer/core/ConcreteComponentDescriptor.h>
-#include <react/renderer/core/PropsParserContext.h>
+#include <NitroModules/ReactProp.hpp>
+#include <NitroModules/ViewComponentDescriptor.hpp>
+#include <NitroModules/ViewPropsHolderState.hpp>
 #include <react/renderer/components/view/ConcreteViewShadowNode.h>
 #include <react/renderer/components/view/ViewProps.h>
+#include <react/renderer/core/PropsParserContext.h>
+#include <react/renderer/core/RawProps.h>
+
+#include <string>
 
 #include <optional>
 #include "ReadiumFile.hpp"
@@ -56,22 +57,62 @@ namespace margelo::nitro::readium::views {
                            const react::RawProps& rawProps);
 
   public:
-    CachedProp<std::optional<bool>> reopenActiveAudiobook;
-    CachedProp<std::optional<ReadiumFile>> file;
-    CachedProp<std::optional<Preferences>> preferences;
-    CachedProp<std::optional<std::vector<CustomFont>>> customFonts;
-    CachedProp<std::optional<std::vector<DecorationGroup>>> decorations;
-    CachedProp<std::optional<std::vector<SelectionAction>>> selectionActions;
-    CachedProp<std::optional<std::vector<AudiobookBookmark>>> audiobookBookmarks;
-    CachedProp<std::optional<std::function<void(const Locator& /* locator */)>>> onLocationChange;
-    CachedProp<std::optional<std::function<void(const Point& /* point */)>>> onTap;
-    CachedProp<std::optional<std::function<void(const PublicationReadyEvent& /* event */)>>> onPublicationReady;
-    CachedProp<std::optional<std::function<void(const DecorationActivatedEvent& /* event */)>>> onDecorationActivated;
-    CachedProp<std::optional<std::function<void(const SelectionEvent& /* event */)>>> onSelectionChange;
-    CachedProp<std::optional<std::function<void(const SelectionActionEvent& /* event */)>>> onSelectionAction;
-    CachedProp<std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>> onAudiobookPlaybackStateChange;
-    CachedProp<std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>> onAudiobookBookmarkChange;
-    CachedProp<std::optional<std::function<void(const std::shared_ptr<HybridReadiumViewSpec>& /* ref */)>>> hybridRef;
+    nitro::ReactProp<std::optional<bool>> reopenActiveAudiobook;
+    nitro::ReactProp<std::optional<ReadiumFile>> file;
+    nitro::ReactProp<std::optional<Preferences>> preferences;
+    nitro::ReactProp<std::optional<std::vector<CustomFont>>> customFonts;
+    nitro::ReactProp<std::optional<std::vector<DecorationGroup>>> decorations;
+    nitro::ReactProp<std::optional<std::vector<SelectionAction>>> selectionActions;
+    nitro::ReactProp<std::optional<std::vector<AudiobookBookmark>>> audiobookBookmarks;
+    nitro::ReactProp<std::optional<std::function<void(const Locator& /* locator */)>>> onLocationChange;
+    nitro::ReactProp<std::optional<std::function<void(const Point& /* point */)>>> onTap;
+    nitro::ReactProp<std::optional<std::function<void(const PublicationReadyEvent& /* event */)>>> onPublicationReady;
+    nitro::ReactProp<std::optional<std::function<void(const DecorationActivatedEvent& /* event */)>>> onDecorationActivated;
+    nitro::ReactProp<std::optional<std::function<void(const SelectionEvent& /* event */)>>> onSelectionChange;
+    nitro::ReactProp<std::optional<std::function<void(const SelectionActionEvent& /* event */)>>> onSelectionAction;
+    nitro::ReactProp<std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>> onAudiobookPlaybackStateChange;
+    nitro::ReactProp<std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>> onAudiobookBookmarkChange;
+    nitro::ReactProp<std::optional<std::function<void(const std::shared_ptr<HybridReadiumViewSpec>& /* ref */)>>> hybridRef;
+
+    [[nodiscard]]
+    bool hasSameProps(const HybridReadiumViewProps& other) const noexcept {
+      return reopenActiveAudiobook.hasSameValue(other.reopenActiveAudiobook) &&
+             file.hasSameValue(other.file) &&
+             preferences.hasSameValue(other.preferences) &&
+             customFonts.hasSameValue(other.customFonts) &&
+             decorations.hasSameValue(other.decorations) &&
+             selectionActions.hasSameValue(other.selectionActions) &&
+             audiobookBookmarks.hasSameValue(other.audiobookBookmarks) &&
+             onLocationChange.hasSameValue(other.onLocationChange) &&
+             onTap.hasSameValue(other.onTap) &&
+             onPublicationReady.hasSameValue(other.onPublicationReady) &&
+             onDecorationActivated.hasSameValue(other.onDecorationActivated) &&
+             onSelectionChange.hasSameValue(other.onSelectionChange) &&
+             onSelectionAction.hasSameValue(other.onSelectionAction) &&
+             onAudiobookPlaybackStateChange.hasSameValue(other.onAudiobookPlaybackStateChange) &&
+             onAudiobookBookmarkChange.hasSameValue(other.onAudiobookBookmarkChange) &&
+             hybridRef.hasSameValue(other.hybridRef);
+    }
+
+    [[nodiscard]]
+    bool hasAnyProvidedProps() const noexcept {
+      return reopenActiveAudiobook.isProvided() ||
+             file.isProvided() ||
+             preferences.isProvided() ||
+             customFonts.isProvided() ||
+             decorations.isProvided() ||
+             selectionActions.isProvided() ||
+             audiobookBookmarks.isProvided() ||
+             onLocationChange.isProvided() ||
+             onTap.isProvided() ||
+             onPublicationReady.isProvided() ||
+             onDecorationActivated.isProvided() ||
+             onSelectionChange.isProvided() ||
+             onSelectionAction.isProvided() ||
+             onAudiobookPlaybackStateChange.isProvided() ||
+             onAudiobookBookmarkChange.isProvided() ||
+             hybridRef.isProvided();
+    }
 
   private:
     static bool filterObjectKeys(const std::string& propName);
@@ -80,32 +121,7 @@ namespace margelo::nitro::readium::views {
   /**
    * State for the "ReadiumView" View.
    */
-  class HybridReadiumViewState final {
-  public:
-    HybridReadiumViewState() = default;
-    explicit HybridReadiumViewState(const std::shared_ptr<HybridReadiumViewProps>& props):
-      _props(props) {}
-
-  public:
-    [[nodiscard]]
-    const std::shared_ptr<HybridReadiumViewProps>& getProps() const {
-      return _props;
-    }
-
-  public:
-#ifdef ANDROID
-  HybridReadiumViewState(const HybridReadiumViewState& /* previousState */, folly::dynamic /* data */) {}
-  folly::dynamic getDynamic() const {
-    throw std::runtime_error("HybridReadiumViewState does not support folly!");
-  }
-  react::MapBuffer getMapBuffer() const {
-    throw std::runtime_error("HybridReadiumViewState does not support MapBuffer!");
-  };
-#endif
-
-  private:
-    std::shared_ptr<HybridReadiumViewProps> _props;
-  };
+  using HybridReadiumViewState = nitro::ViewPropsHolderState<HybridReadiumViewProps>;
 
   /**
    * The Shadow Node for the "ReadiumView" View.
@@ -118,21 +134,7 @@ namespace margelo::nitro::readium::views {
   /**
    * The Component Descriptor for the "ReadiumView" View.
    */
-  class HybridReadiumViewComponentDescriptor final: public react::ConcreteComponentDescriptor<HybridReadiumViewShadowNode> {
-  public:
-    explicit HybridReadiumViewComponentDescriptor(const react::ComponentDescriptorParameters& parameters);
-
-  public:
-    /**
-     * A faster path for cloning props - reuses the caching logic from `HybridReadiumViewProps`.
-     */
-    std::shared_ptr<const react::Props> cloneProps(const react::PropsParserContext& context,
-                                                   const std::shared_ptr<const react::Props>& props,
-                                                   react::RawProps rawProps) const override;
-#ifdef ANDROID
-    void adopt(react::ShadowNode& shadowNode) const override;
-#endif
-  };
+  using HybridReadiumViewComponentDescriptor = nitro::ViewComponentDescriptor<HybridReadiumViewShadowNode>;
 
   /* The actual view for "ReadiumView" needs to be implemented in platform-specific code. */
 

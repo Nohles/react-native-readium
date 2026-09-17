@@ -9,6 +9,7 @@ package com.margelo.nitro.reactnativereadium
 
 import androidx.annotation.Keep
 import com.facebook.proguard.annotations.DoNotStrip
+import java.util.Objects
 
 
 /**
@@ -25,6 +26,20 @@ data class AudiobookBookmarkChangeEvent(
   val bookmark: AudiobookBookmark
 ) {
   /* primary constructor */
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is AudiobookBookmarkChangeEvent) return false
+    return Objects.deepEquals(this.type, other.type)
+      && Objects.deepEquals(this.bookmark, other.bookmark)
+  }
+
+  override fun hashCode(): Int {
+    return arrayOf<Any?>(
+      type,
+      bookmark
+    ).contentDeepHashCode()
+  }
 
   companion object {
     /**

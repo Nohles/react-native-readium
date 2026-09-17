@@ -9,12 +9,24 @@
   },
   "autolinking": {
     "ReadiumView": {
-      "swift": "HybridReadiumView",
-      "kotlin": "HybridReadiumView"
+      "ios": {
+        "language": "swift",
+        "implementationClassName": "HybridReadiumView"
+      },
+      "android": {
+        "language": "kotlin",
+        "implementationClassName": "HybridReadiumView"
+      }
     },
     "ReadiumAudio": {
-      "swift": "HybridReadiumAudio",
-      "kotlin": "HybridReadiumAudio"
+      "ios": {
+        "language": "swift",
+        "implementationClassName": "HybridReadiumAudio"
+      },
+      "android": {
+        "language": "kotlin",
+        "implementationClassName": "HybridReadiumAudio"
+      }
     }
   }
 }

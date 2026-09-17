@@ -10,6 +10,7 @@ package com.margelo.nitro.reactnativereadium
 import androidx.annotation.Keep
 import com.facebook.jni.HybridData
 import com.facebook.proguard.annotations.DoNotStrip
+import dalvik.annotation.optimization.FastNative
 import com.margelo.nitro.core.HybridObject
 
 /**
@@ -98,6 +99,7 @@ abstract class HybridReadiumAudioSpec: HybridObject() {
   @Keep
   protected open class CxxPart(javaPart: HybridReadiumAudioSpec): HybridObject.CxxPart(javaPart) {
     // C++ JHybridReadiumAudioSpec::CxxPart::initHybrid(...)
+    @FastNative
     external override fun initHybrid(): HybridData
   }
   override fun createCxxPart(): CxxPart {

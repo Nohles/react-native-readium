@@ -24,11 +24,11 @@ namespace margelo::nitro::readium {
   using namespace facebook;
 
   /**
-   * The C++ JNI bridge between the C++ struct "AudiobookBookmark" and the the Kotlin data class "AudiobookBookmark".
+   * The C++ JNI bridge between the C++ struct "AudiobookBookmark" and the Kotlin data class "AudiobookBookmark".
    */
   struct JAudiobookBookmark final: public jni::JavaClass<JAudiobookBookmark> {
   public:
-    static auto constexpr kJavaDescriptor = "Lcom/margelo/nitro/reactnativereadium/AudiobookBookmark;";
+    static constexpr auto kJavaDescriptor = "Lcom/margelo/nitro/reactnativereadium/AudiobookBookmark;";
 
   public:
     /**

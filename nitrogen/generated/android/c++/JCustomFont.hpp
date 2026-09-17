@@ -17,11 +17,11 @@ namespace margelo::nitro::readium {
   using namespace facebook;
 
   /**
-   * The C++ JNI bridge between the C++ struct "CustomFont" and the the Kotlin data class "CustomFont".
+   * The C++ JNI bridge between the C++ struct "CustomFont" and the Kotlin data class "CustomFont".
    */
   struct JCustomFont final: public jni::JavaClass<JCustomFont> {
   public:
-    static auto constexpr kJavaDescriptor = "Lcom/margelo/nitro/reactnativereadium/CustomFont;";
+    static constexpr auto kJavaDescriptor = "Lcom/margelo/nitro/reactnativereadium/CustomFont;";
 
   public:
     /**
