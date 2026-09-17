@@ -21,11 +21,11 @@ namespace margelo::nitro::readium {
   class JHybridReadiumAudioSpec: public virtual HybridReadiumAudioSpec, public virtual JHybridObject {
   public:
     struct JavaPart: public jni::JavaClass<JavaPart, JHybridObject::JavaPart> {
-      static auto constexpr kJavaDescriptor = "Lcom/margelo/nitro/reactnativereadium/HybridReadiumAudioSpec;";
+      static constexpr auto kJavaDescriptor = "Lcom/margelo/nitro/reactnativereadium/HybridReadiumAudioSpec;";
       std::shared_ptr<JHybridReadiumAudioSpec> getJHybridReadiumAudioSpec();
     };
     struct CxxPart: public jni::HybridClass<CxxPart, JHybridObject::CxxPart> {
-      static auto constexpr kJavaDescriptor = "Lcom/margelo/nitro/reactnativereadium/HybridReadiumAudioSpec$CxxPart;";
+      static constexpr auto kJavaDescriptor = "Lcom/margelo/nitro/reactnativereadium/HybridReadiumAudioSpec$CxxPart;";
       static jni::local_ref<jhybriddata> initHybrid(jni::alias_ref<jhybridobject> jThis);
       static void registerNatives();
       using HybridBase::HybridBase;

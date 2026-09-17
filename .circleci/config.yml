@@ -80,6 +80,9 @@ jobs:
           name: Build native Android example
           command: cd apps/example-native/android && ./gradlew :app:assembleDebug --no-daemon -PreactNativeArchitectures=x86_64
       - run:
+          name: Test native Android library
+          command: cd apps/example-native/android && ./gradlew :react-native-readium:testDebugUnitTest --no-daemon
+      - run:
           name: Generate Expo Android project
           command: yarn workspace example-expo prebuild --platform android --no-install
       - run:

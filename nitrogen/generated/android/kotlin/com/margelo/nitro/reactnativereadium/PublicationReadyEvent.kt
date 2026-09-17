@@ -9,6 +9,7 @@ package com.margelo.nitro.reactnativereadium
 
 import androidx.annotation.Keep
 import com.facebook.proguard.annotations.DoNotStrip
+import java.util.Objects
 
 
 /**
@@ -31,6 +32,24 @@ data class PublicationReadyEvent(
   val capabilities: PublicationCapabilities
 ) {
   /* primary constructor */
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is PublicationReadyEvent) return false
+    return Objects.deepEquals(this.tableOfContents, other.tableOfContents)
+      && Objects.deepEquals(this.positions, other.positions)
+      && Objects.deepEquals(this.metadata, other.metadata)
+      && Objects.deepEquals(this.capabilities, other.capabilities)
+  }
+
+  override fun hashCode(): Int {
+    return arrayOf<Any?>(
+      tableOfContents,
+      positions,
+      metadata,
+      capabilities
+    ).contentDeepHashCode()
+  }
 
   companion object {
     /**
