@@ -22,6 +22,7 @@ import org.readium.r2.navigator.Navigator
 import org.readium.r2.navigator.epub.EpubPreferences
 import org.readium.r2.navigator.epub.EpubNavigatorFactory
 import org.readium.r2.shared.ExperimentalReadiumApi
+import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.navigator.preferences.Theme
 import org.readium.r2.navigator.preferences.FontFamily

@@ -176,6 +176,19 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
   override fun goForward() { fragment?.goForward() }
   override fun goBackward() { fragment?.goBackward() }
 
+  private fun unsupportedAudio(): Nothing {
+    throw UnsupportedOperationException(
+      "Readium audiobook playback is currently supported on iOS only."
+    )
+  }
+
+  override fun play() = unsupportedAudio()
+  override fun pause() = unsupportedAudio()
+  override fun seekTo(position: Double) = unsupportedAudio()
+  override fun setPlaybackRate(rate: Double) = unsupportedAudio()
+  override fun setVolume(volume: Double) = unsupportedAudio()
+  override fun setSleepTimer(seconds: Double?) = unsupportedAudio()
+
   override fun search(query: String): Promise<PublicationSearchPage> =
     Promise.async(scope) {
       cancelSearch()

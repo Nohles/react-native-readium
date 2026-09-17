@@ -1,4 +1,5 @@
 apply plugin: "com.android.application"
+apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
 def vectorIconsFontsDir = file("../../../../node_modules/react-native-vector-icons/Fonts")
@@ -80,7 +81,15 @@ android {
 
     sourceSets {
         main {
-            assets.srcDirs += ["../../resources", "$buildDir/generated/vector-icons"]
+            assets.srcDirs = ["../../resources", "$buildDir/generated/vector-icons"]
+        }
+    }
+
+    if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+        externalNativeBuild {
+            cmake {
+                buildStagingDirectory file("../../../../.cxx/example")
+            }
         }
     }
 
