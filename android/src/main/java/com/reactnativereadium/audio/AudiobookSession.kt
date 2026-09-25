@@ -21,12 +21,29 @@ import kotlinx.coroutines.launch
 import org.readium.adapter.exoplayer.audio.ExoPlayerEngineProvider
 import org.readium.navigator.media.audio.AudioNavigator
 import org.readium.navigator.media.audio.AudioNavigatorFactory
+import org.readium.navigator.media.common.DefaultMediaMetadataProvider
+import org.readium.navigator.media.common.MediaMetadataFactory
+import org.readium.navigator.media.common.MediaMetadataProvider
 import org.readium.r2.shared.DelicateReadiumApi
 import org.readium.r2.shared.ExperimentalReadiumApi
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.Try
+import org.readium.r2.shared.util.Url as ReadiumUrl
+import org.readium.r2.shared.util.mediatype.MediaType
 import kotlin.time.Duration.Companion.seconds
+
+/**
+ * A host-owned audiobook bookmark. Mirrors the JS `AudiobookBookmark`: the
+ * Readium [Locator] for [position] on the chapter timeline, so a bookmark
+ * survives a re-open even if the item durations shift slightly.
+ */
+data class AudiobookBookmark(
+  val id: String,
+  val locator: Locator,
+  val position: Double,
+  val note: String? = null,
+)
 
 /** Mirrors iOS `AudiobookSessionStatus`. */
 enum class AudiobookStatus { IDLE, LOADING, READY, PLAYING, PAUSED, ENDED, ERROR }
@@ -64,6 +81,19 @@ object AudiobookSession {
 
   private const val TAG = "AudiobookSession"
 
+  /**
+   * Boundary slack, mirroring iOS's `+ 0.25` guards on chapter comparisons
+   * (:937, :951, :954, :960). A position that lands a fraction of a second past
+   * a chapter start should still count as being in that chapter.
+   */
+  private const val CHAPTER_EPSILON = 0.25
+
+  /**
+   * How far into a chapter "previous" restarts it instead of stepping back a
+   * chapter, mirroring iOS `currentPosition - current.time > 3` (:951).
+   */
+  private const val RESTART_CHAPTER_THRESHOLD_SECONDS = 3.0
+
   private val mainHandler = Handler(Looper.getMainLooper())
   private val mainScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -77,9 +107,32 @@ object AudiobookSession {
   private var navigator: AudioNavigator<*, *>? = null
   private var mediaPlayer: Player? = null
 
-  /** Cumulative absolute-time offset of each reading-order item, in seconds. */
+  /**
+   * Chapter start times in absolute seconds, derived from the publication's
+   * table of contents. Mirrors iOS `flattenChapters` +
+   * `absoluteTime(forHref:)`
+   * (ios/Reader/Audiobook/AudiobookViewController.swift:615-628, :970-972).
+   *
+   * A publication whose TOC does not resolve against the reading order yields an
+   * empty list, and [goForward]/[goBackward] fall back to reading-order items.
+   */
+  private var chapters: List<Double> = emptyList()
+
+  /** Absolute start time of each reading-order item, in seconds. */
   private var itemStartOffsets: List<Double> = emptyList()
   private var totalDuration: Double = 0.0
+
+  /**
+   * Bookmarks for the active book, keyed by their host-assigned id.
+   *
+   * iOS keeps its bookmarks inside `AudiobookViewController` because that view
+   * owns the bookmark UI. Android has no native audiobook UI — hosts render
+   * their own — so the session owns the list and publishes changes through
+   * [onBookmarkChange]. Both platforms now expose the same imperative methods.
+   */
+  private val bookmarks = LinkedHashMap<String, AudiobookBookmark>()
+  private val bookmarkListenerLock = Any()
+  private var bookmarkListener: ((type: String, bookmark: AudiobookBookmark) -> Unit)? = null
 
   var fileURL: String? = null
     private set
@@ -87,6 +140,9 @@ object AudiobookSession {
   private var observeJob: Job? = null
   private var sleepJob: Job? = null
   private var mediaServiceStarted = false
+
+  @Volatile
+  private var mediaSession: androidx.media3.session.MediaSession? = null
 
   private fun context(): ReactApplicationContext =
     NitroModules.applicationContext
@@ -135,6 +191,7 @@ object AudiobookSession {
     this.publication = publication
     this.fileURL = fileUrl
     itemStartOffsets = emptyList()
+    chapters = emptyList()
     totalDuration = 0.0
     _state.value = AudiobookSessionState(status = AudiobookStatus.LOADING)
 
@@ -178,16 +235,49 @@ object AudiobookSession {
   }
 
   /** Absolute-time seek across the chapter timeline, in seconds. */
-  fun seekTo(position: Double) = onMain {
-    val nav = navigator ?: return@onMain
+  fun seekTo(position: Double) = onMain { seekToInternal(position) }
+
+  private fun seekToInternal(position: Double) {
+    val nav = navigator ?: return
     val index = itemIndexForAbsolutePosition(position)
     val localOffset = (position - itemStartOffsets.getOrElse(index) { 0.0 })
       .coerceAtLeast(0.0).seconds
     nav.skipTo(index, localOffset)
   }
 
-  fun goForward() = onMain { navigator?.skipForward() }
-  fun goBackward() = onMain { navigator?.skipBackward() }
+  fun goForward() = onMain {
+    val nav = navigator ?: return@onMain
+    val next = chapters.firstOrNull { it > _state.value.position + CHAPTER_EPSILON }
+    if (next == null) {
+      // No chapter boundary ahead: keep the reading-order behaviour so the
+      // control still does something on a publication with a flat TOC.
+      nav.skipForward()
+      return@onMain
+    }
+    seekToInternal(next)
+  }
+
+  fun goBackward() = onMain {
+    val nav = navigator ?: return@onMain
+    if (chapters.isEmpty()) {
+      nav.skipBackward()
+      return@onMain
+    }
+    val position = _state.value.position
+    val current = chapters.lastOrNull { it <= position + CHAPTER_EPSILON }
+    if (current == null) {
+      seekToInternal(0.0)
+      return@onMain
+    }
+    // Mirrors iOS seekToPreviousChapter (:938-957): more than 3s into a chapter
+    // restarts it, otherwise step back to the previous chapter.
+    val target = if (position - current > RESTART_CHAPTER_THRESHOLD_SECONDS) {
+      current
+    } else {
+      chapters.lastOrNull { it < current - CHAPTER_EPSILON } ?: 0.0
+    }
+    seekToInternal(target)
+  }
 
   fun setPlaybackRate(rate: Double) = onMain {
     val player = mediaPlayer ?: return@onMain
@@ -228,23 +318,161 @@ object AudiobookSession {
   }
 
   /** Full teardown back to idle, mirroring iOS `AudiobookSession.close`. */
-  fun close() = onMain {
+  fun close() = onMain { teardown() }
+
+  /**
+   * Drops the running session so the next open starts from scratch. Used by
+   * `ReadiumView` when the host passes `reopenActiveAudiobook: false` — iOS
+   * treats that as "do not resume the active book"
+   * (ios/HybridReadiumView.swift:167-171), and previously Android had no way to
+   * express it.
+   */
+  fun reset() = onMain { teardown() }
+
+  private fun teardown() {
     mediaPlayer?.pause()
     stopMediaService()
     releaseNavigator()
     publication = null
     fileURL = null
     itemStartOffsets = emptyList()
+    chapters = emptyList()
     totalDuration = 0.0
+    synchronized(bookmarks) { bookmarks.clear() }
     sleepJob?.cancel()
     sleepJob = null
     _state.value = AudiobookSessionState()
+  }
+
+  // MARK: - Bookmarks
+
+  /** Registers the host's bookmark-change listener; returns a detach function. */
+  fun setBookmarkListener(listener: ((type: String, bookmark: AudiobookBookmark) -> Unit)?) {
+    synchronized(bookmarkListenerLock) { bookmarkListener = listener }
+  }
+
+  /**
+   * Replaces the bookmark list, emitting `update` for each so a host that
+   * round-trips its own persisted bookmarks sees them acknowledged.
+   */
+  fun setBookmarks(values: List<AudiobookBookmark>) = onMain {
+    val changed = synchronized(bookmarks) {
+      bookmarks.clear()
+      values.forEach { bookmarks[it.id] = it }
+      values.toList()
+    }
+    changed.forEach { emitBookmarkChange("update", it) }
+  }
+
+  fun addBookmark(id: String, position: Double, note: String?) = onMain {
+    val locator = locatorForAbsolutePosition(position)
+    val bookmark = AudiobookBookmark(
+      id = id,
+      locator = locator,
+      position = position,
+      note = note
+    )
+    val existing = synchronized(bookmarks) {
+      val previous = bookmarks.put(id, bookmark)
+      if (previous == null) "add" else "update"
+    }
+    emitBookmarkChange(existing, bookmark)
+  }
+
+  fun updateBookmark(id: String, note: String?) = onMain {
+    val bookmark = synchronized(bookmarks) {
+      val previous = bookmarks[id] ?: return@onMain
+      val updated = previous.copy(note = note)
+      bookmarks[id] = updated
+      updated
+    }
+    emitBookmarkChange("update", bookmark)
+  }
+
+  fun removeBookmark(id: String) = onMain {
+    val bookmark = synchronized(bookmarks) { bookmarks.remove(id) } ?: return@onMain
+    emitBookmarkChange("remove", bookmark)
+  }
+
+  private fun emitBookmarkChange(type: String, bookmark: AudiobookBookmark) {
+    val listener = synchronized(bookmarkListenerLock) { bookmarkListener } ?: return
+    listener(type, bookmark)
+  }
+
+  /**
+   * Builds a Readium locator for an absolute chapter-timeline position.
+   * Mirrors iOS `locator(forAbsoluteTime:)` (:746-763): the reading-order item
+   * containing the position, with the local offset carried in a `t=` fragment.
+   */
+  private fun locatorForAbsolutePosition(position: Double): Locator {
+    val pub = publication
+    val links = pub?.readingOrder.orEmpty()
+    val index = itemIndexForAbsolutePosition(position)
+    val link = links.getOrNull(index)
+    val offset = (position - itemStartOffsets.getOrElse(index) { 0.0 }).coerceAtLeast(0.0)
+    val href = ReadiumUrl(
+      com.reactnativereadium.utils.normalizeHref(link?.href?.toString().orEmpty()).resourcePath
+    ) ?: ReadiumUrl("about:blank")!!
+    return Locator(
+      href = href,
+      mediaType = link?.mediaType ?: MediaType("audio/*")!!,
+      title = link?.title,
+      locations = Locator.Locations(fragments = listOf("t=$offset"))
+    )
   }
 
   // MARK: - Media service bridge
 
   /** The Media3 player backing the active session, for [AudiobookMediaService]. */
   fun media3Player(): Player? = mediaPlayer
+
+  /**
+   * The live `MediaSession` wrapper, published by [AudiobookMediaService]. Held
+   * here so the service does not have to be reached back into when the now
+   * playing master switch changes.
+   */
+  fun attachMediaSession(session: androidx.media3.session.MediaSession?) {
+    mediaSession = session
+  }
+
+  // MARK: - Now Playing
+
+  /**
+   * Master switch for library-published now-playing info, mirroring iOS
+   * `AudiobookViewController.isNowPlayingInfoEnabled`
+   * (ios/Reader/Audiobook/AudiobookViewController.swift:36-41).
+   *
+   * On Android this decides whether the `MediaSessionService` runs, i.e. whether
+   * a media notification and lock-screen entry exist at all. The two platforms
+   * differ in one important way: iOS's `MPNowPlayingInfoCenter` is passive, so
+   * turning it off costs a host nothing, whereas on Android the same session
+   * *is* the background-playback mechanism — turning it off means no
+   * lock-screen transport controls. A host that disables it is taking ownership
+   * of the system media entry.
+   */
+  @Volatile
+  var isNowPlayingInfoEnabled: Boolean = true
+    set(value) {
+      field = value
+      if (value) {
+        if (_state.value.status == AudiobookStatus.PLAYING) ensureMediaServiceStarted()
+      } else {
+        stopMediaService()
+      }
+    }
+
+  /**
+   * Whether the descriptive fields (title, album, artist, artwork) are
+   * published, mirroring iOS `isNowPlayingMetadataEnabled` (:43-48, :852-874).
+   *
+   * Media3 has no `MediaSession.setMediaMetadata`; descriptive metadata is baked
+   * into the media items when the playback engine is built, via the toolkit's
+   * `MediaMetadataProvider`. So this flag is read when a publication is attached
+   * and applies from the next `open`, not to the running one. iOS can toggle it
+   * live because it owns `MPNowPlayingInfoCenter` directly.
+   */
+  @Volatile
+  var isNowPlayingMetadataEnabled: Boolean = true
 
   private fun ensureMediaServiceStarted() {
     try {
@@ -277,7 +505,26 @@ object AudiobookSession {
 
   private fun engineProvider(): ExoPlayerEngineProvider {
     if (engineProvider == null) {
-      engineProvider = ExoPlayerEngineProvider(context().applicationContext as android.app.Application)
+      // Media3 bakes descriptive metadata into the media items at engine-build
+      // time via the toolkit's `MediaMetadataProvider`, which is the only lever
+      // Android exposes for `setNowPlayingMetadataEnabled`. An empty provider
+      // with no title/author/cover still falls back to the publication, so the
+      // disabled case needs a provider that yields empty metadata.
+      val metadataProvider = if (isNowPlayingMetadataEnabled) {
+        DefaultMediaMetadataProvider()
+      } else {
+        val empty = androidx.media3.common.MediaMetadata.Builder().build()
+        MediaMetadataProvider {
+          object : MediaMetadataFactory {
+            override suspend fun publicationMetadata() = empty
+            override suspend fun resourceMetadata(index: Int) = empty
+          }
+        }
+      }
+      engineProvider = ExoPlayerEngineProvider(
+        context().applicationContext as android.app.Application,
+        metadataProvider
+      )
     }
     return engineProvider!!
   }
@@ -296,6 +543,9 @@ object AudiobookSession {
     navigator = null
     mediaPlayer = null
     mediaServiceStarted = false
+    // The service owns the session wrapper; drop our reference so a stale
+    // session cannot keep receiving metadata for a publication we just closed.
+    mediaSession = null
   }
 
   private fun computeTimeline(nav: AudioNavigator<*, *>) {
@@ -306,6 +556,65 @@ object AudiobookSession {
       start
     }
     totalDuration = nav.readingOrder.duration?.inWholeSeconds?.toDouble() ?: accumulator
+    chapters = computeChapterTimes()
+  }
+
+  /**
+   * Flattens the publication TOC into absolute chapter start times.
+   *
+   * A TOC entry's absolute time is the start of the reading-order item it
+   * points at, plus the media fragment offset (`#t=`) if it carries one. TOC
+   * hrefs are routinely written as root-relative (`/chapter1.mp3`) or as a bare
+   * filename, so each is tried against every alias the item is indexed under,
+   * mirroring iOS `resourceKeys(for:)` (:992-1000). Entries that resolve to
+   * nothing are dropped rather than collapsed onto 0.
+   */
+  private fun computeChapterTimes(): List<Double> {
+    val pub = publication ?: return emptyList()
+
+    val offsetsByKey = HashMap<String, Double>()
+    pub.readingOrder.forEachIndexed { index, link ->
+      val start = itemStartOffsets.getOrElse(index) { 0.0 }
+      resourceKeys(link.href.toString()).forEach { key ->
+        offsetsByKey.putIfAbsent(key, start)
+      }
+    }
+    if (offsetsByKey.isEmpty()) return emptyList()
+
+    val times = mutableListOf<Double>()
+    fun walk(links: List<org.readium.r2.shared.publication.Link>) {
+      for (link in links) {
+        val normalized = com.reactnativereadium.utils.normalizeHref(link.href.toString())
+        val offset = resourceKeys(normalized.resourcePath)
+          .firstNotNullOfOrNull { offsetsByKey[it] }
+        if (offset != null) {
+          times += offset + fragmentTime(normalized.fragment)
+        }
+        walk(link.children)
+      }
+    }
+    walk(pub.tableOfContents)
+    return times.sorted()
+  }
+
+  /**
+   * Lookup aliases for a media resource. Mirrors iOS `resourceKeys(for:)`: the
+   * fragment-free path, the path as authored, and the bare filename, since a
+   * TOC may reference any of them.
+   */
+  private fun resourceKeys(path: String): List<String> {
+    val keys = LinkedHashSet<String>()
+    keys.add(path)
+    keys.add(path.substringBefore('#'))
+    path.substringAfterLast('/').takeIf { it.isNotEmpty() }?.let { keys.add(it) }
+    return keys.toList()
+  }
+
+  /** Parses a Readium media-fragment offset (`t=12.5`, `t=12,5` tolerated). */
+  private fun fragmentTime(fragment: String?): Double {
+    if (fragment == null || !fragment.startsWith("t=")) return 0.0
+    val value = fragment.removePrefix("t=").split(',').firstOrNull() ?: return 0.0
+    return value.toDoubleOrNull() ?: 0.0
   }
 
   private fun itemIndexForAbsolutePosition(position: Double): Int {

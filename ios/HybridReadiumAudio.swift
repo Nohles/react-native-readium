@@ -7,6 +7,12 @@ final class HybridReadiumAudio: HybridReadiumAudioSpec {
     }
   }
 
+  var onBookmarkChange: ((AudiobookBookmarkChangeEvent) -> Void)? {
+    didSet {
+      AudiobookSession.shared.onBookmarkChange = onBookmarkChange
+    }
+  }
+
   func open(file: ReadiumFile) throws {
     AudiobookSession.shared.open(file: file)
   }
@@ -25,5 +31,17 @@ final class HybridReadiumAudio: HybridReadiumAudioSpec {
     AudiobookSession.shared.setNowPlayingMetadataEnabled(enabled)
   }
   func setSleepTimer(seconds: Double?) throws { AudiobookSession.shared.setSleepTimer(seconds) }
+  func setBookmarks(bookmarks: [AudiobookBookmark]) throws {
+    AudiobookSession.shared.setBookmarks(bookmarks)
+  }
+  func addBookmark(position: Double, note: String?) throws {
+    AudiobookSession.shared.addBookmark(id: UUID().uuidString, position: position, note: note)
+  }
+  func updateBookmark(id: String, note: String?) throws {
+    AudiobookSession.shared.updateBookmark(id: id, note: note)
+  }
+  func removeBookmark(id: String) throws {
+    AudiobookSession.shared.removeBookmark(id: id)
+  }
   func close() throws { AudiobookSession.shared.close() }
 }

@@ -42,6 +42,10 @@ class AudiobookMediaService : MediaSessionService() {
       else -> {
         current?.release()
         mediaSession = MediaSession.Builder(this, player).build()
+        // The session owns the now-playing metadata policy (which fields it is
+        // allowed to publish), so hand the new session over rather than having
+        // each flag change re-reach into this service.
+        AudiobookSession.attachMediaSession(mediaSession)
       }
     }
   }
@@ -55,6 +59,7 @@ class AudiobookMediaService : MediaSessionService() {
 
   override fun onDestroy() {
     // The player is owned by AudiobookSession — release only the wrapper.
+    AudiobookSession.attachMediaSession(null)
     mediaSession?.release()
     mediaSession = null
     super.onDestroy()

@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import { NitroModules } from 'react-native-nitro-modules';
 
+import type { AudiobookBookmark, AudiobookBookmarkChangeEvent } from './interfaces';
 import type { File } from './interfaces';
 import type {
   AudiobookSessionState,
@@ -8,9 +9,11 @@ import type {
 } from './specs/ReadiumAudio.nitro';
 
 type Listener = (state: AudiobookSessionState) => void;
+type BookmarkListener = (event: AudiobookBookmarkChangeEvent) => void;
 
 let nativeAudio: NativeReadiumAudio | undefined;
 const listeners = new Set<Listener>();
+const bookmarkListeners = new Set<BookmarkListener>();
 const idleState: AudiobookSessionState = {
   status: 'idle',
   position: 0,
@@ -26,6 +29,9 @@ function getNativeAudio(): NativeReadiumAudio {
       NitroModules.createHybridObject<NativeReadiumAudio>('ReadiumAudio');
     nativeAudio.onStateChange = (state) => {
       emitState(state);
+    };
+    nativeAudio.onBookmarkChange = (event) => {
+      bookmarkListeners.forEach((listener) => listener(event));
     };
   }
 
@@ -122,6 +128,30 @@ export const ReadiumAudio = {
     getNativeAudio().setSleepTimer(seconds);
   },
 
+  /**
+   * Replaces the session's bookmark list. Each bookmark is acknowledged with an
+   * `update` change event, so a host that persists bookmarks elsewhere sees
+   * them round-trip.
+   */
+  setBookmarks(bookmarks: AudiobookBookmark[]): void {
+    getNativeAudio().setBookmarks(bookmarks);
+  },
+
+  /** Adds a bookmark at `position` seconds on the chapter timeline. */
+  addBookmark(position: number, note?: string): void {
+    getNativeAudio().addBookmark(position, note);
+  },
+
+  /** Updates the note on an existing bookmark. No-op if the id is unknown. */
+  updateBookmark(id: string, note?: string): void {
+    getNativeAudio().updateBookmark(id, note);
+  },
+
+  /** Removes a bookmark. No-op if the id is unknown. */
+  removeBookmark(id: string): void {
+    getNativeAudio().removeBookmark(id);
+  },
+
   close(): void {
     getNativeAudio().close();
     emitState(idleState);
@@ -134,5 +164,13 @@ export const ReadiumAudio = {
       getNativeAudio();
     }
     return () => listeners.delete(listener);
+  },
+
+  subscribeBookmarks(listener: BookmarkListener): () => void {
+    bookmarkListeners.add(listener);
+    if (Platform.OS === 'android' || Platform.OS === 'ios') {
+      getNativeAudio();
+    }
+    return () => bookmarkListeners.delete(listener);
   },
 };

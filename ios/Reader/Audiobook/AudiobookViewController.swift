@@ -232,6 +232,59 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     updateBookmarkButton()
   }
 
+  // MARK: - Imperative bookmarks (headless hosts)
+  //
+  // The UI paths above (`bookmarkTapped`, the editor, swipe-to-delete) and these
+  // methods share one list and one `onBookmarkChange` emitter. Android has no
+  // native audiobook UI at all, so a headless host can only drive bookmarks
+  // through these — without them, `ReadiumAudio`'s bookmark API would work on
+  // one platform and silently do nothing on the other.
+
+  @discardableResult
+  func addBookmark(id: String, position: Double, note: String?) -> Bool {
+    guard let locator = locator(forAbsoluteTime: position) else { return false }
+    let existingIndex = bookmarks.firstIndex { $0.id == id }
+    let bookmark = AudiobookBookmark(
+      id: id,
+      locator: readiumLocatorToNitro(locator),
+      position: position,
+      note: note
+    )
+    if let existingIndex {
+      bookmarks[existingIndex] = bookmark
+    } else {
+      bookmarks.append(bookmark)
+    }
+    onBookmarkChange?(AudiobookBookmarkChangeEvent(
+      type: existingIndex == nil ? "add" : "update",
+      bookmark: bookmark
+    ))
+    listTableView.reloadData()
+    updateBookmarkButton()
+    return true
+  }
+
+  func updateBookmark(id: String, note: String?) {
+    guard let index = bookmarks.firstIndex(where: { $0.id == id }) else { return }
+    let updated = AudiobookBookmark(
+      id: bookmarks[index].id,
+      locator: bookmarks[index].locator,
+      position: bookmarks[index].position,
+      note: note
+    )
+    bookmarks[index] = updated
+    onBookmarkChange?(AudiobookBookmarkChangeEvent(type: "update", bookmark: updated))
+    listTableView.reloadData()
+  }
+
+  func removeBookmark(id: String) {
+    guard let bookmark = bookmarks.first(where: { $0.id == id }) else { return }
+    bookmarks.removeAll { $0.id == id }
+    onBookmarkChange?(AudiobookBookmarkChangeEvent(type: "remove", bookmark: bookmark))
+    listTableView.reloadData()
+    updateBookmarkButton()
+  }
+
   private func buildUI() {
     view.backgroundColor = backgroundColor
     coverImageView.contentMode = .center
