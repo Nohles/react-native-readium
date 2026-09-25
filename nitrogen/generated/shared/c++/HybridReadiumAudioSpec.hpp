@@ -19,6 +19,8 @@ namespace margelo::nitro::readium { struct AudiobookSessionState; }
 namespace margelo::nitro::readium { struct AudiobookBookmarkChangeEvent; }
 // Forward declaration of `ReadiumFile` to properly resolve imports.
 namespace margelo::nitro::readium { struct ReadiumFile; }
+// Forward declaration of `NowPlayingMetadata` to properly resolve imports.
+namespace margelo::nitro::readium { struct NowPlayingMetadata; }
 // Forward declaration of `AudiobookBookmark` to properly resolve imports.
 namespace margelo::nitro::readium { struct AudiobookBookmark; }
 
@@ -27,6 +29,7 @@ namespace margelo::nitro::readium { struct AudiobookBookmark; }
 #include <optional>
 #include "AudiobookBookmarkChangeEvent.hpp"
 #include "ReadiumFile.hpp"
+#include "NowPlayingMetadata.hpp"
 #include "AudiobookBookmark.hpp"
 #include <vector>
 #include <string>
@@ -75,6 +78,7 @@ namespace margelo::nitro::readium {
       virtual void setVolume(double volume) = 0;
       virtual void setNowPlayingInfoEnabled(bool enabled) = 0;
       virtual void setNowPlayingMetadataEnabled(bool enabled) = 0;
+      virtual void setNowPlayingMetadata(const std::optional<NowPlayingMetadata>& metadata) = 0;
       virtual void setSleepTimer(std::optional<double> seconds) = 0;
       virtual void setBookmarks(const std::vector<AudiobookBookmark>& bookmarks) = 0;
       virtual void addBookmark(double position, const std::optional<std::string>& note) = 0;

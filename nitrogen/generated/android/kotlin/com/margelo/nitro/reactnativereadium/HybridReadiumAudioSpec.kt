@@ -96,6 +96,10 @@ abstract class HybridReadiumAudioSpec: HybridObject() {
   
   @DoNotStrip
   @Keep
+  abstract fun setNowPlayingMetadata(metadata: NowPlayingMetadata?): Unit
+  
+  @DoNotStrip
+  @Keep
   abstract fun setSleepTimer(seconds: Double?): Unit
   
   @DoNotStrip

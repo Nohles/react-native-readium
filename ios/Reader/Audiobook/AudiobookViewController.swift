@@ -47,6 +47,18 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
       }
     }
   }
+
+  /// Host-supplied now-playing fields, overriding the publication's own.
+  /// Android's session has the equivalent override, so a host can drive the
+  /// system media entry identically on both platforms instead of reaching for
+  /// `MPNowPlayingInfoCenter` directly on one of them.
+  var hostNowPlayingMetadata: NowPlayingMetadata? {
+    didSet {
+      if isViewLoaded {
+        updateNowPlayingInfo()
+      }
+    }
+  }
   weak var moduleDelegate: ReaderFormatModuleDelegate?
   var onPlaybackStateChange: ((AudiobookPlaybackState) -> Void)?
   var onBookmarkChange: ((AudiobookBookmarkChangeEvent) -> Void)?
@@ -896,21 +908,25 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     info[MPMediaItemPropertyPlaybackDuration] = chapterWindow?.duration ?? duration
     info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = chapterWindow?.position ?? currentPosition
     info[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? playbackRate : 0
-    info[MPNowPlayingInfoPropertyDefaultPlaybackRate] = playbackRate
+    info[MPNowPlayingInfoPropertyDefaultPlaybackRate] =
+      hostNowPlayingMetadata?.defaultPlaybackRate ?? playbackRate
     info[MPNowPlayingInfoPropertyMediaType] = MPNowPlayingInfoMediaType.audio.rawValue
     info[MPNowPlayingInfoPropertyIsLiveStream] = false
     info[MPNowPlayingInfoPropertyExternalContentIdentifier] = bookId
     info[MPNowPlayingInfoPropertyServiceIdentifier] = "react-native-readium"
 
     if isNowPlayingMetadataEnabled {
-      info[MPMediaItemPropertyTitle] = chapterTitle ?? publicationTitle
-      info[MPMediaItemPropertyAlbumTitle] = publicationTitle
+      let host = hostNowPlayingMetadata
+      let authors = publication.metadata.authors.map(\.name).joined(separator: ", ")
+
+      info[MPMediaItemPropertyTitle] = host?.title ?? chapterTitle ?? publicationTitle
+      info[MPMediaItemPropertyAlbumTitle] = host?.albumTitle ?? publicationTitle
       info[MPMediaItemPropertyGenre] = "Audiobook"
 
-      let authors = publication.metadata.authors.map(\.name).joined(separator: ", ")
-      if !authors.isEmpty {
-        info[MPMediaItemPropertyArtist] = authors
-        info[MPMediaItemPropertyAlbumArtist] = authors
+      let artist = host?.artist ?? (authors.isEmpty ? nil : authors)
+      if let artist {
+        info[MPMediaItemPropertyArtist] = artist
+        info[MPMediaItemPropertyAlbumArtist] = artist
       }
 
       let narrators = publication.metadata.narrators.map(\.name).joined(separator: ", ")

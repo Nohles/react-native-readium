@@ -74,6 +74,19 @@ class HybridReadiumAudio : HybridReadiumAudioSpec() {
   override fun setNowPlayingMetadataEnabled(enabled: Boolean) {
     AudiobookSession.isNowPlayingMetadataEnabled = enabled
   }
+  override fun setNowPlayingMetadata(metadata: NowPlayingMetadata?) {
+    AudiobookSession.setNowPlayingMetadata(
+      metadata?.let {
+        AudiobookSession.NowPlayingMetadata(
+          title = it.title,
+          artist = it.artist,
+          albumTitle = it.albumTitle,
+          artworkUrl = it.artworkUrl,
+          defaultPlaybackRate = it.defaultPlaybackRate
+        )
+      }
+    )
+  }
   override fun setSleepTimer(seconds: Double?) { AudiobookSession.setSleepTimer(seconds) }
   override fun close() { AudiobookSession.close() }
 

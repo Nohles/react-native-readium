@@ -1,10 +1,14 @@
 import { Platform } from 'react-native';
 import { NitroModules } from 'react-native-nitro-modules';
 
-import type { AudiobookBookmark, AudiobookBookmarkChangeEvent } from './interfaces';
+import type {
+  AudiobookBookmark,
+  AudiobookBookmarkChangeEvent,
+} from './interfaces';
 import type { File } from './interfaces';
 import type {
   AudiobookSessionState,
+  NowPlayingMetadata,
   ReadiumAudio as NativeReadiumAudio,
 } from './specs/ReadiumAudio.nitro';
 
@@ -122,6 +126,18 @@ export const ReadiumAudio = {
 
   setNowPlayingMetadataEnabled(enabled: boolean): void {
     getNativeAudio().setNowPlayingMetadataEnabled(enabled);
+  },
+
+  /**
+   * Overrides the descriptive now-playing fields with host-supplied values;
+   * `undefined` falls back to the publication's own metadata.
+   *
+   * This is the cross-platform way to drive the system media entry. Reaching for
+   * the platform's own API directly (iOS `MPNowPlayingInfoCenter`) works on one
+   * platform only, and Android's media session is owned by the library.
+   */
+  setNowPlayingMetadata(metadata?: NowPlayingMetadata): void {
+    getNativeAudio().setNowPlayingMetadata(metadata);
   },
 
   setSleepTimer(seconds?: number): void {

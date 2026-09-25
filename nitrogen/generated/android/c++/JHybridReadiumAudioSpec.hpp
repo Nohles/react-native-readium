@@ -67,6 +67,7 @@ namespace margelo::nitro::readium {
     void setVolume(double volume) override;
     void setNowPlayingInfoEnabled(bool enabled) override;
     void setNowPlayingMetadataEnabled(bool enabled) override;
+    void setNowPlayingMetadata(const std::optional<NowPlayingMetadata>& metadata) override;
     void setSleepTimer(std::optional<double> seconds) override;
     void setBookmarks(const std::vector<AudiobookBookmark>& bookmarks) override;
     void addBookmark(double position, const std::optional<std::string>& note) override;

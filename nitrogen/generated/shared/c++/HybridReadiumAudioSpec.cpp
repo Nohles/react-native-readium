@@ -28,6 +28,7 @@ namespace margelo::nitro::readium {
       prototype.registerHybridMethod("setVolume", &HybridReadiumAudioSpec::setVolume);
       prototype.registerHybridMethod("setNowPlayingInfoEnabled", &HybridReadiumAudioSpec::setNowPlayingInfoEnabled);
       prototype.registerHybridMethod("setNowPlayingMetadataEnabled", &HybridReadiumAudioSpec::setNowPlayingMetadataEnabled);
+      prototype.registerHybridMethod("setNowPlayingMetadata", &HybridReadiumAudioSpec::setNowPlayingMetadata);
       prototype.registerHybridMethod("setSleepTimer", &HybridReadiumAudioSpec::setSleepTimer);
       prototype.registerHybridMethod("setBookmarks", &HybridReadiumAudioSpec::setBookmarks);
       prototype.registerHybridMethod("addBookmark", &HybridReadiumAudioSpec::addBookmark);

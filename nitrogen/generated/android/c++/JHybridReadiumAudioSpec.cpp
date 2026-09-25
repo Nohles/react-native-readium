@@ -37,6 +37,8 @@ namespace margelo::nitro::readium { struct LocatorLocations; }
 namespace margelo::nitro::readium { struct LocatorText; }
 // Forward declaration of `ReadiumFile` to properly resolve imports.
 namespace margelo::nitro::readium { struct ReadiumFile; }
+// Forward declaration of `NowPlayingMetadata` to properly resolve imports.
+namespace margelo::nitro::readium { struct NowPlayingMetadata; }
 
 #include "AudiobookSessionState.hpp"
 #include <functional>
@@ -75,6 +77,8 @@ namespace margelo::nitro::readium { struct ReadiumFile; }
 #include "JLocatorText.hpp"
 #include "ReadiumFile.hpp"
 #include "JReadiumFile.hpp"
+#include "NowPlayingMetadata.hpp"
+#include "JNowPlayingMetadata.hpp"
 
 namespace margelo::nitro::readium {
 
@@ -181,6 +185,10 @@ namespace margelo::nitro::readium {
   void JHybridReadiumAudioSpec::setNowPlayingMetadataEnabled(bool enabled) {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void(jboolean /* enabled */)>("setNowPlayingMetadataEnabled");
     method(_javaPart, enabled);
+  }
+  void JHybridReadiumAudioSpec::setNowPlayingMetadata(const std::optional<NowPlayingMetadata>& metadata) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<JNowPlayingMetadata> /* metadata */)>("setNowPlayingMetadata");
+    method(_javaPart, metadata.has_value() ? JNowPlayingMetadata::fromCpp(metadata.value()) : nullptr);
   }
   void JHybridReadiumAudioSpec::setSleepTimer(std::optional<double> seconds) {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JDouble> /* seconds */)>("setSleepTimer");

@@ -21,6 +21,7 @@ final class AudiobookSession {
   private var metadata: PublicationMetadata?
   private var isNowPlayingInfoEnabled = true
   private var isNowPlayingMetadataEnabled = true
+  private var hostNowPlayingMetadata: NowPlayingMetadata?
   private var lastState = AudiobookSessionState(
     status: .idle,
     publication: nil,
@@ -89,6 +90,7 @@ final class AudiobookSession {
     metadata = readiumMetadataToNitro(host.publication.metadata)
     host.isNowPlayingInfoEnabled = isNowPlayingInfoEnabled
     host.isNowPlayingMetadataEnabled = isNowPlayingMetadataEnabled
+    host.hostNowPlayingMetadata = hostNowPlayingMetadata
     host.onPlaybackStateChange = { [weak self] state in
       self?.receivePlayback(state)
     }
@@ -112,6 +114,10 @@ final class AudiobookSession {
   func setNowPlayingMetadataEnabled(_ enabled: Bool) {
     isNowPlayingMetadataEnabled = enabled
     controller?.isNowPlayingMetadataEnabled = enabled
+  }
+  func setNowPlayingMetadata(_ metadata: NowPlayingMetadata?) {
+    hostNowPlayingMetadata = metadata
+    controller?.hostNowPlayingMetadata = metadata
   }
   func setSleepTimer(_ seconds: Double?) { controller?.setSleepTimer(seconds: seconds) }
 

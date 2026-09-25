@@ -42,6 +42,8 @@ namespace margelo::nitro::readium { struct LocatorLocations; }
 namespace margelo::nitro::readium { struct LocatorText; }
 // Forward declaration of `ReadiumFile` to properly resolve imports.
 namespace margelo::nitro::readium { struct ReadiumFile; }
+// Forward declaration of `NowPlayingMetadata` to properly resolve imports.
+namespace margelo::nitro::readium { struct NowPlayingMetadata; }
 
 #include "AudiobookSessionState.hpp"
 #include <functional>
@@ -62,6 +64,7 @@ namespace margelo::nitro::readium { struct ReadiumFile; }
 #include "LocatorLocations.hpp"
 #include "LocatorText.hpp"
 #include "ReadiumFile.hpp"
+#include "NowPlayingMetadata.hpp"
 
 #include "NitroReadium-Swift-Cxx-Umbrella.hpp"
 
@@ -182,6 +185,12 @@ namespace margelo::nitro::readium {
     }
     inline void setNowPlayingMetadataEnabled(bool enabled) override {
       auto __result = _swiftPart.setNowPlayingMetadataEnabled(std::forward<decltype(enabled)>(enabled));
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void setNowPlayingMetadata(const std::optional<NowPlayingMetadata>& metadata) override {
+      auto __result = _swiftPart.setNowPlayingMetadata(metadata);
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }

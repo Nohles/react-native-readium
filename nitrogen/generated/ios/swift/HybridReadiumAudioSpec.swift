@@ -24,6 +24,7 @@ public protocol HybridReadiumAudioSpec_protocol: HybridObject {
   func setVolume(volume: Double) throws -> Void
   func setNowPlayingInfoEnabled(enabled: Bool) throws -> Void
   func setNowPlayingMetadataEnabled(enabled: Bool) throws -> Void
+  func setNowPlayingMetadata(metadata: NowPlayingMetadata?) throws -> Void
   func setSleepTimer(seconds: Double?) throws -> Void
   func setBookmarks(bookmarks: [AudiobookBookmark]) throws -> Void
   func addBookmark(position: Double, note: String?) throws -> Void

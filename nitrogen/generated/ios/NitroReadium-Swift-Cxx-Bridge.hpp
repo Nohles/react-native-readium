@@ -46,6 +46,8 @@ namespace margelo::nitro::readium { struct LocatorLocations; }
 namespace margelo::nitro::readium { struct LocatorText; }
 // Forward declaration of `Locator` to properly resolve imports.
 namespace margelo::nitro::readium { struct Locator; }
+// Forward declaration of `NowPlayingMetadata` to properly resolve imports.
+namespace margelo::nitro::readium { struct NowPlayingMetadata; }
 // Forward declaration of `Point` to properly resolve imports.
 namespace margelo::nitro::readium { struct Point; }
 // Forward declaration of `Preferences` to properly resolve imports.
@@ -99,6 +101,7 @@ namespace NitroReadium { class HybridReadiumViewSpec_cxx; }
 #include "Locator.hpp"
 #include "LocatorLocations.hpp"
 #include "LocatorText.hpp"
+#include "NowPlayingMetadata.hpp"
 #include "Point.hpp"
 #include "Preferences.hpp"
 #include "PublicationCapabilities.hpp"
@@ -439,6 +442,21 @@ namespace margelo::nitro::readium::bridge::swift {
     return optional.has_value();
   }
   inline Locator get_std__optional_Locator_(const std::optional<Locator>& optional) noexcept {
+    return optional.value();
+  }
+  
+  // pragma MARK: std::optional<NowPlayingMetadata>
+  /**
+   * Specialized version of `std::optional<NowPlayingMetadata>`.
+   */
+  using std__optional_NowPlayingMetadata_ = std::optional<NowPlayingMetadata>;
+  inline std::optional<NowPlayingMetadata> create_std__optional_NowPlayingMetadata_(const NowPlayingMetadata& value) noexcept {
+    return std::optional<NowPlayingMetadata>(value);
+  }
+  inline bool has_value_std__optional_NowPlayingMetadata_(const std::optional<NowPlayingMetadata>& optional) noexcept {
+    return optional.has_value();
+  }
+  inline NowPlayingMetadata get_std__optional_NowPlayingMetadata_(const std::optional<NowPlayingMetadata>& optional) noexcept {
     return optional.value();
   }
   

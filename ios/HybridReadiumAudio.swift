@@ -30,6 +30,9 @@ final class HybridReadiumAudio: HybridReadiumAudioSpec {
   func setNowPlayingMetadataEnabled(enabled: Bool) throws {
     AudiobookSession.shared.setNowPlayingMetadataEnabled(enabled)
   }
+  func setNowPlayingMetadata(metadata: NowPlayingMetadata?) throws {
+    AudiobookSession.shared.setNowPlayingMetadata(metadata)
+  }
   func setSleepTimer(seconds: Double?) throws { AudiobookSession.shared.setSleepTimer(seconds) }
   func setBookmarks(bookmarks: [AudiobookBookmark]) throws {
     AudiobookSession.shared.setBookmarks(bookmarks)

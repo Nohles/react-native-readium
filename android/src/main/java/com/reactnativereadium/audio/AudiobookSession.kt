@@ -22,8 +22,6 @@ import org.readium.adapter.exoplayer.audio.ExoPlayerEngineProvider
 import org.readium.navigator.media.audio.AudioNavigator
 import org.readium.navigator.media.audio.AudioNavigatorFactory
 import org.readium.navigator.media.common.DefaultMediaMetadataProvider
-import org.readium.navigator.media.common.MediaMetadataFactory
-import org.readium.navigator.media.common.MediaMetadataProvider
 import org.readium.r2.shared.DelicateReadiumApi
 import org.readium.r2.shared.ExperimentalReadiumApi
 import org.readium.r2.shared.publication.Locator
@@ -218,6 +216,9 @@ object AudiobookSession {
       }
       computeTimeline(createdNavigator)
       observe(createdNavigator)
+      // Seed the now-playing entry for the newly attached publication, so the
+      // first lock-screen render is not empty while the host catches up.
+      applyNowPlayingMetadata()
       emit(status = AudiobookStatus.READY)
     }
   }
@@ -456,23 +457,96 @@ object AudiobookSession {
       field = value
       if (value) {
         if (_state.value.status == AudiobookStatus.PLAYING) ensureMediaServiceStarted()
+        applyNowPlayingMetadata()
       } else {
         stopMediaService()
+        applyNowPlayingMetadata()
       }
     }
 
   /**
    * Whether the descriptive fields (title, album, artist, artwork) are
    * published, mirroring iOS `isNowPlayingMetadataEnabled` (:43-48, :852-874).
-   *
-   * Media3 has no `MediaSession.setMediaMetadata`; descriptive metadata is baked
-   * into the media items when the playback engine is built, via the toolkit's
-   * `MediaMetadataProvider`. So this flag is read when a publication is attached
-   * and applies from the next `open`, not to the running one. iOS can toggle it
-   * live because it owns `MPNowPlayingInfoCenter` directly.
    */
   @Volatile
   var isNowPlayingMetadataEnabled: Boolean = true
+    set(value) {
+      field = value
+      applyNowPlayingMetadata()
+    }
+
+  /**
+   * Host-supplied now-playing fields, overriding the publication's own metadata.
+   * Mirrors iOS, where the host writes `MPNowPlayingInfoCenter` directly.
+   */
+  @Volatile
+  private var hostNowPlaying: NowPlayingMetadata? = null
+
+  /**
+   * Java-facing setter for [isNowPlayingInfoEnabled] semantics; see the spec's
+   * `setNowPlayingMetadata` for why the host override exists.
+   */
+  fun setNowPlayingMetadata(metadata: NowPlayingMetadata?) {
+    hostNowPlaying = metadata
+    applyNowPlayingMetadata()
+  }
+
+  /**
+   * Pushes the current now-playing fields onto the player.
+   *
+   * Media3 1.x has no `MediaSession.setMediaMetadata`; the lock screen and media
+   * notification read the *player's* playlist metadata. So this sets
+   * `playlistMetadata`, which is the one live-update lever Android exposes, and
+   * merges the host override on top of the publication's own values.
+   */
+  private fun applyNowPlayingMetadata() {
+    val player = mediaPlayer ?: return
+    val pub = publication ?: return
+    if (!isNowPlayingInfoEnabled || !isNowPlayingMetadataEnabled) {
+      player.setPlaylistMetadata(androidx.media3.common.MediaMetadata.Builder().build())
+      return
+    }
+
+    val host = hostNowPlaying
+    val builder = androidx.media3.common.MediaMetadata.Builder()
+      .setMediaType(androidx.media3.common.MediaMetadata.MEDIA_TYPE_AUDIO_BOOK_CHAPTER)
+      .setIsBrowsable(false)
+      .setIsPlayable(true)
+
+    val title = host?.title?.takeIf { it.isNotBlank() } ?: pub.metadata.title
+    title?.let { builder.setTitle(it) }
+    builder.setAlbumTitle(
+      host?.albumTitle?.takeIf { it.isNotBlank() } ?: pub.metadata.title
+    )
+    builder.setGenre("Audiobook")
+
+    val artist = host?.artist?.takeIf { it.isNotBlank() }
+      ?: pub.metadata.authors.joinToString(", ") { it.name }.takeIf { it.isNotBlank() }
+    artist?.let { builder.setArtist(it) }
+    pub.metadata.narrators
+      .joinToString(", ") { it.name }
+      .takeIf { it.isNotBlank() }
+      ?.let { builder.setComposer(it) }
+
+    host?.artworkUrl?.takeIf { it.isNotBlank() }?.let { url ->
+      runCatching { android.net.Uri.parse(url) }.getOrNull()?.let { builder.setArtworkUri(it) }
+    }
+    // `defaultPlaybackRate` has no MediaMetadata equivalent. Android's system
+    // media entry derives the rate from the player, which is what
+    // `AudiobookPlaybackState.rate` already reports to the host, so the field is
+    // accepted and ignored here rather than silently misrepresented.
+
+    runCatching { player.setPlaylistMetadata(builder.build()) }
+  }
+
+  /** Host-supplied now-playing fields; mirrors the spec's `NowPlayingMetadata`. */
+  data class NowPlayingMetadata(
+    val title: String? = null,
+    val artist: String? = null,
+    val albumTitle: String? = null,
+    val artworkUrl: String? = null,
+    val defaultPlaybackRate: Double? = null
+  )
 
   private fun ensureMediaServiceStarted() {
     try {
@@ -505,25 +579,14 @@ object AudiobookSession {
 
   private fun engineProvider(): ExoPlayerEngineProvider {
     if (engineProvider == null) {
-      // Media3 bakes descriptive metadata into the media items at engine-build
-      // time via the toolkit's `MediaMetadataProvider`, which is the only lever
-      // Android exposes for `setNowPlayingMetadataEnabled`. An empty provider
-      // with no title/author/cover still falls back to the publication, so the
-      // disabled case needs a provider that yields empty metadata.
-      val metadataProvider = if (isNowPlayingMetadataEnabled) {
-        DefaultMediaMetadataProvider()
-      } else {
-        val empty = androidx.media3.common.MediaMetadata.Builder().build()
-        MediaMetadataProvider {
-          object : MediaMetadataFactory {
-            override suspend fun publicationMetadata() = empty
-            override suspend fun resourceMetadata(index: Int) = empty
-          }
-        }
-      }
+      // Baseline descriptive metadata comes from the toolkit's
+      // `MediaMetadataProvider`, which bakes it into the media items at
+      // engine-build time. A host override and the two enable flags are layered
+      // on afterwards by [applyNowPlayingMetadata], which writes the player's
+      // playlist metadata — the one live lever Media3 exposes.
       engineProvider = ExoPlayerEngineProvider(
         context().applicationContext as android.app.Application,
-        metadataProvider
+        DefaultMediaMetadataProvider()
       )
     }
     return engineProvider!!
