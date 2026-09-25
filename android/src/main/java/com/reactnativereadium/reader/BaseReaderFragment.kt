@@ -1,5 +1,6 @@
 package com.reactnativereadium.reader
 
+import android.graphics.PointF
 import android.os.Bundle
 import android.view.*
 import androidx.fragment.app.Fragment
@@ -16,6 +17,10 @@ import org.readium.r2.navigator.DecorableNavigator
 import org.readium.r2.navigator.Navigator
 import org.readium.r2.navigator.OverflowableNavigator
 import org.readium.r2.navigator.SelectableNavigator
+import org.readium.r2.navigator.VisualNavigator
+import org.readium.r2.navigator.input.InputListener
+import org.readium.r2.navigator.input.TapEvent
+import org.readium.r2.shared.ExperimentalReadiumApi
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.services.positions
 
@@ -24,6 +29,7 @@ import org.readium.r2.shared.publication.services.positions
  *
  * Provides common menu items and saves last location on stop.
  */
+@OptIn(ExperimentalReadiumApi::class)
 abstract class BaseReaderFragment : Fragment() {
   val channel = EventChannel(
     Channel<ReaderViewModel.Event>(Channel.BUFFERED),
@@ -53,6 +59,13 @@ abstract class BaseReaderFragment : Fragment() {
         false
       }
     }
+
+  /**
+   * Navigator input listener forwarding unhandled taps to JS. Mirrors the iOS
+   * `VisualNavigator.addObserver(.tap)` in
+   * `ReaderViewController.configureNavigatorInteractions`.
+   */
+  private var inputListener: InputListener? = null
 
   override fun onCreate(savedInstanceState: Bundle?) {
     setHasOptionsMenu(true)
@@ -84,6 +97,48 @@ abstract class BaseReaderFragment : Fragment() {
 
     // Start monitoring text selection
     startSelectionMonitoring()
+
+    attachInputListener()
+  }
+
+  /**
+   * Registers the tap forwarder on navigators that expose the Readium input
+   * API. Fragments that render their own content (the comic reader) call
+   * [emitTap] from their own gesture handling instead, because they are not
+   * [VisualNavigator]s and so have nothing to register against.
+   */
+  private fun attachInputListener() {
+    val visualNavigator = navigator as? VisualNavigator ?: return
+    if (inputListener != null) return
+
+    val listener = object : InputListener {
+      override fun onTap(event: TapEvent): Boolean {
+        viewLifecycleOwner.lifecycleScope.launch {
+          channel.send(ReaderViewModel.Event.Tapped(event.point))
+        }
+        // Non-consuming: host apps drive reader chrome from this, and
+        // swallowing the event here would break navigator-internal handling
+        // (link following, selection).
+        return false
+      }
+    }
+    visualNavigator.addInputListener(listener)
+    inputListener = listener
+  }
+
+  override fun onDestroyView() {
+    inputListener?.let { listener ->
+      (navigator as? VisualNavigator)?.removeInputListener(listener)
+    }
+    inputListener = null
+    super.onDestroyView()
+  }
+
+  /** Emits a tap at [point] in this fragment's view coordinate space. */
+  protected fun emitTap(point: PointF) {
+    viewLifecycleOwner.lifecycleScope.launch {
+      channel.send(ReaderViewModel.Event.Tapped(point))
+    }
   }
 
   /**
@@ -209,30 +264,6 @@ abstract class BaseReaderFragment : Fragment() {
   }
 
   /**
-   * Get the current text selection from the navigator
-   * Returns the selection locator which includes text position information needed for highlighting
-   */
-  suspend fun getCurrentSelection(): Locator? {
-    if (!isNavigatorReady) {
-      android.util.Log.w("BaseReaderFragment", "Navigator not initialized yet")
-      return null
-    }
-
-    val selectableNavigator = navigator as? SelectableNavigator
-    if (selectableNavigator == null) {
-      android.util.Log.w("BaseReaderFragment", "Navigator does not support text selection")
-      return null
-    }
-
-    val selection = selectableNavigator.currentSelection()
-    if (selection == null) {
-      return null
-    }
-
-    return selection.locator
-  }
-
-  /**
    * Start monitoring text selection and emit selection change events.
    *
    * Uses 500ms polling because Readium's [SelectableNavigator] does not
@@ -243,6 +274,12 @@ abstract class BaseReaderFragment : Fragment() {
    * Readium toolkit.
    */
   private fun startSelectionMonitoring() {
+    // Only navigators that can hold a selection are polled. The comic reader
+    // and the PDF navigator are not [SelectableNavigator]s, and an
+    // unconditional poll woke the main looper twice a second to re-check a
+    // cast that can never succeed.
+    if (navigator !is SelectableNavigator) return
+
     val viewScope = viewLifecycleOwner.lifecycleScope
 
     viewScope.launch {
@@ -253,8 +290,7 @@ abstract class BaseReaderFragment : Fragment() {
 
         if (!isNavigatorReady) continue
 
-        val selectableNavigator = navigator as? SelectableNavigator
-        if (selectableNavigator == null) continue
+        val selectableNavigator = navigator as? SelectableNavigator ?: break
 
         val currentSelection = try {
           selectableNavigator.currentSelection()

@@ -24,6 +24,7 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
@@ -86,6 +87,7 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
 
   private var touchDownX = 0f
   private var touchDownY = 0f
+  private var touchDownTime = 0L
 
   private var isLayoutDirty = true
   private var appliedViewportWidth = -1
@@ -318,6 +320,52 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
     get() = scrollContainer != null && stackView != null
 
   /**
+   * True when [scrollContainer] is the widget class the current mode needs.
+   *
+   * Paginated and continuous-horizontal share a `HorizontalScrollView`; the
+   * vertical modes share a `ScrollView`. Only a change of class (or the first
+   * build) requires a new container — everything else is a re-parent of the
+   * existing page views, which is what iOS `rebuildArrangedSubviews` does.
+   */
+  private fun isScrollContainerCompatible(): Boolean {
+    val existing = scrollContainer ?: return false
+    val wantsHorizontal = isPaginatedMode || isHorizontalScrollMode
+    return if (wantsHorizontal) existing is HorizontalScrollView else existing is ScrollView &&
+      existing !is HorizontalScrollView
+  }
+
+  /**
+   * Swaps in the page views for the current page(s) without touching the scroll
+   * container. Paginated mode attaches only `visiblePageIndices`, so a page turn
+   * is a re-parent rather than a rebuild — previously `navigateToIndex` called
+   * [rebuildContent], which destroyed and recreated the `ScrollView` +
+   * `LinearLayout` on every single page turn, throwing away any fling momentum
+   * and churning the GC.
+   */
+  private fun attachVisiblePages() {
+    val stack = stackView ?: return
+    val paginated = isPaginatedMode
+    val attached = if (paginated) visiblePageIndices else links.indices.toList()
+    attached.forEach { index ->
+      imageViews.getOrNull(index)?.let { imageView ->
+        if (imageView.parent !== stack) {
+          (imageView.parent as? ViewGroup)?.removeView(imageView)
+          stack.addView(imageView)
+        }
+      }
+    }
+    // Detach pages that fell outside the window (or outside the visible spread)
+    // so a long continuous scroll does not keep thousands of views parented.
+    for (i in stack.childCount - 1 downTo 0) {
+      val child = stack.getChildAt(i)
+      val index = (child.tag as? Int) ?: continue
+      if (index !in attached) {
+        stack.removeViewAt(i)
+      }
+    }
+  }
+
+  /**
    * Rebuilds the scroll container for the current mode — the Android
    * counterpart of the layout switch in `applyLayoutForCurrentPreferences`
    * plus `rebuildArrangedSubviews` (iOS :224-261, :191-207):
@@ -336,6 +384,13 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
     programmaticScrollAnimator = null
     isApplyingProgrammaticScroll = false
 
+    // Keep the page views reachable across the container swap; the stack is
+    // replaced below, so detach every child first.
+    stackView?.let { stack ->
+      for (i in stack.childCount - 1 downTo 0) {
+        stack.removeViewAt(i)
+      }
+    }
     scrollContainer?.let { root.removeView(it) }
 
     val paginated = isPaginatedMode
@@ -361,9 +416,17 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
     stack.orientation = if (horizontalAxis) LinearLayout.HORIZONTAL else LinearLayout.VERTICAL
     stack.gravity = Gravity.CENTER
     if (horizontalAxis) {
-      // Reading direction as a preference (iOS isRTL :374-376): an RTL
-      // publication lays horizontal pages right-to-left, so an RTL spread's
-      // [current, previous] pair mirrors the iOS trait-collection behavior.
+      // Reading direction as a preference (iOS isRTL :374-376).
+      //
+      // This is a deliberate divergence from iOS, which only mirrors which pages
+      // a spread shows (`visiblePageIndices` :378-387) and leaves the physical
+      // order alone. In a continuous horizontal RTL book the *scroll* has to run
+      // right-to-left for the gesture to match the reading direction, and the
+      // only way to express that with a `LinearLayout` is to reverse its
+      // children — which is what `layoutDirection` does. In paginated mode the
+      // attached pair is already ordered [current, previous] for RTL, so
+      // reversing the container puts the current page on the right, which is
+      // also correct.
       stack.layoutDirection =
         if (isRTL) View.LAYOUT_DIRECTION_RTL else View.LAYOUT_DIRECTION_LTR
     }
@@ -385,21 +448,12 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
       }
     )
 
-    val attachedIndices = if (paginated) visiblePageIndices else links.indices.toList()
-    attachedIndices.forEach { index ->
-      imageViews.getOrNull(index)?.let { imageView ->
-        // A preference update can rebuild the container without recreating
-        // the page views. Detach each page from the previous stack before
-        // moving it into the new one.
-        (imageView.parent as? ViewGroup)?.removeView(imageView)
-        stack.addView(imageView)
-      }
-    }
-
     root.addView(scrollView, 0)
 
     scrollContainer = scrollView
     stackView = stack
+
+    attachVisiblePages()
 
     scrollView.setOnScrollChangeListener { _, _, _, _, _ ->
       updateCurrentIndexFromScrollPosition()
@@ -407,30 +461,38 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
     // Mirror of iOS scrollViewWillBeginDragging (:535-537): a user *drag* takes
     // over from an in-flight programmatic scroll; a mere tap does not.
     scrollView.setOnTouchListener { v, event ->
-      if (isPaginatedMode) {
-        when (event.actionMasked) {
-          MotionEvent.ACTION_DOWN -> {
-            touchDownX = event.x
-            touchDownY = event.y
-          }
-
-          MotionEvent.ACTION_UP -> {
-            val deltaX = event.x - touchDownX
-            val deltaY = event.y - touchDownY
-            val isHorizontalSwipe =
-              abs(deltaX) >= pageTurnThresholdPx && abs(deltaX) > abs(deltaY)
-
-            if (isHorizontalSwipe) {
-              // A left swipe advances an LTR publication; RTL reverses the
-              // physical direction while keeping the reading order semantic.
-              val goesForward = if (isRTL) deltaX > 0 else deltaX < 0
-              if (goesForward) goForward() else goBackward()
-            }
-
-            v.performClick()
-          }
+      when (event.actionMasked) {
+        MotionEvent.ACTION_DOWN -> {
+          touchDownX = event.x
+          touchDownY = event.y
+          touchDownTime = event.eventTime
         }
 
+        MotionEvent.ACTION_UP -> {
+          val deltaX = event.x - touchDownX
+          val deltaY = event.y - touchDownY
+          val isHorizontalSwipe =
+            abs(deltaX) >= pageTurnThresholdPx && abs(deltaX) > abs(deltaY)
+
+          if (isHorizontalSwipe && isPaginatedMode) {
+            // A left swipe advances an LTR publication; RTL reverses the
+            // physical direction while keeping the reading order semantic.
+            val goesForward = if (isRTL) deltaX > 0 else deltaX < 0
+            if (goesForward) goForward() else goBackward()
+          } else if (isTap(event)) {
+            // Taps drive the host's tap zones (page turn, chrome toggle). iOS
+            // receives these from the shared gesture recognizer; Android has no
+            // equivalent, so they are classified here from the same touch
+            // stream. A tap in a tap zone is distinct from a swipe: only the
+            // swipe has already turned the page above.
+            emitTap(android.graphics.PointF(event.x, event.y))
+          }
+
+          v.performClick()
+        }
+      }
+
+      if (isPaginatedMode) {
         // Paginated mode attaches only the current page, so the scroll view has
         // no native horizontal movement to handle. Consume the gesture here
         // and turn horizontal swipes into navigator page turns.
@@ -441,13 +503,23 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
           programmaticScrollAnimator = null
           isApplyingProgrammaticScroll = false
         }
-        v.performClick()
         false
       }
     }
 
     applyTheme()
     invalidateLayout()
+  }
+
+  /**
+   * True when the gesture ending at [event] was a tap rather than a drag or a
+   * fling. Uses the platform slop/tap-timeout so the classification matches
+   * what the rest of the system considers a tap.
+   */
+  private fun isTap(event: MotionEvent): Boolean {
+    if (event.eventTime - touchDownTime > ViewConfiguration.getTapTimeout()) return false
+    val touchSlop = ViewConfiguration.get(requireContext()).scaledTouchSlop
+    return abs(event.x - touchDownX) < touchSlop && abs(event.y - touchDownY) < touchSlop
   }
 
   // MARK: - Layout
@@ -582,7 +654,14 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
     loadImagesAround(currentIndex)
 
     if (isPaginatedMode) {
-      rebuildContent()
+      // The container already exists and is the right class for paginated
+      // mode; only the attached page(s) change, so re-parent instead of
+      // rebuilding. `rebuildContent` is reserved for a genuine mode switch.
+      if (!isScrollContainerCompatible()) {
+        rebuildContent()
+      } else {
+        attachVisiblePages()
+      }
       rootView?.post {
         invalidateLayout()
         scrollContainer?.scrollTo(0, 0)
@@ -782,7 +861,7 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
         }
 
         val bitmap = withContext(Dispatchers.Default) {
-          data?.let { runCatching { BitmapFactory.decodeByteArray(it, 0, it.size) }.getOrNull() }
+          data?.let { bytes -> decodeSampled(bytes) }
         }
 
         loadingIndices.remove(i)
@@ -805,6 +884,98 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
         }
       }
     }
+  }
+
+  /**
+   * Decodes a page, downsampling to the size it will actually be drawn at.
+   *
+   * The previous `BitmapFactory.decodeByteArray(bytes)` always produced a
+   * full-resolution bitmap. A single comic page at 2000x2800 is ~22 MB, and the
+   * preload window keeps several alive at once, so a long book reliably hit
+   * `OutOfMemoryError` on a mid-range device. iOS is spared this because
+   * `UIImage(data:)` is lazily decoded and drawn through the display scale.
+   *
+   * Bounds are read first (cheap, no pixel allocation), then `inSampleSize` is
+   * chosen as the largest power of two that still covers the target box, so the
+   * decoded bitmap is never larger than the view that shows it.
+   */
+  private fun decodeSampled(bytes: ByteArray): Bitmap? {
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+    if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+
+    val target = targetDecodeSize(bounds.outWidth, bounds.outHeight)
+    val targetWidth = max(target.width, 1f)
+    val targetHeight = max(target.height, 1f)
+    val options = BitmapFactory.Options().apply {
+      inSampleSize = sampleSizeFor(
+        bounds.outWidth,
+        bounds.outHeight,
+        targetWidth,
+        targetHeight
+      )
+      inPreferredConfig = Bitmap.Config.RGB_565
+    }
+    return runCatching { BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options) }
+      .getOrNull()
+      ?.also { decoded ->
+        // A decode can still land above the target when the source is only
+        // slightly larger than inSampleSize's halving allows; scale once more
+        // so the result is bounded.
+        if (decoded.width > targetWidth && decoded.height > targetHeight) {
+          val scale = min(
+            targetWidth / decoded.width,
+            targetHeight / decoded.height
+          )
+          val scaled = Bitmap.createScaledBitmap(
+            decoded,
+            max((decoded.width * scale).roundToInt(), 1),
+            max((decoded.height * scale).roundToInt(), 1),
+            true
+          )
+          if (scaled !== decoded) decoded.recycle()
+          return scaled
+        }
+      }
+  }
+
+  /**
+   * Pixel size the page needs. Uses the laid-out size when available and falls
+   * back to the viewport, so a page decoded before the first layout pass is
+   * still bounded.
+   */
+  private fun targetDecodeSize(naturalWidth: Int, naturalHeight: Int): Size {
+    val scrollView = scrollContainer
+    val viewportWidth = scrollView?.width?.takeIf { it > 0 }
+      ?: resources.displayMetrics.widthPixels
+    val viewportHeight = scrollView?.height?.takeIf { it > 0 }
+      ?: resources.displayMetrics.heightPixels
+
+    val target = displayedImageSize(
+      naturalWidth.toFloat(),
+      naturalHeight.toFloat(),
+      Size(viewportWidth.toFloat(), viewportHeight.toFloat())
+    )
+    return Size(
+      max(target.width, 1f),
+      max(target.height, 1f)
+    )
+  }
+
+  private fun sampleSizeFor(
+    sourceWidth: Int,
+    sourceHeight: Int,
+    targetWidth: Float,
+    targetHeight: Float
+  ): Int {
+    var sample = 1
+    while (
+      sourceWidth / (sample * 2) >= targetWidth &&
+      sourceHeight / (sample * 2) >= targetHeight
+    ) {
+      sample *= 2
+    }
+    return sample
   }
 
   // MARK: - Locator model
