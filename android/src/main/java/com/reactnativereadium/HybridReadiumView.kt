@@ -54,6 +54,15 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
   private val instanceId = nextInstanceId++
   private val hostView = ReaderHostView(context)
   private var scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+  /**
+   * Publication search runs off the main looper. `publication.search()` and
+   * `SearchIterator.next()` both do file and network I/O — for a remote WebPub
+   * that is a round trip per page — and they were previously dispatched on
+   * [scope], which is pinned to `Dispatchers.Main`.
+   */
+  private var searchScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+  private val searchLock = Any()
   private var svc: ReaderService? = null
   private var fragment: BaseReaderFragment? = null
   private var audiobookJob: kotlinx.coroutines.Job? = null
@@ -97,6 +106,16 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
     }
 
   override var reopenActiveAudiobook: Boolean? = null
+    set(value) {
+      field = value
+      // iOS reads this when adopting the persistent session
+      // (HybridReadiumView.swift:167-171): with the flag off, a re-open starts
+      // a fresh session instead of resuming the running one. Android previously
+      // ignored it and always resumed, so a host could not force a reset.
+      if (value == false) {
+        AudiobookSession.reset()
+      }
+    }
 
   override var preferences: Preferences? = null
     set(value) {
@@ -126,13 +145,22 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
   override var onAudiobookPlaybackStateChange: ((state: AudiobookPlaybackState) -> Unit)? = null
   override var onAudiobookBookmarkChange: ((event: AudiobookBookmarkChangeEvent) -> Unit)? = null
 
-  private fun ensureService() {
-    if (svc == null) {
-      val reactContext = (context as? com.facebook.react.uimanager.ThemedReactContext)?.reactApplicationContext
-      if (reactContext != null) {
-        svc = ReaderService(reactContext)
-      }
+  private fun ensureService(): Boolean {
+    if (svc != null) return true
+    val reactContext =
+      (context as? com.facebook.react.uimanager.ThemedReactContext)?.reactApplicationContext
+    if (reactContext == null) {
+      // Previously this returned silently, so `buildForViewIfReady` bailed with
+      // no diagnostic and the host saw an empty view with no way to tell why.
+      Log.e(
+        TAG,
+        "ReadiumView requires a ThemedReactContext to open publications " +
+          "(got ${context.javaClass.name}). The reader will not load."
+      )
+      return false
     }
+    svc = ReaderService(reactContext)
+    return true
   }
 
   // MARK: - Preferences
@@ -201,34 +229,51 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
   override fun setVolume(volume: Double) = withAudiobook { it.setVolume(volume) }
   override fun setSleepTimer(seconds: Double?) = withAudiobook { it.setSleepTimer(seconds) }
 
-  override fun search(query: String): Promise<PublicationSearchPage> =
-    Promise.async(scope) {
-      cancelSearch()
-      val publication = fragment?.publication()
-        ?: throw IllegalStateException("Publication is not ready.")
-      val normalizedQuery = query.trim()
-      if (normalizedQuery.isEmpty()) {
+  override fun search(query: String): Promise<PublicationSearchPage> {
+    // Read the fragment on the calling (main) thread: `fragment` is mutated by
+    // the main-thread fragment lifecycle, so touching it from a worker is a data
+    // race and, for a `lateinit` behind it, a crash.
+    val publication = fragment?.publication()
+      ?: return Promise.async(searchScope) {
+        throw IllegalStateException("Publication is not ready.")
+      }
+
+    val normalizedQuery = query.trim()
+    if (normalizedQuery.isEmpty()) {
+      return Promise.async(searchScope) {
         throw IllegalArgumentException("Search query must not be empty.")
       }
-      val iterator = publication.search(normalizedQuery)
-        ?: throw IllegalStateException("Publication search is unavailable.")
-      searchIterator = iterator
-      searchQuery = normalizedQuery
-      searchResultOffset = 0
-      nextSearchPage(iterator, normalizedQuery)
     }
 
-  override fun searchNext(): Promise<PublicationSearchPage> =
-    Promise.async(scope) {
-      val iterator = searchIterator
-        ?: return@async PublicationSearchPage(
-          query = searchQuery,
+    return Promise.async(searchScope) {
+      cancelSearch()
+      val iterator = publication.search(normalizedQuery)
+        ?: throw IllegalStateException("Publication search is unavailable.")
+      synchronized(searchLock) {
+        searchIterator = iterator
+        searchQuery = normalizedQuery
+        searchResultOffset = 0
+      }
+      nextSearchPage(iterator, normalizedQuery)
+    }
+  }
+
+  override fun searchNext(): Promise<PublicationSearchPage> {
+    val iterator = synchronized(searchLock) { searchIterator }
+    val query = synchronized(searchLock) { searchQuery }
+
+    return Promise.async(searchScope) {
+      if (iterator == null) {
+        return@async PublicationSearchPage(
+          query = query,
           locators = emptyArray(),
           total = null,
           hasNext = false
         )
-      nextSearchPage(iterator, searchQuery)
+      }
+      nextSearchPage(iterator, query)
     }
+  }
 
   private suspend fun nextSearchPage(
     iterator: SearchIterator,
@@ -242,7 +287,9 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
     val collection = result.getOrNull()
     if (collection == null) {
       iterator.close()
-      if (searchIterator === iterator) searchIterator = null
+      synchronized(searchLock) {
+        if (searchIterator === iterator) searchIterator = null
+      }
       return PublicationSearchPage(
         query = query,
         locators = emptyArray(),
@@ -250,20 +297,25 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
         hasNext = false
       )
     }
-    searchResultOffset += collection.locators.size
     val total = iterator.resultCount
+    val offset = synchronized(searchLock) {
+      searchResultOffset += collection.locators.size
+      searchResultOffset
+    }
     return PublicationSearchPage(
       query = query,
       locators = collection.locators.map { readiumLocatorToNitro(it) }.toTypedArray(),
       total = total?.toDouble(),
-      hasNext = total?.let { searchResultOffset < it } ?: collection.locators.isNotEmpty()
+      hasNext = total?.let { offset < it } ?: collection.locators.isNotEmpty()
     )
   }
 
   override fun cancelSearch() {
-    searchIterator?.close()
-    searchIterator = null
-    searchResultOffset = 0
+    synchronized(searchLock) {
+      searchIterator?.close()
+      searchIterator = null
+      searchResultOffset = 0
+    }
   }
 
   override fun destroy() {
@@ -355,12 +407,23 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
 
     scope.cancel()
     scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    // The search scope is cancelled separately so an in-flight remote search is
+    // abandoned with the reader rather than outliving it on a background thread.
+    searchScope.cancel()
+    searchScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
   }
 
   /**
-   * Called by ViewManager.onDropViewInstance when Fabric permanently removes
-   * the view. Tears down the fragment and physically detaches hostView from
+   * Permanently tears down the fragment and physically detaches hostView from
    * the tree so it cannot overlay or intercept touches on other views.
+   *
+   * Reachable from two places: the JS `destroy()` method, and the stale-instance
+   * sweep in [addFragment] when Fabric remounts this view under a new key. It is
+   * *not* wired to `ViewManager.onDropViewInstance` — the nitrogen-generated
+   * manager has no such override — so a host that unmounts the React view
+   * without calling `destroy()` leaks the fragment until another instance
+   * sweeps it. A JS `destroy()` is always paired with an unmount in
+   * `ReadiumView.tsx`, which is why the gap has not surfaced.
    */
   internal fun cleanup() {
     if (isDestroyed) return
@@ -380,7 +443,10 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
     if (fileUrl.isEmpty()) return
 
     ensureService()
-    val service = svc ?: return
+    val service = svc ?: run {
+      isBuilding = false
+      return
+    }
 
     isBuilding = true
 
@@ -508,6 +574,9 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
             selectedText = event.selectedText,
             actionId = event.actionId
           ))
+        }
+        is ReaderViewModel.Event.Tapped -> {
+          onTap?.invoke(Point(x = event.point.x.toDouble(), y = event.point.y.toDouble()))
         }
       }
     }
