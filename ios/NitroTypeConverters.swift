@@ -105,6 +105,14 @@ func nitroDecorationToReadium(_ dec: Decoration) -> RDecoration? {
 
 // MARK: - Readium → Nitro converters
 
+/// ISO-8601 rendering of a `Date`, matching Kotlin's `Instant.toString()` so the
+/// two platforms report metadata dates in the same format.
+private extension Date {
+  var iso8601: String {
+    ISO8601DateFormatter().string(from: self)
+  }
+}
+
 func readiumDecorationToNitro(_ dec: RDecoration, group: String) -> Decoration {
   let locator = readiumLocatorToNitro(dec.locator)
 
@@ -184,7 +192,19 @@ func flattenReadiumLinks(_ links: [RLink], depth: Double = 0, parentHref: String
 func readiumMetadataToNitro(_ meta: ReadiumShared.Metadata) -> PublicationMetadata {
   func contributors(_ list: [ReadiumShared.Contributor]) -> [margelo.nitro.readium.Contributor]? {
     guard !list.isEmpty else { return nil }
-    return list.map { Contributor(name: $0.name, sortAs: $0.sortAs, identifier: $0.identifier, role: nil, position: nil) }
+    // All three fields are populated, and Android populates the same three, so a
+    // host sees identical contributor records on both platforms. This previously
+    // dropped `role` and `position`, so a host that only ever ran on iOS never
+    // saw them.
+    return list.map {
+      Contributor(
+        name: $0.name,
+        sortAs: $0.sortAs,
+        identifier: $0.identifier,
+        role: $0.roles.first,
+        position: $0.position
+      )
+    }
   }
 
   func subjects(_ list: [ReadiumShared.Subject]) -> [margelo.nitro.readium.Subject]? {
@@ -198,8 +218,11 @@ func readiumMetadataToNitro(_ meta: ReadiumShared.Metadata) -> PublicationMetada
     subtitle: meta.subtitle,
     identifier: meta.identifier,
     accessibility: nil,
-    modified: meta.modified?.description,
-    published: meta.published?.description,
+    // ISO-8601 on both platforms. Android already emitted `Instant.toString()`;
+    // this used to be `Date.description`, so the same publication reported two
+    // different date formats depending on the device.
+    modified: meta.modified?.iso8601,
+    published: meta.published?.iso8601,
     language: meta.languages.isEmpty ? nil : meta.languages,
     author: contributors(meta.authors),
     translator: contributors(meta.translators),

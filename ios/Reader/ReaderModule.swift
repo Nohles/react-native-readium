@@ -29,12 +29,15 @@ final class ReaderModule: ReaderModuleAPI {
   ) {
     self.delegate = delegate
 
+    // Audiobook is the only module that handles the .audiobook profile. It used
+    // to be listed alongside a second `AudioModule` that claimed the same
+    // profile; `first(where:)` always resolved to the audiobook module, so
+    // `AudioModule` and its 235-line `AudioViewController` were unreachable.
     formatModules = [
       AudiobookModule(delegate: self),
       CBZModule(delegate: self),
       PDFModule(delegate: self),
       EPUBModule(delegate: self),
-      AudioModule(delegate: self),
     ]
   }
 
