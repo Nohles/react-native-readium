@@ -73,7 +73,11 @@ class ReaderService(
   ) {
     val publication = retrievePublication(fileName)
     if (publication == null) {
-      onFailure("Unable to retrieve or parse publication: $fileName")
+      onFailure(
+        PublicationUrlResolver.unsupportedScheme(fileName)
+          ?.let { "Unsupported publication URL scheme: $it." }
+          ?: "Unable to retrieve or parse publication: $fileName"
+      )
       return
     }
 
@@ -113,10 +117,21 @@ class ReaderService(
         frag
       }
 
-      else -> {
+      // Mirror of iOS EPUBModule.supports (ios/Reader/EPUB/EPUBModule.swift:11-14).
+      // Previously this was a catch-all `else`, so a format the EPUB navigator
+      // cannot render produced an empty reader instead of an error.
+      isEpub(publication) -> {
         val frag = EpubReaderFragment.newInstance()
         frag.initFactory(publication, locator)
         frag
+      }
+
+      else -> {
+        val message =
+          "Publication is not a supported format: ${publication.metadata.title}."
+        RNLog.w(reactContext, "Failed to open publication: $message")
+        onFailure(message)
+        return
       }
     }
     callback.invoke(OpenResult.Visual(readerFragment))
@@ -169,6 +184,20 @@ class ReaderService(
       }
   }
 
+  /**
+   * Port of `EPUBModule.supports` (ios/Reader/EPUB/EPUBModule.swift:11-14): an
+   * EPUB profile, or a reading order that is entirely HTML for the reflowable
+   * navigator. Anything else has no reader and is reported rather than opened
+   * into a blank view.
+   */
+  internal fun isEpub(publication: Publication): Boolean {
+    val html = MediaType.HTML
+    return publication.conformsTo(Publication.Profile.EPUB) ||
+      publication.readingOrder.all { link ->
+        link.mediaType?.matches(html) == true
+      }
+  }
+
   private fun publicationSource(fileName: String): PublicationSource? {
     if (PublicationUrlResolver.isRemoteUrl(fileName)) {
       val remoteUrl = AbsoluteUrl(fileName)
@@ -180,6 +209,16 @@ class ReaderService(
         url = remoteUrl,
         formatHints = PublicationUrlResolver.formatHintsForUrl(fileName)
       )
+    }
+
+    // iOS hands any absolute URL straight to Readium
+    // (ios/Reader/ReaderService.swift:95-99). Android's asset retriever only
+    // opens http(s), file, content and asset, so anything else is rejected here
+    // with a readable reason rather than falling through to `File(fileName)`,
+    // which reports "File does not exist" for what is really a bad scheme.
+    PublicationUrlResolver.unsupportedScheme(fileName)?.let { scheme ->
+      RNLog.e(reactContext, "Unsupported publication URL scheme: $scheme ($fileName)")
+      return null
     }
 
     val publicationFile = File(fileName).absoluteFile
@@ -213,17 +252,4 @@ class ReaderService(
     val url: AbsoluteUrl,
     val formatHints: FormatHints
   )
-
-  sealed class Event {
-
-    class ImportPublicationFailed(val errorMessage: String?) : Event()
-
-    object UnableToMovePublication : Event()
-
-    object ImportPublicationSuccess : Event()
-
-    object ImportDatabaseFailed : Event()
-
-    class OpenBookError(val errorMessage: String?) : Event()
-  }
 }

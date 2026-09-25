@@ -2,6 +2,7 @@ package com.reactnativereadium.utils
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -41,6 +42,25 @@ class PublicationUrlResolverTest {
   @Test
   fun `malformed uri falls back to local path`() {
     assertFalse(PublicationUrlResolver.isRemoteUrl("http://example.com/a b/manifest.json"))
+  }
+
+  @Test
+  fun `unsupported absolute scheme is reported`() {
+    assertEquals("ftp", PublicationUrlResolver.unsupportedScheme("ftp://example.com/book.epub"))
+  }
+
+  @Test
+  fun `supported schemes are not reported as unsupported`() {
+    assertNull(PublicationUrlResolver.unsupportedScheme("https://example.com/book.epub"))
+    assertNull(PublicationUrlResolver.unsupportedScheme("http://example.com/book.epub"))
+    assertNull(PublicationUrlResolver.unsupportedScheme("file:///tmp/book.epub"))
+    assertNull(PublicationUrlResolver.unsupportedScheme("content://downloads/book.epub"))
+  }
+
+  @Test
+  fun `plain local path has no scheme to report`() {
+    assertNull(PublicationUrlResolver.unsupportedScheme("/storage/emulated/0/book.epub"))
+    assertNull(PublicationUrlResolver.unsupportedScheme("book.epub"))
   }
 
   @Test
