@@ -374,9 +374,18 @@ class HybridReadiumView: HybridReadiumViewSpec {
   }
 
   private func bindReaderTapHandler() {
-    guard let readerVC = readerHost as? ReaderViewController else { return }
-    readerVC.onTap = { [weak self] point in
-      self?.onTap?(Point(x: Double(point.x), y: Double(point.y)))
+    if let readerVC = readerHost as? ReaderViewController {
+      readerVC.onTap = { [weak self] point in
+        self?.onTap?(Point(x: Double(point.x), y: Double(point.y)))
+      }
+      return
+    }
+    // The comic reader is a bare UIViewController over a UIScrollView rather
+    // than a Readium navigator, so it carries its own tap recognizer.
+    if let comicReader = readerHost as? ComicImageViewController {
+      comicReader.onTap = { [weak self] point in
+        self?.onTap?(Point(x: Double(point.x), y: Double(point.y)))
+      }
     }
   }
 
