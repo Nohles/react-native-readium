@@ -15,6 +15,18 @@ class EPUBViewController: ReaderViewController, SelectionActionHandlerDelegate {
     private var selectionActionHandler: SelectionActionHandler?
     weak var selectionActionDelegate: SelectionActionDelegate?
 
+    /// Selection changes forwarded to JS. Android emits these from a 500 ms poll
+    /// of `SelectableNavigator.currentSelection`; UIKit has no such observable
+    /// API, so the same polling is used here rather than leaving the declared
+    /// `onSelectionChange` prop permanently dead on iOS.
+    var onSelectionChange: ((ReadiumShared.Locator?, String?) -> Void)? {
+        didSet { startSelectionPolling() }
+    }
+
+    private var selectionPollTimer: Timer?
+    private var lastSelectionLocator: ReadiumShared.Locator?
+    private var hasReportedEmptySelection = false
+
     init(
       publication: Publication,
       locator: ReadiumShared.Locator?,
@@ -74,16 +86,68 @@ class EPUBViewController: ReaderViewController, SelectionActionHandlerDelegate {
     }
 
     func updateSelectionActions(_ selectionActions: [SelectionActionData]?) {
-      // On iOS, selection actions must be set during navigator initialization
-      // Dynamic updates would require recreating the navigator, which we don't support yet
-      print("Warning: Updating selection actions after initialization is not supported on iOS")
+        // On iOS, selection actions must be set during navigator initialization
+        // because Readium's EPUBNavigatorViewController bakes `editingActions`
+        // into the navigator's `Configuration` and has no public setter.
+        //
+        // Android can update at runtime because the Kotlin navigator reads its
+        // actions from an `ActionMode.Callback`. Re-creating the navigator here
+        // would lose reading position, selection, and every submitted
+        // preference, so the actions are still fixed at init on iOS — but the
+        // failure is reported rather than only printed, and the host is told
+        // what to do about it.
+        print(
+            "Warning: Updating selection actions after initialization is not supported on iOS. " +
+            "Remount the ReadiumView (change its React key) to apply a new set."
+        )
+    }
+
+    // MARK: - Selection polling
+
+    private func startSelectionPolling() {
+        selectionPollTimer?.invalidate()
+        selectionPollTimer = nil
+        lastSelectionLocator = nil
+        hasReportedEmptySelection = false
+        guard onSelectionChange != nil else { return }
+
+        selectionPollTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) {
+            [weak self] _ in
+            self?.pollSelection()
+        }
+    }
+
+    private func pollSelection() {
+        guard let navigator = navigator as? EPUBNavigatorViewController else { return }
+        let selection = navigator.currentSelection
+        let locator = selection?.locator
+        let highlight = locator?.text.highlight
+
+        if let locator, let last = lastSelectionLocator {
+            // Readium's Locator is a struct, so comparing the highlighted text
+            // and href is enough to detect a change and avoids re-reporting an
+            // identical selection every tick.
+            let unchanged = last.href == locator.href && last.text.highlight == highlight
+            if unchanged { return }
+        }
+
+        lastSelectionLocator = locator
+        if locator == nil && hasReportedEmptySelection { return }
+        hasReportedEmptySelection = locator == nil
+        onSelectionChange?(locator, highlight)
+    }
+
+    deinit {
+        selectionPollTimer?.invalidate()
     }
 
     override func viewDidLoad() {
-      super.viewDidLoad()
+        super.viewDidLoad()
 
-      /// Set initial UI appearance.
-      setUIColor(for: epubNavigator.settings.theme)
+        /// Set initial UI appearance.
+        setUIColor(for: epubNavigator.settings.theme)
+
+        startSelectionPolling()
     }
 
     // Insert handler into the responder chain
