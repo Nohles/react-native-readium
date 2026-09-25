@@ -80,23 +80,9 @@ class EpubReaderFragment : VisualReaderFragment() {
       if (this::navigator.isInitialized && navigator is EpubNavigatorFragment) {
         (navigator as EpubNavigatorFragment).submitPreferences(userPreferences)
         pendingPreferences = null
-
-        // Update position label color to match theme, similar to iOS implementation
-        updatePositionLabelColor()
       } else {
         pendingPreferences = epubPreferences
       }
-    }
-
-    private fun updatePositionLabelColor() {
-      // Priority 1: Use explicit textColor if set
-      val color = userPreferences.textColor?.int
-      // Priority 2: Use theme's content color
-      ?: userPreferences.theme?.contentColor
-      // Priority 3: Default to dark gray
-      ?: android.graphics.Color.DKGRAY
-
-      setPositionLabelColor(color)
     }
 
     fun updateSelectionActions(actions: List<SelectionAction>) {
@@ -146,13 +132,6 @@ class EpubReaderFragment : VisualReaderFragment() {
         applyPendingPreferencesIfNeeded()
 
         return view
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        // Set initial position label color based on current preferences
-        updatePositionLabelColor()
     }
 
     override fun onResume() {

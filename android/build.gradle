@@ -187,45 +187,24 @@ dependencies {
   implementation "org.readium.kotlin-toolkit:readium-adapter-pdfium-document:$readium_version"
 
   // other deps
+  // Only what the reader actually uses. The earlier list carried Room, jsoup,
+  // Picasso, joda-time, Timber and the whole navigation/paging/recyclerview/
+  // viewpager2/webkit/material/cardview/browser stack, none of which appear in a
+  // single source file — they were inherited from a Readium 2 example app and
+  // silently shipped into every consumer's APK.
   implementation "androidx.core:core-ktx:1.13.1"
   implementation "androidx.activity:activity-ktx:1.9.0"
   implementation "androidx.appcompat:appcompat:1.6.1"
-  implementation "androidx.browser:browser:1.7.0"
-  implementation "androidx.cardview:cardview:1.0.0"
   implementation "androidx.constraintlayout:constraintlayout:2.1.4"
   implementation "androidx.fragment:fragment-ktx:1.7.1"
   implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.8.4"
   implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.8.4"
   implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.4"
-  implementation 'androidx.navigation:navigation-fragment-ktx:2.7.7'
-  implementation 'androidx.navigation:navigation-ui-ktx:2.7.7'
-  implementation "androidx.paging:paging-runtime-ktx:3.2.1"
-  implementation "androidx.recyclerview:recyclerview:1.3.2"
-  implementation "androidx.viewpager2:viewpager2:1.1.0"
-  implementation "androidx.webkit:webkit:1.8.0"
-  implementation "com.google.android.material:material:1.11.0"
   // media3 session is required by our AudiobookMediaService (lock-screen /
   // background playback controls); the toolkit marks it `implementation`, so
   // declare it explicitly. Version must match the toolkit's pin.
   implementation "androidx.media3:media3-session:1.10.0"
-  implementation "com.jakewharton.timber:timber:5.0.1"
-  // AM NOTE: needs to stay this version for now (June 24,2020)
-  //noinspection GradleDependency
-  implementation "com.squareup.picasso:picasso:2.71828"
-  implementation "joda-time:joda-time:2.10.13"
   implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0"
-
-  implementation "org.jsoup:jsoup:1.18.3"
-
-  // Room database
-  final roomVersion = "2.6.1"
-  implementation "androidx.room:room-runtime:$roomVersion"
-  implementation "androidx.room:room-ktx:$roomVersion"
-  annotationProcessor "androidx.room:room-compiler:$roomVersion"
-
-  implementation "androidx.lifecycle:lifecycle-extensions:2.2.0"
-  //noinspection LifecycleAnnotationProcessorWithJava8
-  annotationProcessor "androidx.lifecycle:lifecycle-compiler:2.8.4"
 
   testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
   testImplementation "junit:junit:4.13.2"
