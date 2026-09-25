@@ -25,14 +25,18 @@ namespace margelo::nitro::readium { struct Subject; }
 namespace margelo::nitro::readium { struct BelongsTo; }
 // Forward declaration of `SeriesInfo` to properly resolve imports.
 namespace margelo::nitro::readium { struct SeriesInfo; }
-// Forward declaration of `ReadiumFile` to properly resolve imports.
-namespace margelo::nitro::readium { struct ReadiumFile; }
+// Forward declaration of `AudiobookBookmarkChangeEvent` to properly resolve imports.
+namespace margelo::nitro::readium { struct AudiobookBookmarkChangeEvent; }
+// Forward declaration of `AudiobookBookmark` to properly resolve imports.
+namespace margelo::nitro::readium { struct AudiobookBookmark; }
 // Forward declaration of `Locator` to properly resolve imports.
 namespace margelo::nitro::readium { struct Locator; }
 // Forward declaration of `LocatorLocations` to properly resolve imports.
 namespace margelo::nitro::readium { struct LocatorLocations; }
 // Forward declaration of `LocatorText` to properly resolve imports.
 namespace margelo::nitro::readium { struct LocatorText; }
+// Forward declaration of `ReadiumFile` to properly resolve imports.
+namespace margelo::nitro::readium { struct ReadiumFile; }
 
 #include "AudiobookSessionState.hpp"
 #include <functional>
@@ -58,14 +62,19 @@ namespace margelo::nitro::readium { struct LocatorText; }
 #include "JBelongsTo.hpp"
 #include "SeriesInfo.hpp"
 #include "JSeriesInfo.hpp"
-#include "ReadiumFile.hpp"
-#include "JReadiumFile.hpp"
+#include "AudiobookBookmarkChangeEvent.hpp"
+#include "JFunc_void_AudiobookBookmarkChangeEvent.hpp"
+#include "JAudiobookBookmarkChangeEvent.hpp"
+#include "AudiobookBookmark.hpp"
+#include "JAudiobookBookmark.hpp"
 #include "Locator.hpp"
 #include "JLocator.hpp"
 #include "LocatorLocations.hpp"
 #include "JLocatorLocations.hpp"
 #include "LocatorText.hpp"
 #include "JLocatorText.hpp"
+#include "ReadiumFile.hpp"
+#include "JReadiumFile.hpp"
 
 namespace margelo::nitro::readium {
 
@@ -114,6 +123,23 @@ namespace margelo::nitro::readium {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<JFunc_void_AudiobookSessionState::javaobject> /* onStateChange */)>("setOnStateChange_cxx");
     method(_javaPart, onStateChange.has_value() ? JFunc_void_AudiobookSessionState_cxx::fromCpp(onStateChange.value()) : nullptr);
   }
+  std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>> JHybridReadiumAudioSpec::getOnBookmarkChange() {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<JFunc_void_AudiobookBookmarkChangeEvent::javaobject>()>("getOnBookmarkChange_cxx");
+    auto __result = method(_javaPart);
+    return __result != nullptr ? std::make_optional([&]() -> std::function<void(const AudiobookBookmarkChangeEvent& /* event */)> {
+      if (__result->isInstanceOf(JFunc_void_AudiobookBookmarkChangeEvent_cxx::javaClassStatic())) [[likely]] {
+        auto downcast = jni::static_ref_cast<JFunc_void_AudiobookBookmarkChangeEvent_cxx::javaobject>(__result);
+        return downcast->cthis()->getFunction();
+      } else {
+        auto __resultRef = jni::make_global(__result);
+        return JNICallable<JFunc_void_AudiobookBookmarkChangeEvent, void(AudiobookBookmarkChangeEvent)>(std::move(__resultRef));
+      }
+    }()) : std::nullopt;
+  }
+  void JHybridReadiumAudioSpec::setOnBookmarkChange(const std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>& onBookmarkChange) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<JFunc_void_AudiobookBookmarkChangeEvent::javaobject> /* onBookmarkChange */)>("setOnBookmarkChange_cxx");
+    method(_javaPart, onBookmarkChange.has_value() ? JFunc_void_AudiobookBookmarkChangeEvent_cxx::fromCpp(onBookmarkChange.value()) : nullptr);
+  }
 
   // Methods
   void JHybridReadiumAudioSpec::open(const ReadiumFile& file) {
@@ -159,6 +185,31 @@ namespace margelo::nitro::readium {
   void JHybridReadiumAudioSpec::setSleepTimer(std::optional<double> seconds) {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JDouble> /* seconds */)>("setSleepTimer");
     method(_javaPart, seconds.has_value() ? jni::JDouble::valueOf(seconds.value()) : nullptr);
+  }
+  void JHybridReadiumAudioSpec::setBookmarks(const std::vector<AudiobookBookmark>& bookmarks) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JArrayClass<JAudiobookBookmark>> /* bookmarks */)>("setBookmarks");
+    method(_javaPart, [&]() {
+      size_t __size = bookmarks.size();
+      jni::local_ref<jni::JArrayClass<JAudiobookBookmark>> __array = jni::JArrayClass<JAudiobookBookmark>::newArray(__size);
+      for (size_t __i = 0; __i < __size; __i++) {
+        const auto& __element = bookmarks[__i];
+        auto __elementJni = JAudiobookBookmark::fromCpp(__element);
+        __array->setElement(__i, *__elementJni);
+      }
+      return __array;
+    }());
+  }
+  void JHybridReadiumAudioSpec::addBookmark(double position, const std::optional<std::string>& note) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(double /* position */, jni::alias_ref<jni::JString> /* note */)>("addBookmark");
+    method(_javaPart, position, note.has_value() ? jni::make_jstring(note.value()) : nullptr);
+  }
+  void JHybridReadiumAudioSpec::updateBookmark(const std::string& id, const std::optional<std::string>& note) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JString> /* id */, jni::alias_ref<jni::JString> /* note */)>("updateBookmark");
+    method(_javaPart, jni::make_jstring(id), note.has_value() ? jni::make_jstring(note.value()) : nullptr);
+  }
+  void JHybridReadiumAudioSpec::removeBookmark(const std::string& id) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JString> /* id */)>("removeBookmark");
+    method(_javaPart, jni::make_jstring(id));
   }
   void JHybridReadiumAudioSpec::close() {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void()>("close");

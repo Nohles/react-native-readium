@@ -152,6 +152,38 @@ open class HybridReadiumAudioSpec_cxx {
       }()
     }
   }
+  
+  public final var onBookmarkChange: bridge.std__optional_std__function_void_const_AudiobookBookmarkChangeEvent_____event______ {
+    @inline(__always)
+    get {
+      return { () -> bridge.std__optional_std__function_void_const_AudiobookBookmarkChangeEvent_____event______ in
+        if let __unwrappedValue = self.__implementation.onBookmarkChange {
+          return bridge.create_std__optional_std__function_void_const_AudiobookBookmarkChangeEvent_____event______({ () -> bridge.Func_void_AudiobookBookmarkChangeEvent in
+            let __closureWrapper = Func_void_AudiobookBookmarkChangeEvent(__unwrappedValue)
+            return bridge.create_Func_void_AudiobookBookmarkChangeEvent(__closureWrapper.toUnsafe())
+          }())
+        } else {
+          return .init()
+        }
+      }()
+    }
+    @inline(__always)
+    set {
+      self.__implementation.onBookmarkChange = { () -> ((_ event: AudiobookBookmarkChangeEvent) -> Void)? in
+        if bridge.has_value_std__optional_std__function_void_const_AudiobookBookmarkChangeEvent_____event______(newValue) {
+          let __unwrapped = bridge.get_std__optional_std__function_void_const_AudiobookBookmarkChangeEvent_____event______(newValue)
+          return { () -> (AudiobookBookmarkChangeEvent) -> Void in
+            let __wrappedFunction = bridge.wrap_Func_void_AudiobookBookmarkChangeEvent(__unwrapped)
+            return { (__event: AudiobookBookmarkChangeEvent) -> Void in
+              __wrappedFunction.call(__event)
+            }
+          }()
+        } else {
+          return nil
+        }
+      }()
+    }
+  }
 
   // Methods
   @inline(__always)
@@ -275,6 +307,64 @@ open class HybridReadiumAudioSpec_cxx {
           return nil
         }
       }())
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func setBookmarks(bookmarks: bridge.std__vector_AudiobookBookmark_) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.setBookmarks(bookmarks: bookmarks.map({ __item in __item }))
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func addBookmark(position: Double, note: bridge.std__optional_std__string_) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.addBookmark(position: position, note: { () -> String? in
+        if bridge.has_value_std__optional_std__string_(note) {
+          let __unwrapped = bridge.get_std__optional_std__string_(note)
+          return String(__unwrapped)
+        } else {
+          return nil
+        }
+      }())
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func updateBookmark(id: std.string, note: bridge.std__optional_std__string_) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.updateBookmark(id: String(id), note: { () -> String? in
+        if bridge.has_value_std__optional_std__string_(note) {
+          let __unwrapped = bridge.get_std__optional_std__string_(note)
+          return String(__unwrapped)
+        } else {
+          return nil
+        }
+      }())
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func removeBookmark(id: std.string) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.removeBookmark(id: String(id))
       return bridge.create_Result_void_()
     } catch (let __error) {
       let __exceptionPtr = __error.toCpp()

@@ -15,13 +15,21 @@
 
 // Forward declaration of `AudiobookSessionState` to properly resolve imports.
 namespace margelo::nitro::readium { struct AudiobookSessionState; }
+// Forward declaration of `AudiobookBookmarkChangeEvent` to properly resolve imports.
+namespace margelo::nitro::readium { struct AudiobookBookmarkChangeEvent; }
 // Forward declaration of `ReadiumFile` to properly resolve imports.
 namespace margelo::nitro::readium { struct ReadiumFile; }
+// Forward declaration of `AudiobookBookmark` to properly resolve imports.
+namespace margelo::nitro::readium { struct AudiobookBookmark; }
 
 #include "AudiobookSessionState.hpp"
 #include <functional>
 #include <optional>
+#include "AudiobookBookmarkChangeEvent.hpp"
 #include "ReadiumFile.hpp"
+#include "AudiobookBookmark.hpp"
+#include <vector>
+#include <string>
 
 namespace margelo::nitro::readium {
 
@@ -52,6 +60,8 @@ namespace margelo::nitro::readium {
       // Properties
       virtual std::optional<std::function<void(const AudiobookSessionState& /* state */)>> getOnStateChange() = 0;
       virtual void setOnStateChange(const std::optional<std::function<void(const AudiobookSessionState& /* state */)>>& onStateChange) = 0;
+      virtual std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>> getOnBookmarkChange() = 0;
+      virtual void setOnBookmarkChange(const std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>& onBookmarkChange) = 0;
 
     public:
       // Methods
@@ -66,6 +76,10 @@ namespace margelo::nitro::readium {
       virtual void setNowPlayingInfoEnabled(bool enabled) = 0;
       virtual void setNowPlayingMetadataEnabled(bool enabled) = 0;
       virtual void setSleepTimer(std::optional<double> seconds) = 0;
+      virtual void setBookmarks(const std::vector<AudiobookBookmark>& bookmarks) = 0;
+      virtual void addBookmark(double position, const std::optional<std::string>& note) = 0;
+      virtual void updateBookmark(const std::string& id, const std::optional<std::string>& note) = 0;
+      virtual void removeBookmark(const std::string& id) = 0;
       virtual void close() = 0;
 
     protected:

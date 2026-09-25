@@ -390,6 +390,43 @@ namespace margelo::nitro::readium::bridge::swift {
     return optional.value();
   }
   
+  // pragma MARK: std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>
+  /**
+   * Specialized version of `std::function<void(const AudiobookBookmarkChangeEvent&)>`.
+   */
+  using Func_void_AudiobookBookmarkChangeEvent = std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>;
+  /**
+   * Wrapper class for a `std::function<void(const AudiobookBookmarkChangeEvent& / * event * /)>`, this can be used from Swift.
+   */
+  class Func_void_AudiobookBookmarkChangeEvent_Wrapper final {
+  public:
+    explicit Func_void_AudiobookBookmarkChangeEvent_Wrapper(std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>&& func): _function(std::make_unique<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>(std::move(func))) {}
+    inline void call(AudiobookBookmarkChangeEvent event) const noexcept {
+      _function->operator()(event);
+    }
+  private:
+    std::unique_ptr<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>> _function;
+  } SWIFT_NONCOPYABLE;
+  Func_void_AudiobookBookmarkChangeEvent create_Func_void_AudiobookBookmarkChangeEvent(void* NON_NULL swiftClosureWrapper) noexcept;
+  inline Func_void_AudiobookBookmarkChangeEvent_Wrapper wrap_Func_void_AudiobookBookmarkChangeEvent(Func_void_AudiobookBookmarkChangeEvent value) noexcept {
+    return Func_void_AudiobookBookmarkChangeEvent_Wrapper(std::move(value));
+  }
+  
+  // pragma MARK: std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>
+  /**
+   * Specialized version of `std::optional<std::function<void(const AudiobookBookmarkChangeEvent& / * event * /)>>`.
+   */
+  using std__optional_std__function_void_const_AudiobookBookmarkChangeEvent_____event______ = std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>;
+  inline std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>> create_std__optional_std__function_void_const_AudiobookBookmarkChangeEvent_____event______(const std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>& value) noexcept {
+    return std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>(value);
+  }
+  inline bool has_value_std__optional_std__function_void_const_AudiobookBookmarkChangeEvent_____event______(const std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>& optional) noexcept {
+    return optional.has_value();
+  }
+  inline std::function<void(const AudiobookBookmarkChangeEvent& /* event */)> get_std__optional_std__function_void_const_AudiobookBookmarkChangeEvent_____event______(const std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>& optional) noexcept {
+    return optional.value();
+  }
+  
   // pragma MARK: std::optional<Locator>
   /**
    * Specialized version of `std::optional<Locator>`.
@@ -403,6 +440,17 @@ namespace margelo::nitro::readium::bridge::swift {
   }
   inline Locator get_std__optional_Locator_(const std::optional<Locator>& optional) noexcept {
     return optional.value();
+  }
+  
+  // pragma MARK: std::vector<AudiobookBookmark>
+  /**
+   * Specialized version of `std::vector<AudiobookBookmark>`.
+   */
+  using std__vector_AudiobookBookmark_ = std::vector<AudiobookBookmark>;
+  inline std::vector<AudiobookBookmark> create_std__vector_AudiobookBookmark_(size_t size) noexcept {
+    std::vector<AudiobookBookmark> vector;
+    vector.reserve(size);
+    return vector;
   }
   
   // pragma MARK: std::shared_ptr<HybridReadiumAudioSpec>
@@ -572,17 +620,6 @@ namespace margelo::nitro::readium::bridge::swift {
   }
   inline std::vector<SelectionAction> get_std__optional_std__vector_SelectionAction__(const std::optional<std::vector<SelectionAction>>& optional) noexcept {
     return optional.value();
-  }
-  
-  // pragma MARK: std::vector<AudiobookBookmark>
-  /**
-   * Specialized version of `std::vector<AudiobookBookmark>`.
-   */
-  using std__vector_AudiobookBookmark_ = std::vector<AudiobookBookmark>;
-  inline std::vector<AudiobookBookmark> create_std__vector_AudiobookBookmark_(size_t size) noexcept {
-    std::vector<AudiobookBookmark> vector;
-    vector.reserve(size);
-    return vector;
   }
   
   // pragma MARK: std::optional<std::vector<AudiobookBookmark>>
@@ -908,43 +945,6 @@ namespace margelo::nitro::readium::bridge::swift {
     return optional.has_value();
   }
   inline std::function<void(const AudiobookPlaybackState& /* state */)> get_std__optional_std__function_void_const_AudiobookPlaybackState_____state______(const std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>& optional) noexcept {
-    return optional.value();
-  }
-  
-  // pragma MARK: std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>
-  /**
-   * Specialized version of `std::function<void(const AudiobookBookmarkChangeEvent&)>`.
-   */
-  using Func_void_AudiobookBookmarkChangeEvent = std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>;
-  /**
-   * Wrapper class for a `std::function<void(const AudiobookBookmarkChangeEvent& / * event * /)>`, this can be used from Swift.
-   */
-  class Func_void_AudiobookBookmarkChangeEvent_Wrapper final {
-  public:
-    explicit Func_void_AudiobookBookmarkChangeEvent_Wrapper(std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>&& func): _function(std::make_unique<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>(std::move(func))) {}
-    inline void call(AudiobookBookmarkChangeEvent event) const noexcept {
-      _function->operator()(event);
-    }
-  private:
-    std::unique_ptr<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>> _function;
-  } SWIFT_NONCOPYABLE;
-  Func_void_AudiobookBookmarkChangeEvent create_Func_void_AudiobookBookmarkChangeEvent(void* NON_NULL swiftClosureWrapper) noexcept;
-  inline Func_void_AudiobookBookmarkChangeEvent_Wrapper wrap_Func_void_AudiobookBookmarkChangeEvent(Func_void_AudiobookBookmarkChangeEvent value) noexcept {
-    return Func_void_AudiobookBookmarkChangeEvent_Wrapper(std::move(value));
-  }
-  
-  // pragma MARK: std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>
-  /**
-   * Specialized version of `std::optional<std::function<void(const AudiobookBookmarkChangeEvent& / * event * /)>>`.
-   */
-  using std__optional_std__function_void_const_AudiobookBookmarkChangeEvent_____event______ = std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>;
-  inline std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>> create_std__optional_std__function_void_const_AudiobookBookmarkChangeEvent_____event______(const std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>& value) noexcept {
-    return std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>(value);
-  }
-  inline bool has_value_std__optional_std__function_void_const_AudiobookBookmarkChangeEvent_____event______(const std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>& optional) noexcept {
-    return optional.has_value();
-  }
-  inline std::function<void(const AudiobookBookmarkChangeEvent& /* event */)> get_std__optional_std__function_void_const_AudiobookBookmarkChangeEvent_____event______(const std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>& optional) noexcept {
     return optional.value();
   }
   

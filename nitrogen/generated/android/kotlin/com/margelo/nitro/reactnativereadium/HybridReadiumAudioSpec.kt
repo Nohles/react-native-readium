@@ -38,6 +38,20 @@ abstract class HybridReadiumAudioSpec: HybridObject() {
     set(value) {
       onStateChange = value?.let { it }
     }
+  
+  abstract var onBookmarkChange: ((event: AudiobookBookmarkChangeEvent) -> Unit)?
+  
+  private var onBookmarkChange_cxx: Func_void_AudiobookBookmarkChangeEvent?
+    @Keep
+    @DoNotStrip
+    get() {
+      return onBookmarkChange?.let { Func_void_AudiobookBookmarkChangeEvent_java(it) }
+    }
+    @Keep
+    @DoNotStrip
+    set(value) {
+      onBookmarkChange = value?.let { it }
+    }
 
   // Methods
   @DoNotStrip
@@ -83,6 +97,22 @@ abstract class HybridReadiumAudioSpec: HybridObject() {
   @DoNotStrip
   @Keep
   abstract fun setSleepTimer(seconds: Double?): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun setBookmarks(bookmarks: Array<AudiobookBookmark>): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun addBookmark(position: Double, note: String?): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun updateBookmark(id: String, note: String?): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun removeBookmark(id: String): Unit
   
   @DoNotStrip
   @Keep

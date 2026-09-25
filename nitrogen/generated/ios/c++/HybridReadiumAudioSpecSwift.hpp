@@ -30,14 +30,18 @@ namespace margelo::nitro::readium { struct Subject; }
 namespace margelo::nitro::readium { struct BelongsTo; }
 // Forward declaration of `SeriesInfo` to properly resolve imports.
 namespace margelo::nitro::readium { struct SeriesInfo; }
-// Forward declaration of `ReadiumFile` to properly resolve imports.
-namespace margelo::nitro::readium { struct ReadiumFile; }
+// Forward declaration of `AudiobookBookmarkChangeEvent` to properly resolve imports.
+namespace margelo::nitro::readium { struct AudiobookBookmarkChangeEvent; }
+// Forward declaration of `AudiobookBookmark` to properly resolve imports.
+namespace margelo::nitro::readium { struct AudiobookBookmark; }
 // Forward declaration of `Locator` to properly resolve imports.
 namespace margelo::nitro::readium { struct Locator; }
 // Forward declaration of `LocatorLocations` to properly resolve imports.
 namespace margelo::nitro::readium { struct LocatorLocations; }
 // Forward declaration of `LocatorText` to properly resolve imports.
 namespace margelo::nitro::readium { struct LocatorText; }
+// Forward declaration of `ReadiumFile` to properly resolve imports.
+namespace margelo::nitro::readium { struct ReadiumFile; }
 
 #include "AudiobookSessionState.hpp"
 #include <functional>
@@ -52,10 +56,12 @@ namespace margelo::nitro::readium { struct LocatorText; }
 #include "Subject.hpp"
 #include "BelongsTo.hpp"
 #include "SeriesInfo.hpp"
-#include "ReadiumFile.hpp"
+#include "AudiobookBookmarkChangeEvent.hpp"
+#include "AudiobookBookmark.hpp"
 #include "Locator.hpp"
 #include "LocatorLocations.hpp"
 #include "LocatorText.hpp"
+#include "ReadiumFile.hpp"
 
 #include "NitroReadium-Swift-Cxx-Umbrella.hpp"
 
@@ -109,6 +115,13 @@ namespace margelo::nitro::readium {
     }
     inline void setOnStateChange(const std::optional<std::function<void(const AudiobookSessionState& /* state */)>>& onStateChange) noexcept override {
       _swiftPart.setOnStateChange(onStateChange);
+    }
+    inline std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>> getOnBookmarkChange() noexcept override {
+      auto __result = _swiftPart.getOnBookmarkChange();
+      return __result;
+    }
+    inline void setOnBookmarkChange(const std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>& onBookmarkChange) noexcept override {
+      _swiftPart.setOnBookmarkChange(onBookmarkChange);
     }
 
   public:
@@ -175,6 +188,30 @@ namespace margelo::nitro::readium {
     }
     inline void setSleepTimer(std::optional<double> seconds) override {
       auto __result = _swiftPart.setSleepTimer(seconds);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void setBookmarks(const std::vector<AudiobookBookmark>& bookmarks) override {
+      auto __result = _swiftPart.setBookmarks(bookmarks);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void addBookmark(double position, const std::optional<std::string>& note) override {
+      auto __result = _swiftPart.addBookmark(std::forward<decltype(position)>(position), note);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void updateBookmark(const std::string& id, const std::optional<std::string>& note) override {
+      auto __result = _swiftPart.updateBookmark(id, note);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void removeBookmark(const std::string& id) override {
+      auto __result = _swiftPart.removeBookmark(id);
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }

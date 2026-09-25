@@ -52,6 +52,8 @@ namespace margelo::nitro::readium {
     // Properties
     std::optional<std::function<void(const AudiobookSessionState& /* state */)>> getOnStateChange() override;
     void setOnStateChange(const std::optional<std::function<void(const AudiobookSessionState& /* state */)>>& onStateChange) override;
+    std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>> getOnBookmarkChange() override;
+    void setOnBookmarkChange(const std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>& onBookmarkChange) override;
 
   public:
     // Methods
@@ -66,6 +68,10 @@ namespace margelo::nitro::readium {
     void setNowPlayingInfoEnabled(bool enabled) override;
     void setNowPlayingMetadataEnabled(bool enabled) override;
     void setSleepTimer(std::optional<double> seconds) override;
+    void setBookmarks(const std::vector<AudiobookBookmark>& bookmarks) override;
+    void addBookmark(double position, const std::optional<std::string>& note) override;
+    void updateBookmark(const std::string& id, const std::optional<std::string>& note) override;
+    void removeBookmark(const std::string& id) override;
     void close() override;
 
   private:
