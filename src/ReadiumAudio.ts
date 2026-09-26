@@ -47,9 +47,29 @@ function emitState(state: AudiobookSessionState): void {
   listeners.forEach((listener) => listener(state));
 }
 
+/**
+ * How long `open` waits for the session to reach `ready` or `error`.
+ *
+ * The dominant cost of an open is per-track duration resolution: for every
+ * reading-order item whose manifest entry carries no `duration`, the Android
+ * navigator opens the resource and runs `MediaMetadataRetriever` over it (see
+ * `AudioNavigatorFactory.duration` in the kotlin-toolkit). That work cannot be
+ * moved off the main thread — `ExoPlayer` requires its application thread, and
+ * `createNavigator` reaches `setMediaItems` — so for a remote multi-track
+ * audiobook the open legitimately takes minutes on a slow connection.
+ *
+ * A short deadline therefore converts a slow-but-successful open into a hard
+ * failure that looks exactly like a broken one. Ten minutes is deliberately
+ * generous: the cost of being wrong in this direction is the user staring at a
+ * Retry button for a book that would have opened a minute later.
+ */
+const DEFAULT_OPEN_TIMEOUT_MS = 10 * 60 * 1000;
+
+let openTimeoutMs = DEFAULT_OPEN_TIMEOUT_MS;
+
 function waitForSession(
   predicate: (state: AudiobookSessionState) => boolean,
-  timeoutMs = 120_000
+  timeoutMs: number
 ): Promise<AudiobookSessionState> {
   return new Promise((resolve, reject) => {
     if (predicate(currentState)) {
@@ -60,7 +80,13 @@ function waitForSession(
     let unsubscribe: () => void = () => {};
     const timeout = setTimeout(() => {
       unsubscribe();
-      reject(new Error('Timed out waiting for audiobook session.'));
+      reject(
+        new Error(
+          `Timed out waiting for audiobook session after ${Math.round(
+            timeoutMs / 1000
+          )}s.`
+        )
+      );
     }, timeoutMs);
 
     const listener: Listener = (state) => {
@@ -85,11 +111,28 @@ export const ReadiumAudio = {
   async open(file: File): Promise<void> {
     getNativeAudio().open(file);
     const state = await waitForSession(
-      (session) => session.status === 'ready' || session.status === 'error'
+      (session) => session.status === 'ready' || session.status === 'error',
+      openTimeoutMs
     );
     if (state.status === 'error') {
       throw new Error(state.error ?? 'Failed to open audiobook.');
     }
+  },
+
+  /**
+   * Overrides how long {@link open} waits for the session, in milliseconds.
+   *
+   * Only worth lowering for a publication known to be local, where the open
+   * should be near-instant and a long stall means something is actually wrong.
+   * Pass `null` to restore the default.
+   */
+  setOpenTimeoutMs(timeoutMs: number | null): void {
+    openTimeoutMs = timeoutMs ?? DEFAULT_OPEN_TIMEOUT_MS;
+  },
+
+  /** The current open deadline in milliseconds. */
+  getOpenTimeoutMs(): number {
+    return openTimeoutMs;
   },
 
   play(): void {
