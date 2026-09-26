@@ -50,20 +50,15 @@ function emitState(state: AudiobookSessionState): void {
 /**
  * How long `open` waits for the session to reach `ready` or `error`.
  *
- * The dominant cost of an open is per-track duration resolution: for every
- * reading-order item whose manifest entry carries no `duration`, the Android
- * navigator opens the resource and runs `MediaMetadataRetriever` over it (see
- * `AudioNavigatorFactory.duration` in the kotlin-toolkit). That work cannot be
- * moved off the main thread — `ExoPlayer` requires its application thread, and
- * `createNavigator` reaches `setMediaItems` — so for a remote multi-track
- * audiobook the open legitimately takes minutes on a slow connection.
- *
- * A short deadline therefore converts a slow-but-successful open into a hard
- * failure that looks exactly like a broken one. Ten minutes is deliberately
- * generous: the cost of being wrong in this direction is the user staring at a
- * Retry button for a book that would have opened a minute later.
+ * Kept short on purpose. Resolving durations for a remote audiobook can be
+ * slow, but a slow open that eventually succeeds is not something to paper over
+ * with a long sleep: with `DefaultHttpClient` now bounded (see
+ * `ReaderService`), a genuinely stalled request surfaces as an error rather than
+ * hanging, so the deadline is a backstop for the case where the native side is
+ * working but not finishing. Raise it via {@link
+ * ReadiumAudio.setOpenTimeoutMs} for a known-slow publication.
  */
-const DEFAULT_OPEN_TIMEOUT_MS = 10 * 60 * 1000;
+const DEFAULT_OPEN_TIMEOUT_MS = 120_000;
 
 let openTimeoutMs = DEFAULT_OPEN_TIMEOUT_MS;
 

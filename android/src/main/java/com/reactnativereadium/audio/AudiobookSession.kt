@@ -150,6 +150,18 @@ object AudiobookSession {
     if (Looper.myLooper() == Looper.getMainLooper()) block() else mainHandler.post(block)
   }
 
+  /**
+   * Structured trace of the open path, so a slow or failed open names the phase
+   * it stalled in instead of surfacing only as a host-side timeout. The open
+   * crosses several unbounded-looking boundaries (manifest fetch, per-item
+   * duration resolution, playlist metadata awaiting cover art), and guessing
+   * which one is slow costs more than logging them.
+   */
+  private fun phase(name: String, vararg details: String) {
+    val suffix = if (details.isEmpty()) "" else " " + details.joinToString(" ")
+    android.util.Log.i(TAG, "$name$suffix")
+  }
+
   // MARK: - Opening
 
   /**
@@ -162,13 +174,21 @@ object AudiobookSession {
     }
     emitLoading(fileUrl)
     mainScope.launch {
+      phase("open:start")
       val publication = service().retrievePublication(fileUrl)
       if (publication == null) {
+        phase("open:publication", "null")
         if (fileURL == fileUrl) {
           emitError("Failed to open audiobook.")
         }
         return@launch
       }
+      phase(
+        "open:publication",
+        "readingOrder=${publication.readingOrder.size}",
+        "manifestDurationSeconds=${publication.metadata.duration}",
+        "linkDurationSeconds=${publication.readingOrder.map { it.duration }}"
+      )
       attachInternal(publication, fileUrl, initialLocator)
     }
   }
@@ -208,15 +228,15 @@ object AudiobookSession {
       // on every call — running it on a worker throws
       // "Player is accessed on the wrong thread. Expected thread: 'main'".
       //
-      // That matters because the duration resolution it also does is slow for a
-      // remote audiobook: where the manifest supplies no duration it opens the
-      // resource and runs MetadataRetriever over it
-      // (AudioNavigatorFactory.duration, :88-99), a range request plus a media
-      // parse per track. So the open blocks the UI thread and can outlast the
-      // 120s wait in ReadiumAudio.open. The cost has to be removed rather than
-      // moved: get durations into the manifest (the readium sidecar already
-      // parses them for local files) and this becomes fast and main-thread safe.
+      // The phase logs around it are not noise. This call resolves a duration
+      // for every reading-order item, and where the manifest supplies none it
+      // opens the resource and runs MetadataRetriever over it
+      // (AudioNavigatorFactory.duration, :88-99) — and building the playlist
+      // metadata awaits cover art. Both are unbounded from the caller's point
+      // of view, so which one is slow is not something to guess at.
+      phase("createNavigator:start")
       val result = factory.createNavigator(initialLocator)
+      phase("createNavigator:done")
       val createdNavigator = result.getOrNull()
       if (createdNavigator == null) {
         val message = (result as? Try.Failure)?.value?.message ?: "Failed to initialize playback."
@@ -228,13 +248,16 @@ object AudiobookSession {
       mediaPlayer = createdNavigator.asMedia3Player().also { player ->
         updateState { it.copy(rate = player.playbackParameters.speed.toDouble()) }
       }
+      phase("timeline:start")
       computeTimeline(createdNavigator)
+      phase("timeline:done", "items=${itemStartOffsets.size}", "chapters=${chapters.size}")
       observe(createdNavigator)
       // Seeds the now-playing entry for the newly attached publication so the
       // first lock-screen render is not empty while the host catches up. Touches
       // the player, so it has to stay on the main thread too.
       applyNowPlayingMetadata()
       emit(status = AudiobookStatus.READY)
+      phase("ready")
     }
   }
 
