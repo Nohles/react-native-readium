@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.readium.adapter.exoplayer.audio.ExoPlayerEngineProvider
 import org.readium.navigator.media.audio.AudioNavigator
 import org.readium.navigator.media.audio.AudioNavigatorFactory
@@ -26,7 +27,6 @@ import org.readium.r2.shared.DelicateReadiumApi
 import org.readium.r2.shared.ExperimentalReadiumApi
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.Publication
-import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.Url as ReadiumUrl
 import org.readium.r2.shared.util.mediatype.MediaType
 import kotlin.time.Duration.Companion.seconds
@@ -202,11 +202,22 @@ object AudiobookSession {
         return@launch
       }
 
-      val result = factory.createNavigator(initialLocator)
-      val createdNavigator = result.getOrNull()
+      // AudioNavigatorFactory.createNavigator resolves a duration for every
+      // reading-order item, and where the manifest does not supply one it opens
+      // the resource and runs MetadataRetriever over it (see
+      // AudioNavigatorFactory.duration). For a remote audiobook that is a range
+      // request plus a media parse *per track*, and for a multi-track book it
+      // comfortably exceeds any reasonable open budget.
+      //
+      // iOS does this off the main actor (AudiobookViewController.preparePlayback
+      // is a Task). Android ran it on Dispatchers.Main, so the whole open blocked
+      // the UI thread — long enough that the app's 120s wait for the session
+      // expired and the user saw "Timed out waiting for audiobook session".
+      val createdNavigator = withContext(Dispatchers.IO) {
+        factory.createNavigator(initialLocator).getOrNull()
+      }
       if (createdNavigator == null) {
-        val message = (result as? Try.Failure)?.value?.message ?: "Failed to initialize playback."
-        emitError(message)
+        emitError("Failed to initialize playback.")
         return@launch
       }
 
@@ -214,7 +225,11 @@ object AudiobookSession {
       mediaPlayer = createdNavigator.asMedia3Player().also { player ->
         updateState { it.copy(rate = player.playbackParameters.speed.toDouble()) }
       }
-      computeTimeline(createdNavigator)
+      // computeTimeline walks the reading order and the TOC. The timeline is
+      // cheap (durations come from the manifest by this point), but it is still
+      // I/O-adjacent work, so it stays off the main thread with the rest of the
+      // open.
+      withContext(Dispatchers.IO) { computeTimeline(createdNavigator) }
       observe(createdNavigator)
       // Seed the now-playing entry for the newly attached publication, so the
       // first lock-screen render is not empty while the host catches up.
