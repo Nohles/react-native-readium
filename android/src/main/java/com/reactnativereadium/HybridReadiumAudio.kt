@@ -18,6 +18,10 @@ import kotlinx.coroutines.launch
  */
 class HybridReadiumAudio : HybridReadiumAudioSpec() {
 
+  private companion object {
+    const val TAG = "HybridReadiumAudio"
+  }
+
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
   private var observeJob: Job? = null
 
@@ -26,12 +30,28 @@ class HybridReadiumAudio : HybridReadiumAudioSpec() {
       field = value
       observeJob?.cancel()
       observeJob = null
+      android.util.Log.i(TAG, "onStateChange ${if (value == null) "cleared" else "attached"}")
       if (value != null) {
         // Collecting the StateFlow replays the current state immediately,
         // matching iOS `AudiobookSession.onStateChange` didSet semantics.
         observeJob = scope.launch {
           AudiobookSession.state.collect { sessionState ->
-            value(sessionState.toNitroSessionState())
+            // The conversion and the JS callback are both outside this file's
+            // control, and an exception in either silently kills the collector —
+            // after which the host never sees another state and reports a plain
+            // timeout. Isolated here so the reason is visible.
+            val nitro = try {
+              sessionState.toNitroSessionState()
+            } catch (error: Throwable) {
+              android.util.Log.e(TAG, "state conversion threw: $error")
+              return@collect
+            }
+            android.util.Log.i(TAG, "emitting ${nitro.status}")
+            try {
+              value(nitro)
+            } catch (error: Throwable) {
+              android.util.Log.e(TAG, "onStateChange callback threw: $error")
+            }
           }
         }
       }

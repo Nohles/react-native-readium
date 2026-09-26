@@ -60,6 +60,25 @@ function emitState(state: AudiobookSessionState): void {
  */
 const DEFAULT_OPEN_TIMEOUT_MS = 120_000;
 
+/**
+ * Whether an open has finished, one way or the other.
+ *
+ * Deliberately not "is it `ready`". The native side is a `StateFlow`, which is
+ * *conflated*: it guarantees the latest value, not every value. `ready` is
+ * emitted and then superseded almost immediately by `paused` (nothing is playing
+ * yet), so a collector that is even slightly behind never sees it — while the
+ * publication is open and ExoPlayer is initialised. Waiting for `ready` exactly
+ * therefore hangs until the deadline and then reports a timeout for an audiobook
+ * that opened in under half a second.
+ *
+ * `idle` and `loading` are the only states that mean "still opening". Every
+ * other state describes a session that exists, and `error` is handled by the
+ * caller.
+ */
+function sessionIsSettled(session: AudiobookSessionState): boolean {
+  return session.status !== 'idle' && session.status !== 'loading';
+}
+
 let openTimeoutMs = DEFAULT_OPEN_TIMEOUT_MS;
 
 function waitForSession(
@@ -105,10 +124,7 @@ export const ReadiumAudio = {
 
   async open(file: File): Promise<void> {
     getNativeAudio().open(file);
-    const state = await waitForSession(
-      (session) => session.status === 'ready' || session.status === 'error',
-      openTimeoutMs
-    );
+    const state = await waitForSession(sessionIsSettled, openTimeoutMs);
     if (state.status === 'error') {
       throw new Error(state.error ?? 'Failed to open audiobook.');
     }
