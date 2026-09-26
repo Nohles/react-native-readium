@@ -21,13 +21,34 @@ import org.readium.r2.shared.util.mediatype.MediaType
 import org.readium.r2.shared.util.toUrl
 import org.readium.adapter.pdfium.document.PdfiumDocumentFactory
 import org.readium.r2.streamer.PublicationOpener
+import kotlin.time.Duration.Companion.seconds
 import org.readium.r2.streamer.parser.DefaultPublicationParser
 
 
 class ReaderService(
   private val reactContext: ReactApplicationContext
 ) {
-  private val httpClient = DefaultHttpClient()
+  /**
+   * Bounded network timeouts.
+   *
+   * `DefaultHttpClient` leaves both `connectTimeout` and `readTimeout` null by
+   * default, and null means "use HttpURLConnection's default" — for
+   * `readTimeout` that default is **0, i.e. infinite**. A connection that
+   * stalls mid-read therefore never returns and never errors: the suspend
+   * function hangs forever, the session stays `loading`, and the host's own
+   * deadline expires with nothing to report. That is what an audiobook open over
+   * a flaky link looks like from the outside.
+   *
+   * `readTimeout` is the socket timeout between reads, not a cap on total
+   * transfer time, so a generous value is safe for a multi-gigabyte publication:
+   * it only fires when no bytes arrive at all for that long. 30s of connect and
+   * 60s of read is far longer than any healthy request needs and far shorter
+   * than a user will wait.
+   */
+  private val httpClient = DefaultHttpClient(
+    connectTimeout = 30.seconds,
+    readTimeout = 60.seconds,
+  )
   private val assetRetriever = AssetRetriever(
     reactContext.contentResolver,
     httpClient
