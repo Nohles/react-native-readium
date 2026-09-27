@@ -1,6 +1,23 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
   package="com.reactnativereadium">
+
+  <!-- Audiobook background playback (mirrors iOS UIBackgroundModes audio). -->
+  <uses-permission android:name="android.permission.WAKE_LOCK" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+  <!-- Runtime permission on API 33+: hosts must request it to surface the
+       media notification / lock-screen controls. -->
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
   <application
     android:networkSecurityConfig="@xml/network_security_config">
+    <service
+      android:name=".audio.AudiobookMediaService"
+      android:exported="false"
+      android:foregroundServiceType="mediaPlayback">
+      <intent-filter>
+        <action android:name="androidx.media3.session.MediaSessionService" />
+      </intent-filter>
+    </service>
   </application>
 </manifest>

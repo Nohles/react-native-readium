@@ -23,6 +23,9 @@
       [
         "expo-build-properties",
         {
+          "android": {
+            "kotlinVersion": "2.3.20"
+          },
           "ios": {
             "deploymentTarget": "17.0"
           }

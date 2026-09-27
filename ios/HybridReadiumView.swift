@@ -19,10 +19,37 @@ class HybridReadiumView: HybridReadiumViewSpec {
     didSet {
       guard let file = file else { return }
       ensureHostViewConfigured()
+
+      // Changing the file on a mounted view has to replace the reader. This
+      // previously just stashed the new URL, which `tryLoadBook` then refused to
+      // act on because `hasLoadedBook` was still true, so a host that reused one
+      // `ReadiumView` for a second publication kept showing the first. Android
+      // has torn down and rebuilt on URL change since CHANGELOG rc.6; this is
+      // the same behaviour for iOS.
+      let previousUrl = oldValue?.url
+      if hasLoadedBook, previousUrl != nil, previousUrl != file.url {
+        teardownReaderForNewFile()
+      }
+
       pendingFileUrl = file.url
       pendingInitialLocation = file.initialLocation
       tryLoadBook()
     }
+  }
+
+  /// Detaches the current reader so the pending file can be opened in its place.
+  private func teardownReaderForNewFile() {
+    cancelSearch()
+    detachEmbeddedReaderView()
+    readerHost = nil
+    hasLoadedBook = false
+    hasNotifiedPublicationReady = false
+    for subscription in subscriptions {
+      subscription.cancel()
+    }
+    subscriptions = Set<AnyCancellable>()
+    activeDecorationGroups.removeAll()
+    observedDecorationGroups.removeAll()
   }
 
   var reopenActiveAudiobook: Bool? = nil
@@ -292,7 +319,10 @@ class HybridReadiumView: HybridReadiumViewSpec {
 
   private func updateSelectionActions() {
     guard let actions = selectionActions, !actions.isEmpty else { return }
-    // Selection actions are applied during fragment setup
+    // iOS bakes editing actions into the navigator's Configuration at init, so a
+    // runtime update would mean rebuilding the navigator (losing position,
+    // selection and submitted preferences). `EPUBViewController.updateSelectionActions`
+    // reports this rather than pretending it worked; Android applies it live.
   }
 
   // MARK: - View lifecycle
@@ -330,15 +360,35 @@ class HybridReadiumView: HybridReadiumViewSpec {
       }
     }
 
+    if let epubVC = vc as? EPUBViewController {
+      epubVC.onSelectionChange = { [weak self] locator, highlight in
+        self?.onSelectionChange?(
+          SelectionEvent(
+            locator: locator.map { readiumLocatorToNitro($0) },
+            selectedText: highlight
+          )
+        )
+      }
+    }
+
     if preferences != nil { updatePreferences() }
     if decorations != nil { updateDecorations() }
     bindReaderTapHandler()
   }
 
   private func bindReaderTapHandler() {
-    guard let readerVC = readerHost as? ReaderViewController else { return }
-    readerVC.onTap = { [weak self] point in
-      self?.onTap?(Point(x: Double(point.x), y: Double(point.y)))
+    if let readerVC = readerHost as? ReaderViewController {
+      readerVC.onTap = { [weak self] point in
+        self?.onTap?(Point(x: Double(point.x), y: Double(point.y)))
+      }
+      return
+    }
+    // The comic reader is a bare UIViewController over a UIScrollView rather
+    // than a Readium navigator, so it carries its own tap recognizer.
+    if let comicReader = readerHost as? ComicImageViewController {
+      comicReader.onTap = { [weak self] point in
+        self?.onTap?(Point(x: Double(point.x), y: Double(point.y)))
+      }
     }
   }
 
@@ -581,18 +631,7 @@ class HybridReadiumView: HybridReadiumViewSpec {
 
   // Cleanup
   func cleanup() {
-    cancelSearch()
-    detachEmbeddedReaderView()
-    readerHost = nil
-    hasLoadedBook = false
-    hasNotifiedPublicationReady = false
-
-    for subscription in subscriptions {
-      subscription.cancel()
-    }
-    subscriptions = Set<AnyCancellable>()
-    activeDecorationGroups.removeAll()
-    observedDecorationGroups.removeAll()
+    teardownReaderForNewFile()
   }
 }
 

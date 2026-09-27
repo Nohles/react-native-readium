@@ -3,7 +3,7 @@ import type { Locator } from 'react-native-readium';
 import {
   DEFAULT_PROXIED_INITIAL_LOCATION,
   DEFAULT_PROXIED_MANIFEST_URL,
-} from './lib/proxied-audiobook';
+} from './helpers/proxied-audiobook';
 
 export type Format = 'epub' | 'audiobook' | 'comic' | 'pdf';
 
@@ -11,6 +11,7 @@ export type Sample = {
   title: string;
   format: Format;
   url: string;
+  asset?: number;
   /** Reader-style HTTP manifest test (probe manifest + audio, debug logs). */
   proxied?: boolean;
   initialLocation?: Locator;
@@ -40,14 +41,17 @@ export const samples: Sample[] = [
 
   // Audiobooks
   {
-    title: 'Flatland (Audiobook)',
+    title: 'Readium Sample Audiobook',
     format: 'audiobook',
-    url: 'https://readium.org/webpub-manifest/examples/Flatland/manifest.json',
+    url: 'readium-sample.m4b',
+    asset: require('../example-native/resources/readium-sample.m4b'),
   },
   {
-    title: 'The Martian (Proxied manifest, iOS)',
+    title: 'The Martian (Proxied manifest)',
     format: 'audiobook',
-    url: 'http://192.168.1.199:3000/readium/9b4fb794-7711-4aff-aab7-1a8c15378c68/webpub/QW5keSBXZWlyL1RoZSBNYXJ0aWFuL1RoZSBNYXJ0aWFuLm1wMw/manifest.json',
+    url: DEFAULT_PROXIED_MANIFEST_URL,
+    proxied: true,
+    initialLocation: DEFAULT_PROXIED_INITIAL_LOCATION,
   },
 
   // RTL + CJK
@@ -59,7 +63,7 @@ export const samples: Sample[] = [
 
   // PDF
   {
-    title: 'PDF Sample (iOS)',
+    title: 'PDF Sample',
     format: 'pdf',
     url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
   },

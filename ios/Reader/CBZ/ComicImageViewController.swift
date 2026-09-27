@@ -24,6 +24,10 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
   private var isClampingContentOffset = false
   private var loadingIndices = Set<Int>()
 
+  /// Taps on the page, in this reader's coordinate space. Android's
+  /// ComicReaderFragment emits the same event from its own touch stream.
+  var onTap: ((CGPoint) -> Void)?
+
   init(
     publication: Publication,
     locator: ReadiumShared.Locator?,
@@ -108,6 +112,16 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     scrollView.showsHorizontalScrollIndicator = false
     view.addSubview(scrollView)
 
+    // This reader is a bare UIViewController over a UIScrollView, not a
+    // Readium VisualNavigator, so it never gets the shared `.tap` observer that
+    // ReaderViewController installs. Without this, a host has no way to receive
+    // comic taps on iOS — the app's tap zones and tap-to-toggle-chrome have no
+    // native path here. Android classifies taps in ComicReaderFragment instead,
+    // so the two readers reach the same behaviour by different means.
+    let tapRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
+    tapRecognizer.cancelsTouchesInView = false
+    scrollView.addGestureRecognizer(tapRecognizer)
+
     stackView.translatesAutoresizingMaskIntoConstraints = false
     stackView.alignment = .center
     scrollView.addSubview(stackView)
@@ -122,6 +136,13 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
       stackView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
       stackView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
     ])
+  }
+
+  /// Tap in the reader's own coordinate space, matching the `Point` that
+  /// `ReadiumView.onTap` receives from a VisualNavigator tap.
+  @objc private func handleTap(_ recognizer: UITapGestureRecognizer) {
+    guard recognizer.state == .ended else { return }
+    onTap?(recognizer.location(in: scrollView))
   }
 
   private func configureLoadingIndicator() {

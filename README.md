@@ -155,7 +155,7 @@ android {
 }
 
 dependencies {
-  coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.2"
+  coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.5"
 }
 ```
 
@@ -257,7 +257,7 @@ export function WebPubReader() {
 
 - **Web** — `File.url` must be an HTTPS `manifest.json` URL. The reader fetches the manifest and resources from its base URL. The server must allow your origin via CORS.
 - **iOS** — `File.url` can be a remote `manifest.json` URL (streamed WebPub) or a local path to a packaged EPUB, CBZ, PDF, or audiobook file.
-- **Android** — `File.url` must be a local path to a packaged EPUB on disk. Streamed manifest URLs are not supported yet; download the EPUB first if needed.
+- **Android** — `File.url` can be a remote `manifest.json` URL (streamed WebPub) or a local path to a packaged EPUB, CBZ, PDF, or audiobook file. The manifest should include a `rel: "self"` link (with `type: application/webpub+json`) so the toolkit can resolve the publication's base URL — manifests served by the Readium publication server do. Unlike web, no synthetic self link is injected.
 
 **Self-hosting**
 
@@ -283,7 +283,7 @@ The example apps maintain longer lists of sample URLs:
 
 For a proxied audiobook sample (The Martian), see [`apps/example-expo/README.md`](apps/example-expo/README.md).
 
-### Persistent Audiobook Playback (iOS)
+### Persistent Audiobook Playback (Android and iOS)
 
 Use `useAudiobookPlayer` to build your own audiobook UI while keeping playback
 state and controls connected to Readium. The hook can drive a mini-player while
@@ -336,8 +336,9 @@ title, author, duration, elapsed time, playback rate, and remote transport contr
 When using the Expo config plugin, the required `UIBackgroundModes` audio entry is
 added during prebuild.
 
-`ReadiumAudio`, audiobook rendering, PDF, and CBZ are iOS-only for this release.
-Android continues to support EPUB reading; non-EPUB Android support is deferred.
+`ReadiumAudio`, audiobook rendering, PDF, and CBZ are supported on Android and iOS
+in this release. CBZ uses a bespoke reader on both platforms rather than a
+Readium navigator — see [CBZ / Comic Canvas Presets](#cbz--comic-canvas-presets).
 
 When reopening the full reader from a mini-player, pass
 `reopenActiveAudiobook` through `useAudiobookPlayer` or directly to
@@ -441,10 +442,10 @@ Key concepts:
 
 | Format     | Platforms    | Notes                                                                                                                                                                                                                                      |
 | ---------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| EPUB 2 / 3 | iOS, Android | Rendering, navigation, preferences, highlights, and selection actions. Packaged EPUB on all platforms; streamed WebPub via `manifest.json` on web and iOS only (see [Streamed Web Publications](#streamed-web-publications-manifestjson)). |
-| Audiobook  | iOS          | Playback and persistent `ReadiumAudio` session; Android is deferred.                                                                                                                                                                       |
-| PDF        | iOS          | Rendering and navigation; Android is deferred.                                                                                                                                                                                             |
-| CBZ        | iOS          | Rendering, navigation, comic canvas presets, fit, spread, and reading direction through Readium's EPUB navigator; Android is deferred.                                                                                                     |
+| EPUB 2 / 3 | iOS, Android | Rendering, navigation, preferences, highlights, and selection actions. Packaged EPUB on all platforms; streamed WebPub via `manifest.json` supported everywhere (see [Streamed Web Publications](#streamed-web-publications-manifestjson)). |
+| Audiobook  | iOS, Android | Playback and persistent `ReadiumAudio` session.                                                                                                                                                                                             |
+| PDF        | iOS, Android | Rendering and navigation.                                                                                                                                                                                                                  |
+| CBZ        | iOS, Android | Rendering, navigation, comic canvas presets, fit, spread, and reading direction through a bespoke reader (see [CBZ / Comic Canvas Presets](#cbz--comic-canvas-presets)).                                                     |
 
 **Missing a format you need?** Reach out and see if it can be added to the roadmap.
 
@@ -564,6 +565,62 @@ const MyComponent: React.FC = () => {
 #### File URL by platform
 
 See [Streamed Web Publications (manifest.json)](#streamed-web-publications-manifestjson) for platform rules, sample manifest URLs, and self-hosting guidance.
+
+#### System now playing and bookmarks
+
+`ReadiumAudio` is a headless audiobook session: hosts render their own player UI
+and receive state through `onStateChange`. Three areas are worth calling out
+because the two platforms reach them by different mechanisms.
+
+**Now playing.** Use `setNowPlayingMetadata` to supply the descriptive fields
+(title, artist, album, artwork) rather than writing the platform's own now-playing
+API directly:
+
+```ts
+import { ReadiumAudio } from 'react-native-readium';
+
+ReadiumAudio.setNowPlayingMetadata({
+  title: 'Chapter 4',
+  artist: 'Ursula K. Le Guin',
+  albumTitle: 'The Dispossessed',
+  artworkUrl: 'https://example.com/cover.jpg',
+});
+```
+
+Pass `undefined` to fall back to the publication's own metadata.
+
+- iOS writes `MPNowPlayingInfoCenter`, so a host may keep using that directly if
+  it prefers. Playback *timing* (elapsed, duration, rate) is the host's to
+  publish on iOS.
+- Android has no `MediaSession.setMediaMetadata` — the lock screen and media
+  notification read the *player's* playlist metadata, and the library owns that
+  session. The library therefore applies the fields itself and derives timing
+  from the player, so a host cannot reach the same session from app code.
+
+`setNowPlayingInfoEnabled(false)` suppresses the library's own publishing. This
+is cheap on iOS (`MPNowPlayingInfoCenter` is a passive dictionary) but on Android
+it also stops `AudiobookMediaService`, which *is* the background-playback
+mechanism — you would lose the media notification and the lock-screen transport
+controls. Prefer `setNowPlayingMetadata` on Android and leave the flag on.
+
+**Bookmarks.** The `ReadiumAudio` bookmark methods are the cross-platform way to
+drive bookmarks from a host-rendered player:
+
+```ts
+ReadiumAudio.setBookmarks(savedBookmarks); // restore, acknowledged as `update`
+ReadiumAudio.addBookmark(positionInSeconds, 'note');
+ReadiumAudio.updateBookmark(id, 'a better note');
+ReadiumAudio.removeBookmark(id);
+ReadiumAudio.subscribeBookmarks((event) => persist(event));
+```
+
+iOS additionally emits `onAudiobookBookmarkChange` from its own built-in
+bookmark UI; Android has no such UI, so those events come only from the methods
+above.
+
+**Chapter skip.** `goForward` / `goBackward` move by *chapter* on both platforms,
+derived from the publication's table of contents. A publication whose TOC does
+not resolve against its reading order falls back to reading-order items.
 
 ## Contributing
 

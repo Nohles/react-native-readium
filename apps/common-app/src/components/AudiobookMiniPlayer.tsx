@@ -43,7 +43,7 @@ export const AudiobookMiniPlayer: React.FC<AudiobookMiniPlayerProps> = ({
         {artworkSource ? (
           <Image source={artworkSource} style={styles.artworkImage} />
         ) : (
-          <MaterialIcons name="headphones" size={28} color="#E7E7E7" />
+          <MaterialIcons name="headset" size={28} color="#E7E7E7" />
         )}
       </View>
 

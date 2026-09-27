@@ -17,6 +17,7 @@
 
 #include "JHybridReadiumAudioSpec.hpp"
 #include "JFunc_void_AudiobookSessionState.hpp"
+#include "JFunc_void_AudiobookBookmarkChangeEvent.hpp"
 #include "JHybridReadiumViewSpec.hpp"
 #include "JFunc_void_Locator.hpp"
 #include "JFunc_void_Point.hpp"
@@ -25,7 +26,6 @@
 #include "JFunc_void_SelectionEvent.hpp"
 #include "JFunc_void_SelectionActionEvent.hpp"
 #include "JFunc_void_AudiobookPlaybackState.hpp"
-#include "JFunc_void_AudiobookBookmarkChangeEvent.hpp"
 #include "views/JHybridReadiumViewStateUpdater.hpp"
 #include <NitroModules/DefaultConstructableObject.hpp>
 
@@ -61,6 +61,7 @@ void registerAllNatives() {
   // Register native JNI methods
   margelo::nitro::readium::JHybridReadiumAudioSpec::CxxPart::registerNatives();
   margelo::nitro::readium::JFunc_void_AudiobookSessionState_cxx::registerNatives();
+  margelo::nitro::readium::JFunc_void_AudiobookBookmarkChangeEvent_cxx::registerNatives();
   margelo::nitro::readium::JHybridReadiumViewSpec::CxxPart::registerNatives();
   margelo::nitro::readium::JFunc_void_Locator_cxx::registerNatives();
   margelo::nitro::readium::JFunc_void_Point_cxx::registerNatives();
@@ -69,7 +70,6 @@ void registerAllNatives() {
   margelo::nitro::readium::JFunc_void_SelectionEvent_cxx::registerNatives();
   margelo::nitro::readium::JFunc_void_SelectionActionEvent_cxx::registerNatives();
   margelo::nitro::readium::JFunc_void_AudiobookPlaybackState_cxx::registerNatives();
-  margelo::nitro::readium::JFunc_void_AudiobookBookmarkChangeEvent_cxx::registerNatives();
   margelo::nitro::readium::views::JHybridReadiumViewStateUpdater::registerNatives();
 
   // Register Nitro Hybrid Objects

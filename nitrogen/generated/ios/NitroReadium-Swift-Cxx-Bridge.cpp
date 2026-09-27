@@ -23,6 +23,14 @@ namespace margelo::nitro::readium::bridge::swift {
     };
   }
   
+  // pragma MARK: std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>
+  Func_void_AudiobookBookmarkChangeEvent create_Func_void_AudiobookBookmarkChangeEvent(void* NON_NULL swiftClosureWrapper) noexcept {
+    auto swiftClosure = NitroReadium::Func_void_AudiobookBookmarkChangeEvent::fromUnsafe(swiftClosureWrapper);
+    return [swiftClosure = std::move(swiftClosure)](const AudiobookBookmarkChangeEvent& event) mutable -> void {
+      swiftClosure.call(event);
+    };
+  }
+  
   // pragma MARK: std::shared_ptr<HybridReadiumAudioSpec>
   std::shared_ptr<HybridReadiumAudioSpec> create_std__shared_ptr_HybridReadiumAudioSpec_(void* NON_NULL swiftUnsafePointer) noexcept {
     NitroReadium::HybridReadiumAudioSpec_cxx swiftPart = NitroReadium::HybridReadiumAudioSpec_cxx::fromUnsafe(swiftUnsafePointer);
@@ -92,14 +100,6 @@ namespace margelo::nitro::readium::bridge::swift {
     auto swiftClosure = NitroReadium::Func_void_AudiobookPlaybackState::fromUnsafe(swiftClosureWrapper);
     return [swiftClosure = std::move(swiftClosure)](const AudiobookPlaybackState& state) mutable -> void {
       swiftClosure.call(state);
-    };
-  }
-  
-  // pragma MARK: std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>
-  Func_void_AudiobookBookmarkChangeEvent create_Func_void_AudiobookBookmarkChangeEvent(void* NON_NULL swiftClosureWrapper) noexcept {
-    auto swiftClosure = NitroReadium::Func_void_AudiobookBookmarkChangeEvent::fromUnsafe(swiftClosureWrapper);
-    return [swiftClosure = std::move(swiftClosure)](const AudiobookBookmarkChangeEvent& event) mutable -> void {
-      swiftClosure.call(event);
     };
   }
   

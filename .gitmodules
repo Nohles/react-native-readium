@@ -1,0 +1,4 @@
+[submodule "external/kotlin-toolkit"]
+	path = external/kotlin-toolkit
+	url = https://github.com/Nohles/kotlin-toolkit
+	shallow = true

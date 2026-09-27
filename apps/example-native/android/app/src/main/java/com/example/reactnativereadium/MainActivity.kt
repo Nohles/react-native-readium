@@ -1,7 +1,11 @@
 package com.example.reactnativereadium
 
 // https://github.com/software-mansion/react-native-screens/tree/6ad2f401061a7706af0f77186a466cb33241d680#android
+import android.os.Build;
 import android.os.Bundle;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import androidx.core.app.ActivityCompat;
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -27,5 +31,20 @@ class MainActivity : ReactActivity() {
    */
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(null)
+    requestNotificationPermissionIfNeeded()
+  }
+
+  /**
+   * The audiobook media notification (lock-screen controls) needs
+   * POST_NOTIFICATIONS granted at runtime on Android 13+.
+   */
+  private fun requestNotificationPermissionIfNeeded() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+        ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+          PackageManager.PERMISSION_GRANTED) {
+      ActivityCompat.requestPermissions(
+        this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1
+      )
+    }
   }
 }

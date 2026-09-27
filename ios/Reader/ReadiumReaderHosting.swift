@@ -19,10 +19,6 @@ extension ReaderViewController: ReadiumReaderHosting {
   var viewController: UIViewController { self }
 }
 
-extension AudioViewController: ReadiumReaderHosting {
-  var viewController: UIViewController { self }
-}
-
 extension AudiobookViewController: ReadiumReaderHosting {
   var viewController: UIViewController { self }
 }

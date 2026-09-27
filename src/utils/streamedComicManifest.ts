@@ -31,9 +31,7 @@ function base64UrlEncode(value: string): string {
     .replace(/=+$/, '');
 }
 
-export function isComicBookLink(link: {
-  type?: string;
-}): boolean {
+export function isComicBookLink(link: { type?: string }): boolean {
   return typeof link?.type === 'string' && COMIC_BOOK_TYPES.has(link.type);
 }
 

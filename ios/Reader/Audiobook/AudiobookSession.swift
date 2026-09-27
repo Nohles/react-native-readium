@@ -10,12 +10,18 @@ final class AudiobookSession {
     didSet { onStateChange?(lastState) }
   }
 
+  /// Bookmark mutations from either the native UI or a headless host. Android
+  /// has no native audiobook UI, so this is the only path a bookmark takes
+  /// there; keeping it on the session makes both platforms emit identically.
+  var onBookmarkChange: ((AudiobookBookmarkChangeEvent) -> Void)?
+
   private var readerService = ReaderService()
   private(set) var controller: AudiobookViewController?
   private(set) var fileURL: String?
   private var metadata: PublicationMetadata?
   private var isNowPlayingInfoEnabled = true
   private var isNowPlayingMetadataEnabled = true
+  private var hostNowPlayingMetadata: NowPlayingMetadata?
   private var lastState = AudiobookSessionState(
     status: .idle,
     publication: nil,
@@ -85,8 +91,12 @@ final class AudiobookSession {
     metadata = readiumMetadataToNitro(host.publication.metadata)
     host.isNowPlayingInfoEnabled = isNowPlayingInfoEnabled
     host.isNowPlayingMetadataEnabled = isNowPlayingMetadataEnabled
+    host.hostNowPlayingMetadata = hostNowPlayingMetadata
     host.onPlaybackStateChange = { [weak self] state in
       self?.receivePlayback(state)
+    }
+    host.onBookmarkChange = { [weak self] event in
+      self?.onBookmarkChange?(event)
     }
     if emitReady && (lastState.status == .idle || lastState.status == .loading) {
       emit(status: .ready)
@@ -106,7 +116,27 @@ final class AudiobookSession {
     isNowPlayingMetadataEnabled = enabled
     controller?.isNowPlayingMetadataEnabled = enabled
   }
+  func setNowPlayingMetadata(_ metadata: NowPlayingMetadata?) {
+    hostNowPlayingMetadata = metadata
+    controller?.hostNowPlayingMetadata = metadata
+  }
   func setSleepTimer(_ seconds: Double?) { controller?.setSleepTimer(seconds: seconds) }
+
+  func setBookmarks(_ bookmarks: [AudiobookBookmark]) {
+    Task { @MainActor in controller?.setBookmarks(bookmarks) }
+  }
+
+  func addBookmark(id: String, position: Double, note: String?) {
+    Task { @MainActor in controller?.addBookmark(id: id, position: position, note: note) }
+  }
+
+  func updateBookmark(id: String, note: String?) {
+    Task { @MainActor in controller?.updateBookmark(id: id, note: note) }
+  }
+
+  func removeBookmark(id: String) {
+    Task { @MainActor in controller?.removeBookmark(id: id) }
+  }
 
   func goForward() {
     Task { @MainActor in await controller?.goForward() }

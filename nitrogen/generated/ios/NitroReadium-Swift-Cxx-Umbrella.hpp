@@ -48,6 +48,8 @@ namespace margelo::nitro::readium { struct LocatorLocations; }
 namespace margelo::nitro::readium { struct LocatorText; }
 // Forward declaration of `Locator` to properly resolve imports.
 namespace margelo::nitro::readium { struct Locator; }
+// Forward declaration of `NowPlayingMetadata` to properly resolve imports.
+namespace margelo::nitro::readium { struct NowPlayingMetadata; }
 // Forward declaration of `Point` to properly resolve imports.
 namespace margelo::nitro::readium { struct Point; }
 // Forward declaration of `Preferences` to properly resolve imports.
@@ -96,6 +98,7 @@ namespace margelo::nitro::readium { struct Subject; }
 #include "Locator.hpp"
 #include "LocatorLocations.hpp"
 #include "LocatorText.hpp"
+#include "NowPlayingMetadata.hpp"
 #include "Point.hpp"
 #include "Preferences.hpp"
 #include "PublicationCapabilities.hpp"

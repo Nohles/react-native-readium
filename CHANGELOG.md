@@ -1,3 +1,189 @@
+# 5.0.0-rc.35
+
+Android/iOS parity pass, plus the audiobook-open fix. Consumes the byte-range fix
+in [Nohles/kotlin-toolkit#1](https://github.com/Nohles/kotlin-toolkit/pull/1),
+which the Android EPUB navigator depends on for ranged resources.
+
+### Bug Fixes
+
+**Android — the interaction and audiobook surface that was declared but never
+implemented**
+
+* `onTap` now fires. It was declared on the spec with zero call sites, so comic tap
+  zones and tap-to-toggle-chrome were dead on Android while working on iOS. A JS
+  gesture layer cannot substitute: the native reader consumes the touch before it
+  reaches React Native.
+* `search` / `searchNext` run off the main looper. Both do file and network I/O
+  and were dispatched on the UI thread.
+* `audiobookBookmarks` and `onAudiobookBookmarkChange` are wired; the session owns
+  the list and publishes `add`/`update`/`remove`.
+* `ReadiumAudio.goForward`/`goBackward` are chapter-aware, matching
+  `AudiobookViewController.seekToNext/PreviousChapter` including its
+  "restart the current chapter" rule. They were reading-order item skips, so the
+  player's Previous/Next behaved differently per platform.
+* `setNowPlayingInfoEnabled` and `setNowPlayingMetadataEnabled` are no longer
+  `= Unit`. The info flag controls whether `AudiobookMediaService` runs; the
+  metadata flag selects a `MediaMetadataProvider`. Both differences from iOS are
+  documented in the source.
+* `reopenActiveAudiobook` is honoured.
+* Unsupported formats now fail with an accurate reason instead of opening into an
+  empty reader (EPUB `allAreHTML` gate), and an unsupported URL scheme is reported
+  as such instead of "File does not exist".
+* Comic page turns no longer destroy and recreate the scroll container, and page
+  decoding is downsampled to the target size. A 2000x2800 page previously decoded
+  at full resolution while several stayed alive in the preload window, which
+  reliably hit `OutOfMemoryError` on a mid-range device.
+* The 500ms selection poll no longer runs on fragments whose navigator cannot hold
+  a selection.
+* Metadata conversion matches iOS: contributors populate the same three fields,
+  dates are ISO-8601 on both, and an opaque decoration tint is `#RRGGBB` rather
+  than always `#AARRGGBB`.
+* `ensureService` no longer fails silently when the host context is not a
+  `ThemedReactContext`; the reader used to render an empty view with no diagnostic.
+
+**Audiobook open — two real bugs, both only visible on a real publication**
+
+* `DefaultHttpClient` left `connectTimeout` and `readTimeout` null, and null means
+  `HttpURLConnection`'s default — for `readTimeout` that is 0, i.e. infinite. A
+  connection that stalled mid-read never returned *and never errored*, so the
+  session sat in `loading` forever and the host's deadline expired with nothing to
+  report. Bounded at 30s connect / 60s read. `readTimeout` is the gap *between*
+  reads rather than a cap on total transfer, so a generous value is safe for a
+  multi-gigabyte publication.
+* The open was reported as a timeout because `ready` is conflated away. The native
+  session is a `StateFlow`, which guarantees the *latest* value, not every value.
+  `ready` is emitted and then superseded almost immediately by `paused`, so a
+  collector never observes it — while `ReadiumAudio.open` waited for exactly
+  `ready`. Every audiobook open ended in "Timed out waiting for audiobook session"
+  even though the publication opened in well under a second. It now waits for the
+  session to be *settled*: anything that is not `idle` or `loading`.
+
+**iOS**
+
+* Changing `file` on a mounted `ReadiumView` replaces the reader. It was ignored,
+  so a host reusing one view for a second publication kept showing the first.
+* `onSelectionChange` is emitted. It was declared and documented as working but
+  never fired anywhere.
+* The comic reader emits taps. It is a bare `UIViewController` over a
+  `UIScrollView`, so it never received the shared `.tap` observer.
+
+### Features
+
+* `ReadiumAudio` gains `setBookmarks`, `addBookmark`, `updateBookmark`,
+  `removeBookmark` and `subscribeBookmarks`, implemented on both platforms. iOS
+  could only emit bookmark changes from its own native UI, so a host-rendered
+  player had no way to drive bookmarks on Android at all.
+* `ReadiumAudio.setNowPlayingMetadata` supplies the descriptive now-playing fields
+  (title, artist, album, artwork) on both platforms, so a host no longer needs to
+  reach for `MPNowPlayingInfoCenter` directly on one platform only.
+
+### Chores
+
+* Removed the Readium 2 era `fragment_fxllayout_*` / `viewpager_fragment_epub`
+  layouts, which reference classes that no longer exist.
+* Removed `ContentResolverUtil` and `FragmentFactory` (referenced by nothing), the
+  permanently-hidden `PositionLabelManager` subsystem, `ReaderService.Event`, and
+  `BaseReaderFragment.getCurrentSelection`.
+* Dropped unused Gradle dependencies inherited from a Readium 2 example app —
+  Room, jsoup, Picasso, joda-time, Timber, and the navigation / paging /
+  recyclerview / viewpager2 / webkit / material / cardview / browser stack —
+  which were shipping into every consumer's APK.
+* Removed the unreachable `AudioModule` / `AudioViewController` and
+  `ios/Readium.xcodeproj`, which referenced three files that do not exist.
+* `publish-kotlin-toolkit-maven-local.sh` now publishes every
+  `org.readium.kotlin-toolkit` coordinate `android/build.gradle` declares and fails
+  if any is missing. The two pdfium adapters were absent, so Gradle silently
+  resolved them from Maven Central while everything else came from the fork — PDF
+  was the only format linked against a different toolkit.
+
+# Unreleased (after 5.0.0-rc.33)
+
+This release closes the Android/iOS parity gaps. Nothing here changes the JS
+API surface except where noted as a feature.
+
+### Bug Fixes
+
+**Android — declared but never implemented**
+
+* **android:** `onTap` now fires. It was declared on the spec with zero call
+  sites, so comic tap zones and tap-to-toggle-chrome were dead on Android while
+  working on iOS. Registering a `VisualNavigator` InputListener is the fix; a JS
+  gesture layer cannot substitute because the native reader consumes the touch
+  before it reaches React Native.
+* **android:** `search` and `searchNext` run off the main looper. Both do file
+  and network I/O, and both were dispatched on the UI thread.
+* **android:** `audiobookBookmarks` and `onAudiobookBookmarkChange` are wired.
+  The session owns the list and publishes `add`/`update`/`remove`.
+* **android:** `ReadiumAudio.goForward`/`goBackward` are chapter-aware, matching
+  iOS including its "restart the current chapter" rule. They were reading-order
+  item skips, so the player's Previous/Next behaved differently per platform.
+* **android:** `setNowPlayingInfoEnabled` and `setNowPlayingMetadataEnabled` are
+  no longer `= Unit`. The info flag controls whether `AudiobookMediaService`
+  runs; the metadata flag gates descriptive metadata. Both differences from iOS
+  are documented in the source.
+* **android:** `reopenActiveAudiobook` is honoured.
+* **android:** unsupported publication formats now fail with an accurate reason
+  instead of opening into an empty reader (EPUB `allAreHTML` gate), and an
+  unsupported URL scheme is reported as such instead of "File does not exist".
+* **android:** comic page turns no longer destroy and recreate the scroll
+  container, and page decoding is downsampled to the target size. A 2000x2800
+  page previously decoded at full resolution while several stayed alive in the
+  preload window, which reliably hit `OutOfMemoryError` on a mid-range device.
+* **android:** the 500ms selection poll no longer runs on fragments whose
+  navigator cannot hold a selection.
+* **android:** metadata conversion matches iOS — contributors populate the same
+  three fields, dates are ISO-8601 on both, and an opaque decoration tint is
+  `#RRGGBB` rather than always `#AARRGGBB`.
+* **android:** `ensureService` no longer fails silently when the host context is
+  not a `ThemedReactContext`; the reader used to render an empty view with no
+  diagnostic.
+
+**iOS**
+
+* **ios:** changing `file` on a mounted `ReadiumView` replaces the reader. It was
+  ignored, so a host reusing one view for a second publication kept showing the
+  first and had to remount by hand.
+* **ios:** `onSelectionChange` is emitted. It was declared and documented as
+  working but never fired anywhere, so the dictionary controller had no
+  selection on iOS.
+* **ios:** the comic reader emits taps. It is a bare `UIViewController` over a
+  `UIScrollView`, so it never received the shared `.tap` observer that
+  `ReaderViewController` installs.
+* **ios:** selection-action update now says what a caller should do rather than
+  only printing that it did nothing.
+
+### Features
+
+* `ReadiumAudio` gains `setBookmarks`, `addBookmark`, `updateBookmark`,
+  `removeBookmark` and `subscribeBookmarks`, implemented on both platforms.
+  iOS could only emit bookmark changes from its own native UI, so a host-rendered
+  player had no way to drive bookmarks on Android at all.
+* `ReadiumAudio.setNowPlayingMetadata` supplies the descriptive now-playing
+  fields (title, artist, album, artwork) on both platforms, so a host no longer
+  needs to reach for `MPNowPlayingInfoCenter` directly on one platform only.
+
+### Chores
+
+* Removed the Readium 2 era `fragment_fxllayout_*` / `viewpager_fragment_epub`
+  layouts, which reference classes that no longer exist and only generated unused
+  ViewBinding classes.
+* Removed `ContentResolverUtil` and `FragmentFactory` (referenced by nothing),
+  the permanently-hidden `PositionLabelManager` subsystem and its colour
+  plumbing, `ReaderService.Event`, and `BaseReaderFragment.getCurrentSelection`.
+* Dropped unused Gradle dependencies inherited from a Readium 2 example app —
+  Room, jsoup, Picasso, joda-time, Timber, and the navigation / paging /
+  recyclerview / viewpager2 / webkit / material / cardview / browser stack — which
+  were shipping into every consumer's APK.
+* Removed the unreachable `AudioModule` / `AudioViewController` (235 lines) and
+  `ios/Readium.xcodeproj`, which referenced three files that do not exist.
+* `scripts/publish-kotlin-toolkit-maven-local.sh` publishes every
+  `org.readium.kotlin-toolkit` coordinate `android/build.gradle` declares, and
+  fails if any is missing. The two pdfium adapters were absent, so Gradle
+  silently resolved them from Maven Central while everything else came from the
+  fork — PDF was the only format linked against a different toolkit. The script
+  also resolves the JetBrains Runtime 21 the toolkit requires and the Android SDK
+  itself, and reports where it looked when it cannot.
+
 # 5.0.0-rc.29 (2026-07-28)
 
 ### Bug Fixes

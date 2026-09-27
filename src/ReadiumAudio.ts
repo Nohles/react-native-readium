@@ -1,16 +1,23 @@
 import { Platform } from 'react-native';
 import { NitroModules } from 'react-native-nitro-modules';
 
+import type {
+  AudiobookBookmark,
+  AudiobookBookmarkChangeEvent,
+} from './interfaces';
 import type { File } from './interfaces';
 import type {
   AudiobookSessionState,
+  NowPlayingMetadata,
   ReadiumAudio as NativeReadiumAudio,
 } from './specs/ReadiumAudio.nitro';
 
 type Listener = (state: AudiobookSessionState) => void;
+type BookmarkListener = (event: AudiobookBookmarkChangeEvent) => void;
 
 let nativeAudio: NativeReadiumAudio | undefined;
 const listeners = new Set<Listener>();
+const bookmarkListeners = new Set<BookmarkListener>();
 const idleState: AudiobookSessionState = {
   status: 'idle',
   position: 0,
@@ -20,19 +27,15 @@ const idleState: AudiobookSessionState = {
 };
 let currentState: AudiobookSessionState = idleState;
 
-const unsupportedError = () =>
-  new Error('Readium audiobook sessions are currently supported on iOS only.');
-
 function getNativeAudio(): NativeReadiumAudio {
-  if (Platform.OS !== 'ios') {
-    throw unsupportedError();
-  }
-
   if (!nativeAudio) {
     nativeAudio =
       NitroModules.createHybridObject<NativeReadiumAudio>('ReadiumAudio');
     nativeAudio.onStateChange = (state) => {
       emitState(state);
+    };
+    nativeAudio.onBookmarkChange = (event) => {
+      bookmarkListeners.forEach((listener) => listener(event));
     };
   }
 
@@ -44,9 +47,43 @@ function emitState(state: AudiobookSessionState): void {
   listeners.forEach((listener) => listener(state));
 }
 
+/**
+ * How long `open` waits for the session to reach `ready` or `error`.
+ *
+ * Kept short on purpose. Resolving durations for a remote audiobook can be
+ * slow, but a slow open that eventually succeeds is not something to paper over
+ * with a long sleep: with `DefaultHttpClient` now bounded (see
+ * `ReaderService`), a genuinely stalled request surfaces as an error rather than
+ * hanging, so the deadline is a backstop for the case where the native side is
+ * working but not finishing. Raise it via {@link
+ * ReadiumAudio.setOpenTimeoutMs} for a known-slow publication.
+ */
+const DEFAULT_OPEN_TIMEOUT_MS = 120_000;
+
+/**
+ * Whether an open has finished, one way or the other.
+ *
+ * Deliberately not "is it `ready`". The native side is a `StateFlow`, which is
+ * *conflated*: it guarantees the latest value, not every value. `ready` is
+ * emitted and then superseded almost immediately by `paused` (nothing is playing
+ * yet), so a collector that is even slightly behind never sees it — while the
+ * publication is open and ExoPlayer is initialised. Waiting for `ready` exactly
+ * therefore hangs until the deadline and then reports a timeout for an audiobook
+ * that opened in under half a second.
+ *
+ * `idle` and `loading` are the only states that mean "still opening". Every
+ * other state describes a session that exists, and `error` is handled by the
+ * caller.
+ */
+function sessionIsSettled(session: AudiobookSessionState): boolean {
+  return session.status !== 'idle' && session.status !== 'loading';
+}
+
+let openTimeoutMs = DEFAULT_OPEN_TIMEOUT_MS;
+
 function waitForSession(
   predicate: (state: AudiobookSessionState) => boolean,
-  timeoutMs = 120_000
+  timeoutMs: number
 ): Promise<AudiobookSessionState> {
   return new Promise((resolve, reject) => {
     if (predicate(currentState)) {
@@ -57,7 +94,13 @@ function waitForSession(
     let unsubscribe: () => void = () => {};
     const timeout = setTimeout(() => {
       unsubscribe();
-      reject(new Error('Timed out waiting for audiobook session.'));
+      reject(
+        new Error(
+          `Timed out waiting for audiobook session after ${Math.round(
+            timeoutMs / 1000
+          )}s.`
+        )
+      );
     }, timeoutMs);
 
     const listener: Listener = (state) => {
@@ -81,12 +124,26 @@ export const ReadiumAudio = {
 
   async open(file: File): Promise<void> {
     getNativeAudio().open(file);
-    const state = await waitForSession(
-      (session) => session.status === 'ready' || session.status === 'error'
-    );
+    const state = await waitForSession(sessionIsSettled, openTimeoutMs);
     if (state.status === 'error') {
       throw new Error(state.error ?? 'Failed to open audiobook.');
     }
+  },
+
+  /**
+   * Overrides how long {@link open} waits for the session, in milliseconds.
+   *
+   * Only worth lowering for a publication known to be local, where the open
+   * should be near-instant and a long stall means something is actually wrong.
+   * Pass `null` to restore the default.
+   */
+  setOpenTimeoutMs(timeoutMs: number | null): void {
+    openTimeoutMs = timeoutMs ?? DEFAULT_OPEN_TIMEOUT_MS;
+  },
+
+  /** The current open deadline in milliseconds. */
+  getOpenTimeoutMs(): number {
+    return openTimeoutMs;
   },
 
   play(): void {
@@ -125,20 +182,65 @@ export const ReadiumAudio = {
     getNativeAudio().setNowPlayingMetadataEnabled(enabled);
   },
 
+  /**
+   * Overrides the descriptive now-playing fields with host-supplied values;
+   * `undefined` falls back to the publication's own metadata.
+   *
+   * This is the cross-platform way to drive the system media entry. Reaching for
+   * the platform's own API directly (iOS `MPNowPlayingInfoCenter`) works on one
+   * platform only, and Android's media session is owned by the library.
+   */
+  setNowPlayingMetadata(metadata?: NowPlayingMetadata): void {
+    getNativeAudio().setNowPlayingMetadata(metadata);
+  },
+
   setSleepTimer(seconds?: number): void {
     getNativeAudio().setSleepTimer(seconds);
   },
 
+  /**
+   * Replaces the session's bookmark list. Each bookmark is acknowledged with an
+   * `update` change event, so a host that persists bookmarks elsewhere sees
+   * them round-trip.
+   */
+  setBookmarks(bookmarks: AudiobookBookmark[]): void {
+    getNativeAudio().setBookmarks(bookmarks);
+  },
+
+  /** Adds a bookmark at `position` seconds on the chapter timeline. */
+  addBookmark(position: number, note?: string): void {
+    getNativeAudio().addBookmark(position, note);
+  },
+
+  /** Updates the note on an existing bookmark. No-op if the id is unknown. */
+  updateBookmark(id: string, note?: string): void {
+    getNativeAudio().updateBookmark(id, note);
+  },
+
+  /** Removes a bookmark. No-op if the id is unknown. */
+  removeBookmark(id: string): void {
+    getNativeAudio().removeBookmark(id);
+  },
+
   close(): void {
-    if (Platform.OS === 'ios') {
-      getNativeAudio().close();
-    }
+    getNativeAudio().close();
     emitState(idleState);
   },
 
   subscribe(listener: Listener): () => void {
     listeners.add(listener);
     listener(currentState);
+    if (Platform.OS === 'android' || Platform.OS === 'ios') {
+      getNativeAudio();
+    }
     return () => listeners.delete(listener);
+  },
+
+  subscribeBookmarks(listener: BookmarkListener): () => void {
+    bookmarkListeners.add(listener);
+    if (Platform.OS === 'android' || Platform.OS === 'ios') {
+      getNativeAudio();
+    }
+    return () => bookmarkListeners.delete(listener);
   },
 };

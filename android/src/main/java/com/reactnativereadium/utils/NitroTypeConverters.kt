@@ -2,6 +2,10 @@ package com.reactnativereadium.utils
 
 import android.graphics.Color
 import com.margelo.nitro.reactnativereadium.*
+import com.reactnativereadium.audio.AudiobookSessionState as NativeAudioSessionState
+import com.reactnativereadium.audio.AudiobookStatus
+import com.reactnativereadium.audio.AudiobookBookmark as NativeAudiobookBookmark
+import com.reactnativereadium.reader.ComicPreferences
 import org.readium.r2.navigator.epub.EpubPreferences as ReadiumEpubPreferences
 import org.readium.r2.navigator.preferences.ColumnCount
 import org.readium.r2.navigator.preferences.FontFamily
@@ -44,7 +48,6 @@ internal fun nitroPreferencesToEpub(prefs: Preferences): ReadiumEpubPreferences 
     language = prefs.language?.let { Language(it) },
     letterSpacing = prefs.letterSpacing,
     ligatures = prefs.ligatures,
-    linkColor = prefs.linkColor?.let { parseReadiumColor(it) },
     lineHeight = prefs.lineHeight,
     pageMargins = prefs.pageMargins,
     paragraphIndent = prefs.paragraphIndent,
@@ -60,6 +63,23 @@ internal fun nitroPreferencesToEpub(prefs: Preferences): ReadiumEpubPreferences 
     typeScale = prefs.typeScale,
     verticalText = prefs.verticalText,
     wordSpacing = prefs.wordSpacing,
+  )
+}
+
+internal fun nitroPreferencesToComic(prefs: Preferences): ComicPreferences {
+  return ComicPreferences(
+    scroll = prefs.scroll,
+    spread = prefs.spread,
+    readingMode = prefs.comicReadingMode,
+    scaleType = prefs.comicScaleType,
+    readingProgression = prefs.readingProgression,
+    backgroundColor = prefs.backgroundColor,
+    pageMargins = prefs.pageMargins,
+    stretchSmallPages = prefs.comicStretchSmallPages,
+    widthLimitEnabled = prefs.comicWidthLimitEnabled,
+    widthLimitPercent = prefs.comicWidthLimitPercent,
+    scrollAmountPercent = prefs.comicScrollAmountPercent,
+    imagePreloadAmount = prefs.comicImagePreloadAmount
   )
 }
 
@@ -271,10 +291,12 @@ internal fun readiumDecorationToNitro(dec: ReadiumDecoration): Decoration {
 internal fun readiumMetadataToNitro(meta: ReadiumMetadata): PublicationMetadata {
   fun contributors(list: List<org.readium.r2.shared.publication.Contributor>): Array<Contributor>? {
     if (list.isEmpty()) return null
+    // All three fields are populated, and iOS populates the same three, so a
+    // host sees identical contributor records on both platforms.
     return list.map {
       Contributor(
         name = it.name,
-        sortAs = null,
+        sortAs = it.localizedSortAs?.string,
         identifier = it.identifier,
         role = it.roles.firstOrNull(),
         position = it.position
@@ -291,10 +313,13 @@ internal fun readiumMetadataToNitro(meta: ReadiumMetadata): PublicationMetadata 
 
   return PublicationMetadata(
     title = meta.title ?: "Untitled",
-    sortAs = null,
+    sortAs = meta.localizedSortAs?.string,
     subtitle = meta.localizedSubtitle?.string,
     identifier = meta.identifier,
     accessibility = null,
+    // ISO-8601 on both platforms: the iOS converter used to emit a
+    // human-readable `Date.description` here, so the same publication reported
+    // two different date formats depending on the device.
     modified = meta.modified?.toString(),
     published = meta.published?.toString(),
     language = if (meta.languages.isNotEmpty()) meta.languages.toTypedArray() else null,
@@ -313,7 +338,7 @@ internal fun readiumMetadataToNitro(meta: ReadiumMetadata): PublicationMetadata 
     imprint = contributors(meta.imprints),
     subject = subjects(meta.subjects),
     layout = null,
-    readingProgression = meta.readingProgression?.name?.lowercase(),
+    readingProgression = meta.readingProgression?.value,
     description = meta.description,
     duration = meta.duration,
     numberOfPages = meta.numberOfPages?.toDouble(),
@@ -321,4 +346,75 @@ internal fun readiumMetadataToNitro(meta: ReadiumMetadata): PublicationMetadata 
   )
 }
 
-internal fun colorToHex(color: Int): String = String.format("#%08X", color)
+/**
+ * Renders an ARGB int as a CSS hex colour, matching iOS `UIColor.cssHex`
+ * (ios/Common/Toolkit/Extensions/UIColor+CSS.swift:77-95): `#RRGGBB` when fully
+ * opaque, `#AARRGGBB` otherwise. Android previously always emitted the 8-digit
+ * form, so an opaque decoration tint came back as `#FFRRGGBB` on Android and
+ * `#RRGGBB` on iOS for the same publication.
+ */
+internal fun colorToHex(color: Int): String {
+  val alpha = Color.alpha(color)
+  if (alpha == 0xFF) {
+    return String.format("#%02X%02X%02X", Color.red(color), Color.green(color), Color.blue(color))
+  }
+  return String.format("#%02X%02X%02X%02X", alpha, Color.red(color), Color.green(color), Color.blue(color))
+}
+
+// MARK: - Audiobook session → Nitro converters
+
+private fun audiobookStatusToNitro(status: AudiobookStatus): AudiobookSessionStatus =
+  when (status) {
+    AudiobookStatus.IDLE -> AudiobookSessionStatus.IDLE
+    AudiobookStatus.LOADING -> AudiobookSessionStatus.LOADING
+    AudiobookStatus.READY -> AudiobookSessionStatus.READY
+    AudiobookStatus.PLAYING -> AudiobookSessionStatus.PLAYING
+    AudiobookStatus.PAUSED -> AudiobookSessionStatus.PAUSED
+    AudiobookStatus.ENDED -> AudiobookSessionStatus.ENDED
+    AudiobookStatus.ERROR -> AudiobookSessionStatus.ERROR
+  }
+
+internal fun NativeAudioSessionState.toNitroSessionState(): AudiobookSessionState =
+  AudiobookSessionState(
+    status = audiobookStatusToNitro(status),
+    publication = publication?.let { readiumMetadataToNitro(it.metadata) },
+    position = position,
+    duration = duration,
+    rate = rate,
+    volume = volume,
+    currentHref = currentHref,
+    currentTitle = currentTitle,
+    sleepTimerRemaining = sleepTimerRemaining,
+    error = error
+  )
+
+internal fun NativeAudioSessionState.toNitroPlaybackState(): AudiobookPlaybackState =
+  AudiobookPlaybackState(
+    isPlaying = status == AudiobookStatus.PLAYING,
+    position = position,
+    duration = duration,
+    rate = rate,
+    volume = volume,
+    currentHref = currentHref,
+    currentTitle = currentTitle,
+    sleepTimerRemaining = sleepTimerRemaining
+  )
+
+internal fun readiumBookmarkToNitro(bookmark: NativeAudiobookBookmark): AudiobookBookmark =
+  AudiobookBookmark(
+    id = bookmark.id,
+    locator = readiumLocatorToNitro(bookmark.locator),
+    position = bookmark.position,
+    note = bookmark.note
+  )
+
+/** Nitro → session bookmark; null when the locator cannot be reconstructed. */
+internal fun nitroBookmarkToReadium(bookmark: AudiobookBookmark): NativeAudiobookBookmark? {
+  val locator = nitroLocatorToReadium(bookmark.locator) ?: return null
+  return NativeAudiobookBookmark(
+    id = bookmark.id,
+    locator = locator,
+    position = bookmark.position,
+    note = bookmark.note
+  )
+}

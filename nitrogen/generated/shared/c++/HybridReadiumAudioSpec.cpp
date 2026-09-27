@@ -16,6 +16,8 @@ namespace margelo::nitro::readium {
     registerHybrids(this, [](Prototype& prototype) {
       prototype.registerHybridGetter("onStateChange", &HybridReadiumAudioSpec::getOnStateChange);
       prototype.registerHybridSetter("onStateChange", &HybridReadiumAudioSpec::setOnStateChange);
+      prototype.registerHybridGetter("onBookmarkChange", &HybridReadiumAudioSpec::getOnBookmarkChange);
+      prototype.registerHybridSetter("onBookmarkChange", &HybridReadiumAudioSpec::setOnBookmarkChange);
       prototype.registerHybridMethod("open", &HybridReadiumAudioSpec::open);
       prototype.registerHybridMethod("play", &HybridReadiumAudioSpec::play);
       prototype.registerHybridMethod("pause", &HybridReadiumAudioSpec::pause);
@@ -26,7 +28,12 @@ namespace margelo::nitro::readium {
       prototype.registerHybridMethod("setVolume", &HybridReadiumAudioSpec::setVolume);
       prototype.registerHybridMethod("setNowPlayingInfoEnabled", &HybridReadiumAudioSpec::setNowPlayingInfoEnabled);
       prototype.registerHybridMethod("setNowPlayingMetadataEnabled", &HybridReadiumAudioSpec::setNowPlayingMetadataEnabled);
+      prototype.registerHybridMethod("setNowPlayingMetadata", &HybridReadiumAudioSpec::setNowPlayingMetadata);
       prototype.registerHybridMethod("setSleepTimer", &HybridReadiumAudioSpec::setSleepTimer);
+      prototype.registerHybridMethod("setBookmarks", &HybridReadiumAudioSpec::setBookmarks);
+      prototype.registerHybridMethod("addBookmark", &HybridReadiumAudioSpec::addBookmark);
+      prototype.registerHybridMethod("updateBookmark", &HybridReadiumAudioSpec::updateBookmark);
+      prototype.registerHybridMethod("removeBookmark", &HybridReadiumAudioSpec::removeBookmark);
       prototype.registerHybridMethod("close", &HybridReadiumAudioSpec::close);
     });
   }

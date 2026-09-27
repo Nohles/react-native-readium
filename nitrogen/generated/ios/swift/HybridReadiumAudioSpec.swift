@@ -11,6 +11,7 @@ import NitroModules
 public protocol HybridReadiumAudioSpec_protocol: HybridObject {
   // Properties
   var onStateChange: ((_ state: AudiobookSessionState) -> Void)? { get set }
+  var onBookmarkChange: ((_ event: AudiobookBookmarkChangeEvent) -> Void)? { get set }
 
   // Methods
   func open(file: ReadiumFile) throws -> Void
@@ -23,7 +24,12 @@ public protocol HybridReadiumAudioSpec_protocol: HybridObject {
   func setVolume(volume: Double) throws -> Void
   func setNowPlayingInfoEnabled(enabled: Bool) throws -> Void
   func setNowPlayingMetadataEnabled(enabled: Bool) throws -> Void
+  func setNowPlayingMetadata(metadata: NowPlayingMetadata?) throws -> Void
   func setSleepTimer(seconds: Double?) throws -> Void
+  func setBookmarks(bookmarks: [AudiobookBookmark]) throws -> Void
+  func addBookmark(position: Double, note: String?) throws -> Void
+  func updateBookmark(id: String, note: String?) throws -> Void
+  func removeBookmark(id: String) throws -> Void
   func close() throws -> Void
 }
 

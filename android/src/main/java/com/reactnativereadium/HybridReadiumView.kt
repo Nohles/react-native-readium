@@ -6,12 +6,16 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.fragment.app.FragmentActivity
+import com.reactnativereadium.ReaderHostView
+import com.reactnativereadium.audio.AudiobookSession
 import com.reactnativereadium.reader.BaseReaderFragment
+import com.reactnativereadium.reader.ComicReaderFragment
 import com.reactnativereadium.reader.EpubReaderFragment
 import com.reactnativereadium.reader.ReaderService
 import com.reactnativereadium.reader.ReaderViewModel
 import com.reactnativereadium.reader.SelectionAction as FragmentSelectionAction
 import com.reactnativereadium.utils.nitroPreferencesToEpub
+import com.reactnativereadium.utils.nitroPreferencesToComic
 import com.reactnativereadium.utils.nitroLocatorToReadium
 import com.reactnativereadium.utils.nitroDecorationToReadium
 import com.reactnativereadium.utils.readiumLocatorToNitro
@@ -19,6 +23,7 @@ import com.reactnativereadium.utils.readiumLinkToNitro
 import com.reactnativereadium.utils.flattenReadiumLinks
 import com.reactnativereadium.utils.readiumDecorationToNitro
 import com.reactnativereadium.utils.readiumMetadataToNitro
+import com.reactnativereadium.utils.toNitroPlaybackState
 import com.margelo.nitro.core.Promise
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +38,7 @@ import org.readium.r2.shared.publication.services.search.search
 @OptIn(ExperimentalReadiumApi::class)
 class HybridReadiumView(private val context: android.content.Context) : HybridReadiumViewSpec() {
   companion object {
+    private const val CONTAINER_ID_ATTEMPTS = 20
     private const val TAG = "HybridReadiumView"
     private var nextInstanceId = 0
     // Fabric creates the new native view before removing the old one when React
@@ -46,10 +52,21 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
   }
 
   private val instanceId = nextInstanceId++
-  private val hostView = FrameLayout(context)
+  private val hostView = ReaderHostView(context)
   private var scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+  /**
+   * Publication search runs off the main looper. `publication.search()` and
+   * `SearchIterator.next()` both do file and network I/O — for a remote WebPub
+   * that is a round trip per page — and they were previously dispatched on
+   * [scope], which is pinned to `Dispatchers.Main`.
+   */
+  private var searchScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+  private val searchLock = Any()
   private var svc: ReaderService? = null
   private var fragment: BaseReaderFragment? = null
+  private var audiobookJob: kotlinx.coroutines.Job? = null
+  private var hostedAudiobookPublication: org.readium.r2.shared.publication.Publication? = null
   private var isFragmentAdded = false
   private var isBuilding = false
   private var isAttached = false
@@ -89,6 +106,16 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
     }
 
   override var reopenActiveAudiobook: Boolean? = null
+    set(value) {
+      field = value
+      // iOS reads this when adopting the persistent session
+      // (HybridReadiumView.swift:167-171): with the flag off, a re-open starts
+      // a fresh session instead of resuming the running one. Android previously
+      // ignored it and always resumed, so a host could not force a reset.
+      if (value == false) {
+        AudiobookSession.reset()
+      }
+    }
 
   override var preferences: Preferences? = null
     set(value) {
@@ -120,21 +147,33 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
   override var onAudiobookPlaybackStateChange: ((state: AudiobookPlaybackState) -> Unit)? = null
   override var onAudiobookBookmarkChange: ((event: AudiobookBookmarkChangeEvent) -> Unit)? = null
 
-  private fun ensureService() {
-    if (svc == null) {
-      val reactContext = (context as? com.facebook.react.uimanager.ThemedReactContext)?.reactApplicationContext
-      if (reactContext != null) {
-        svc = ReaderService(reactContext)
-      }
+  private fun ensureService(): Boolean {
+    if (svc != null) return true
+    val reactContext =
+      (context as? com.facebook.react.uimanager.ThemedReactContext)?.reactApplicationContext
+    if (reactContext == null) {
+      // Previously this returned silently, so `buildForViewIfReady` bailed with
+      // no diagnostic and the host saw an empty view with no way to tell why.
+      Log.e(
+        TAG,
+        "ReadiumView requires a ThemedReactContext to open publications " +
+          "(got ${context.javaClass.name}). The reader will not load."
+      )
+      return false
     }
+    svc = ReaderService(reactContext)
+    return true
   }
 
   // MARK: - Preferences
 
   private fun updatePreferences() {
     val prefs = preferences ?: return
-    val frag = fragment as? EpubReaderFragment ?: return
-    frag.updatePreferences(nitroPreferencesToEpub(prefs))
+    when (val frag = fragment) {
+      is EpubReaderFragment -> frag.updatePreferences(nitroPreferencesToEpub(prefs))
+      is ComicReaderFragment -> frag.updatePreferences(nitroPreferencesToComic(prefs))
+      else -> Unit
+    }
   }
 
   // MARK: - Decorations
@@ -176,34 +215,67 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
   override fun goForward() { fragment?.goForward() }
   override fun goBackward() { fragment?.goBackward() }
 
-  override fun search(query: String): Promise<PublicationSearchPage> =
-    Promise.async(scope) {
-      cancelSearch()
-      val publication = fragment?.publication()
-        ?: throw IllegalStateException("Publication is not ready.")
-      val normalizedQuery = query.trim()
-      if (normalizedQuery.isEmpty()) {
+  // MARK: - Audiobook playback (delegated to the persistent session when this
+  // view hosts an audiobook; mirrors iOS view adoption of AudiobookSession)
+
+  private fun withAudiobook(block: (AudiobookSession) -> Unit) {
+    if (isFragmentAdded && fragment == null) {
+      block(AudiobookSession)
+    }
+  }
+
+  override fun play() = withAudiobook { it.play() }
+  override fun pause() = withAudiobook { it.pause() }
+  override fun seekTo(position: Double) = withAudiobook { it.seekTo(position) }
+  override fun setPlaybackRate(rate: Double) = withAudiobook { it.setPlaybackRate(rate) }
+  override fun setVolume(volume: Double) = withAudiobook { it.setVolume(volume) }
+  override fun setSleepTimer(seconds: Double?) = withAudiobook { it.setSleepTimer(seconds) }
+
+  override fun search(query: String): Promise<PublicationSearchPage> {
+    // Read the fragment on the calling (main) thread: `fragment` is mutated by
+    // the main-thread fragment lifecycle, so touching it from a worker is a data
+    // race and, for a `lateinit` behind it, a crash.
+    val publication = fragment?.publication()
+      ?: return Promise.async(searchScope) {
+        throw IllegalStateException("Publication is not ready.")
+      }
+
+    val normalizedQuery = query.trim()
+    if (normalizedQuery.isEmpty()) {
+      return Promise.async(searchScope) {
         throw IllegalArgumentException("Search query must not be empty.")
       }
-      val iterator = publication.search(normalizedQuery)
-        ?: throw IllegalStateException("Publication search is unavailable.")
-      searchIterator = iterator
-      searchQuery = normalizedQuery
-      searchResultOffset = 0
-      nextSearchPage(iterator, normalizedQuery)
     }
 
-  override fun searchNext(): Promise<PublicationSearchPage> =
-    Promise.async(scope) {
-      val iterator = searchIterator
-        ?: return@async PublicationSearchPage(
-          query = searchQuery,
+    return Promise.async(searchScope) {
+      cancelSearch()
+      val iterator = publication.search(normalizedQuery)
+        ?: throw IllegalStateException("Publication search is unavailable.")
+      synchronized(searchLock) {
+        searchIterator = iterator
+        searchQuery = normalizedQuery
+        searchResultOffset = 0
+      }
+      nextSearchPage(iterator, normalizedQuery)
+    }
+  }
+
+  override fun searchNext(): Promise<PublicationSearchPage> {
+    val iterator = synchronized(searchLock) { searchIterator }
+    val query = synchronized(searchLock) { searchQuery }
+
+    return Promise.async(searchScope) {
+      if (iterator == null) {
+        return@async PublicationSearchPage(
+          query = query,
           locators = emptyArray(),
           total = null,
           hasNext = false
         )
-      nextSearchPage(iterator, searchQuery)
+      }
+      nextSearchPage(iterator, query)
     }
+  }
 
   private suspend fun nextSearchPage(
     iterator: SearchIterator,
@@ -217,7 +289,9 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
     val collection = result.getOrNull()
     if (collection == null) {
       iterator.close()
-      if (searchIterator === iterator) searchIterator = null
+      synchronized(searchLock) {
+        if (searchIterator === iterator) searchIterator = null
+      }
       return PublicationSearchPage(
         query = query,
         locators = emptyArray(),
@@ -225,20 +299,25 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
         hasNext = false
       )
     }
-    searchResultOffset += collection.locators.size
     val total = iterator.resultCount
+    val offset = synchronized(searchLock) {
+      searchResultOffset += collection.locators.size
+      searchResultOffset
+    }
     return PublicationSearchPage(
       query = query,
       locators = collection.locators.map { readiumLocatorToNitro(it) }.toTypedArray(),
       total = total?.toDouble(),
-      hasNext = total?.let { searchResultOffset < it } ?: collection.locators.isNotEmpty()
+      hasNext = total?.let { offset < it } ?: collection.locators.isNotEmpty()
     )
   }
 
   override fun cancelSearch() {
-    searchIterator?.close()
-    searchIterator = null
-    searchResultOffset = 0
+    synchronized(searchLock) {
+      searchIterator?.close()
+      searchIterator = null
+      searchResultOffset = 0
+    }
   }
 
   override fun destroy() {
@@ -246,6 +325,43 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
       cleanup()
     } else {
       hostView.post { cleanup() }
+    }
+  }
+
+  // MARK: - Audiobook hosting
+
+  /**
+   * The file routed to the persistent audiobook session instead of a reader
+   * fragment. Playback is owned by [AudiobookSession] and keeps running when
+   * this view tears down; we only observe state while mounted.
+   */
+  private fun hostAudiobook() {
+    if (isDestroyed) return
+    isFragmentAdded = true
+    isBuilding = false
+
+    audiobookJob?.cancel()
+    audiobookJob = scope.launch {
+      var readyFor: org.readium.r2.shared.publication.Publication? = null
+      AudiobookSession.state.collect { sessionState ->
+        val publication = sessionState.publication
+        if (publication != null && publication !== readyFor &&
+          sessionState.status != com.reactnativereadium.audio.AudiobookStatus.LOADING
+        ) {
+          readyFor = publication
+          hostedAudiobookPublication = publication
+          onPublicationReady?.invoke(PublicationReadyEvent(
+            tableOfContents = flattenReadiumLinks(publication.tableOfContents).toTypedArray(),
+            positions = publication.readingOrder.mapNotNull { publication.locatorFromLink(it) }
+              .map { readiumLocatorToNitro(it) }.toTypedArray(),
+            metadata = readiumMetadataToNitro(publication.metadata),
+            // Search is currently implemented for visual fragments; audiobooks
+            // are hosted headlessly and have no fragment-backed search iterator.
+            capabilities = PublicationCapabilities(search = false, searchHref = null)
+          ))
+        }
+        onAudiobookPlaybackStateChange?.invoke(sessionState.toNitroPlaybackState())
+      }
     }
   }
 
@@ -285,14 +401,31 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
     isFragmentAdded = false
     isBuilding = false
 
+    // Detach from audiobook playback but do NOT stop it: the persistent
+    // session keeps playing across reader close/reopen (iOS parity).
+    audiobookJob?.cancel()
+    audiobookJob = null
+    hostedAudiobookPublication = null
+
     scope.cancel()
     scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    // The search scope is cancelled separately so an in-flight remote search is
+    // abandoned with the reader rather than outliving it on a background thread.
+    searchScope.cancel()
+    searchScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
   }
 
   /**
-   * Called by ViewManager.onDropViewInstance when Fabric permanently removes
-   * the view. Tears down the fragment and physically detaches hostView from
+   * Permanently tears down the fragment and physically detaches hostView from
    * the tree so it cannot overlay or intercept touches on other views.
+   *
+   * Reachable from two places: the JS `destroy()` method, and the stale-instance
+   * sweep in [addFragment] when Fabric remounts this view under a new key. It is
+   * *not* wired to `ViewManager.onDropViewInstance` — the nitrogen-generated
+   * manager has no such override — so a host that unmounts the React view
+   * without calling `destroy()` leaks the fragment until another instance
+   * sweeps it. A JS `destroy()` is always paired with an unmount in
+   * `ReadiumView.tsx`, which is why the gap has not surfaced.
    */
   internal fun cleanup() {
     if (isDestroyed) return
@@ -312,7 +445,10 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
     if (fileUrl.isEmpty()) return
 
     ensureService()
-    val service = svc ?: return
+    val service = svc ?: run {
+      isBuilding = false
+      return
+    }
 
     isBuilding = true
 
@@ -323,9 +459,23 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
     }
 
     scope.launch {
-      service.openPublication(path, initialLocator, customFonts) { frag ->
-        addFragment(frag)
-      }
+      service.openPublication(
+        path,
+        initialLocator,
+        customFonts,
+        callback = { result ->
+          when (result) {
+            is ReaderService.OpenResult.Visual -> addFragment(result.fragment)
+            ReaderService.OpenResult.Audiobook -> hostAudiobook()
+          }
+        },
+        onFailure = { message ->
+          // Mirror of iOS loadBook onFailure reset: log and clear the build
+          // state so the same file can be retried (e.g. after re-attach).
+          Log.e(TAG, "Failed to open publication: $message")
+          isBuilding = false
+        }
+      )
     }
   }
 
@@ -349,7 +499,7 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
       return
     }
 
-    hostView.id = View.generateViewId()
+    val containerId = assignContainerId(activity)
 
     // Apply selection actions BEFORE committing so they're available
     // during onCreate when the callback is conditionally registered.
@@ -361,7 +511,7 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
 
     activity.supportFragmentManager
       .beginTransaction()
-      .replace(hostView.id, frag, hostView.id.toString())
+      .replace(containerId, frag, containerId.toString())
       .commitNow()
 
     // The FragmentManager may not find hostView via activity.findViewById()
@@ -428,6 +578,9 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
             actionId = event.actionId
           ))
         }
+        is ReaderViewModel.Event.Tapped -> {
+          onTap?.invoke(Point(x = event.point.x.toDouble(), y = event.point.y.toDouble()))
+        }
       }
     }
   }
@@ -441,6 +594,42 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
       }
     }
     frameCallback?.let { Choreographer.getInstance().postFrameCallback(it) }
+  }
+
+  /**
+   * Gives [hostView] an id that FragmentManager will resolve back to it, and
+   * returns that id.
+   *
+   * FragmentManager looks the container up with `activity.findViewById()`, so a
+   * colliding id silently attaches the reader somewhere else entirely.
+   * `View.generateViewId()` draws from a process-wide counter starting at 1, and
+   * React Native labels its root views with the surface tag - also a small
+   * integer - so the first id generated in a process is typically 1, the very id
+   * `ReactSurfaceView` carries. The fragment then lands on the React root, and
+   * the corrective re-parent in [addFragment] has to move an already-attached
+   * view. That is fatal for PDF: AndroidPdfViewer's `PDFView` nulls its rendering
+   * `HandlerThread` in `onDetachedFromWindow()` and never recreates it, so the
+   * next `load()` completes into a NullPointerException.
+   */
+  private fun assignContainerId(activity: FragmentActivity): Int {
+    repeat(CONTAINER_ID_ATTEMPTS) {
+      val candidate = View.generateViewId()
+      hostView.id = candidate
+
+      when (activity.findViewById<View>(candidate)) {
+        // Resolves to us: FragmentManager will attach the fragment to hostView.
+        hostView -> return candidate
+        // Unreachable from the activity, so nothing can collide with it either.
+        // FragmentManager resolves a null container and leaves the fragment view
+        // unparented, which addFragment then adopts without detaching anything.
+        null -> return candidate
+        // Collision with another view - try a different id.
+        else -> Unit
+      }
+    }
+
+    Log.w(TAG, "addFragment: could not find a non-colliding container id for hostView")
+    return hostView.id
   }
 
   private fun manuallyLayoutChildren() {

@@ -26,10 +26,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   const iconForBook = (item: BookOption): string => {
     if (item.format === 'audiobook' || item.type === 'audiobook') {
-      return 'headphones';
+      return 'headset';
     }
     if (item.format === 'comic' || item.type === 'comic') {
       return 'collections-bookmark';
+    }
+    if (item.format === 'pdf' || item.type === 'pdf') {
+      return 'picture-as-pdf';
     }
     return 'menu-book';
   };
