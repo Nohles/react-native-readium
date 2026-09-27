@@ -56,6 +56,8 @@ namespace margelo::nitro::readium {
     void setFile(const std::optional<ReadiumFile>& file) override;
     std::optional<Preferences> getPreferences() override;
     void setPreferences(const std::optional<Preferences>& preferences) override;
+    std::optional<std::vector<CustomFont>> getCustomFonts() override;
+    void setCustomFonts(const std::optional<std::vector<CustomFont>>& customFonts) override;
     std::optional<std::vector<DecorationGroup>> getDecorations() override;
     void setDecorations(const std::optional<std::vector<DecorationGroup>>& decorations) override;
     std::optional<std::vector<SelectionAction>> getSelectionActions() override;

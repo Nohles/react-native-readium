@@ -19,8 +19,9 @@
 #include <optional>
 #include "ReadiumFile.hpp"
 #include "Preferences.hpp"
-#include "DecorationGroup.hpp"
+#include "CustomFont.hpp"
 #include <vector>
+#include "DecorationGroup.hpp"
 #include "SelectionAction.hpp"
 #include "AudiobookBookmark.hpp"
 #include "Locator.hpp"
@@ -58,6 +59,7 @@ namespace margelo::nitro::readium::views {
     CachedProp<std::optional<bool>> reopenActiveAudiobook;
     CachedProp<std::optional<ReadiumFile>> file;
     CachedProp<std::optional<Preferences>> preferences;
+    CachedProp<std::optional<std::vector<CustomFont>>> customFonts;
     CachedProp<std::optional<std::vector<DecorationGroup>>> decorations;
     CachedProp<std::optional<std::vector<SelectionAction>>> selectionActions;
     CachedProp<std::optional<std::vector<AudiobookBookmark>>> audiobookBookmarks;

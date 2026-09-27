@@ -18,15 +18,7 @@ export interface Preferences
   > {
   columnCount?: 'auto' | '1' | '2';
   fit?: 'auto' | 'page' | 'width';
-  fontFamily?:
-    | 'serif'
-    | 'sans-serif'
-    | 'cursive'
-    | 'fantasy'
-    | 'monospace'
-    | 'AccessibleDfA'
-    | 'IA Writer Duospace'
-    | 'OpenDyslexic';
+  fontFamily?: string;
   imageFilter?: 'darken' | 'invert';
   readingProgression?: 'ltr' | 'rtl';
   spread?: 'auto' | 'never' | 'always';

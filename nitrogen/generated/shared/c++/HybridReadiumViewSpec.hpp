@@ -17,6 +17,8 @@
 namespace margelo::nitro::readium { struct ReadiumFile; }
 // Forward declaration of `Preferences` to properly resolve imports.
 namespace margelo::nitro::readium { struct Preferences; }
+// Forward declaration of `CustomFont` to properly resolve imports.
+namespace margelo::nitro::readium { struct CustomFont; }
 // Forward declaration of `DecorationGroup` to properly resolve imports.
 namespace margelo::nitro::readium { struct DecorationGroup; }
 // Forward declaration of `SelectionAction` to properly resolve imports.
@@ -45,8 +47,9 @@ namespace margelo::nitro::readium { struct PublicationSearchPage; }
 #include <optional>
 #include "ReadiumFile.hpp"
 #include "Preferences.hpp"
-#include "DecorationGroup.hpp"
+#include "CustomFont.hpp"
 #include <vector>
+#include "DecorationGroup.hpp"
 #include "SelectionAction.hpp"
 #include "AudiobookBookmark.hpp"
 #include "Locator.hpp"
@@ -95,6 +98,8 @@ namespace margelo::nitro::readium {
       virtual void setFile(const std::optional<ReadiumFile>& file) = 0;
       virtual std::optional<Preferences> getPreferences() = 0;
       virtual void setPreferences(const std::optional<Preferences>& preferences) = 0;
+      virtual std::optional<std::vector<CustomFont>> getCustomFonts() = 0;
+      virtual void setCustomFonts(const std::optional<std::vector<CustomFont>>& customFonts) = 0;
       virtual std::optional<std::vector<DecorationGroup>> getDecorations() = 0;
       virtual void setDecorations(const std::optional<std::vector<DecorationGroup>>& decorations) = 0;
       virtual std::optional<std::vector<SelectionAction>> getSelectionActions() = 0;

@@ -89,6 +89,10 @@ class ReaderService(
   suspend fun openPublication(
     fileName: String,
     initialLocation: LinkOrLocator?,
+    // Custom fonts are a presentation concern, so they only reach the EPUB
+    // navigator — the comic and PDF readers have no font model. Kept optional so
+    // every other caller is unaffected.
+    customFonts: Array<com.margelo.nitro.reactnativereadium.CustomFont>? = null,
     callback: suspend (result: OpenResult) -> Unit,
     onFailure: (message: String) -> Unit = {}
   ) {
@@ -143,7 +147,9 @@ class ReaderService(
       // cannot render produced an empty reader instead of an error.
       isEpub(publication) -> {
         val frag = EpubReaderFragment.newInstance()
-        frag.initFactory(publication, locator)
+        // Only the EPUB navigator has a font model, so the custom fonts are
+        // threaded only into this branch.
+        frag.initFactory(publication, locator, customFonts)
         frag
       }
 

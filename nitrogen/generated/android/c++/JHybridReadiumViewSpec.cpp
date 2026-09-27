@@ -17,6 +17,8 @@ namespace margelo::nitro::readium { struct LocatorLocations; }
 namespace margelo::nitro::readium { struct LocatorText; }
 // Forward declaration of `Preferences` to properly resolve imports.
 namespace margelo::nitro::readium { struct Preferences; }
+// Forward declaration of `CustomFont` to properly resolve imports.
+namespace margelo::nitro::readium { struct CustomFont; }
 // Forward declaration of `DecorationGroup` to properly resolve imports.
 namespace margelo::nitro::readium { struct DecorationGroup; }
 // Forward declaration of `Decoration` to properly resolve imports.
@@ -76,8 +78,10 @@ namespace margelo::nitro::readium { struct PublicationSearchPage; }
 #include "JLocatorText.hpp"
 #include "Preferences.hpp"
 #include "JPreferences.hpp"
-#include "DecorationGroup.hpp"
+#include "CustomFont.hpp"
 #include <vector>
+#include "JCustomFont.hpp"
+#include "DecorationGroup.hpp"
 #include "JDecorationGroup.hpp"
 #include "Decoration.hpp"
 #include "JDecoration.hpp"
@@ -193,6 +197,33 @@ namespace margelo::nitro::readium {
   void JHybridReadiumViewSpec::setPreferences(const std::optional<Preferences>& preferences) {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<JPreferences> /* preferences */)>("setPreferences");
     method(_javaPart, preferences.has_value() ? JPreferences::fromCpp(preferences.value()) : nullptr);
+  }
+  std::optional<std::vector<CustomFont>> JHybridReadiumViewSpec::getCustomFonts() {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<jni::JArrayClass<JCustomFont>>()>("getCustomFonts");
+    auto __result = method(_javaPart);
+    return __result != nullptr ? std::make_optional([&]() {
+      size_t __size = __result->size();
+      std::vector<CustomFont> __vector;
+      __vector.reserve(__size);
+      for (size_t __i = 0; __i < __size; __i++) {
+        auto __element = __result->getElement(__i);
+        __vector.push_back(__element->toCpp());
+      }
+      return __vector;
+    }()) : std::nullopt;
+  }
+  void JHybridReadiumViewSpec::setCustomFonts(const std::optional<std::vector<CustomFont>>& customFonts) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JArrayClass<JCustomFont>> /* customFonts */)>("setCustomFonts");
+    method(_javaPart, customFonts.has_value() ? [&]() {
+      size_t __size = customFonts.value().size();
+      jni::local_ref<jni::JArrayClass<JCustomFont>> __array = jni::JArrayClass<JCustomFont>::newArray(__size);
+      for (size_t __i = 0; __i < __size; __i++) {
+        const auto& __element = customFonts.value()[__i];
+        auto __elementJni = JCustomFont::fromCpp(__element);
+        __array->setElement(__i, *__elementJni);
+      }
+      return __array;
+    }() : nullptr);
   }
   std::optional<std::vector<DecorationGroup>> JHybridReadiumViewSpec::getDecorations() {
     static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<jni::JArrayClass<JDecorationGroup>>()>("getDecorations");

@@ -179,6 +179,36 @@ open class HybridReadiumViewSpec_cxx {
     }
   }
   
+  public final var customFonts: bridge.std__optional_std__vector_CustomFont__ {
+    @inline(__always)
+    get {
+      return { () -> bridge.std__optional_std__vector_CustomFont__ in
+        if let __unwrappedValue = self.__implementation.customFonts {
+          return bridge.create_std__optional_std__vector_CustomFont__({ () -> bridge.std__vector_CustomFont_ in
+            var __vector = bridge.create_std__vector_CustomFont_(__unwrappedValue.count)
+            for __item in __unwrappedValue {
+              __vector.push_back(__item)
+            }
+            return __vector
+          }())
+        } else {
+          return .init()
+        }
+      }()
+    }
+    @inline(__always)
+    set {
+      self.__implementation.customFonts = { () -> [CustomFont]? in
+        if bridge.has_value_std__optional_std__vector_CustomFont__(newValue) {
+          let __unwrapped = bridge.get_std__optional_std__vector_CustomFont__(newValue)
+          return __unwrapped.map({ __item in __item })
+        } else {
+          return nil
+        }
+      }()
+    }
+  }
+  
   public final var decorations: bridge.std__optional_std__vector_DecorationGroup__ {
     @inline(__always)
     get {

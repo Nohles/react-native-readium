@@ -269,12 +269,18 @@ export interface ReadiumFile {
   initialLocation?: Locator;
 }
 
+export interface CustomFont {
+  family: string;
+  fileUri: string;
+}
+
 // ── HybridView ───────────────────────────────────────────────────────────────
 
 export interface ReadiumViewProps extends HybridViewProps {
   reopenActiveAudiobook?: boolean;
   file?: ReadiumFile;
   preferences?: Preferences;
+  customFonts?: CustomFont[];
   decorations?: DecorationGroup[];
   selectionActions?: SelectionAction[];
   audiobookBookmarks?: AudiobookBookmark[];

@@ -22,6 +22,8 @@ namespace margelo::nitro::readium { struct LocatorLocations; }
 namespace margelo::nitro::readium { struct LocatorText; }
 // Forward declaration of `Preferences` to properly resolve imports.
 namespace margelo::nitro::readium { struct Preferences; }
+// Forward declaration of `CustomFont` to properly resolve imports.
+namespace margelo::nitro::readium { struct CustomFont; }
 // Forward declaration of `DecorationGroup` to properly resolve imports.
 namespace margelo::nitro::readium { struct DecorationGroup; }
 // Forward declaration of `Decoration` to properly resolve imports.
@@ -76,8 +78,9 @@ namespace margelo::nitro::readium { struct PublicationSearchPage; }
 #include "LocatorLocations.hpp"
 #include "LocatorText.hpp"
 #include "Preferences.hpp"
-#include "DecorationGroup.hpp"
+#include "CustomFont.hpp"
 #include <vector>
+#include "DecorationGroup.hpp"
 #include "Decoration.hpp"
 #include "DecorationStyle.hpp"
 #include <unordered_map>
@@ -170,6 +173,13 @@ namespace margelo::nitro::readium {
     }
     inline void setPreferences(const std::optional<Preferences>& preferences) noexcept override {
       _swiftPart.setPreferences(preferences);
+    }
+    inline std::optional<std::vector<CustomFont>> getCustomFonts() noexcept override {
+      auto __result = _swiftPart.getCustomFonts();
+      return __result;
+    }
+    inline void setCustomFonts(const std::optional<std::vector<CustomFont>>& customFonts) noexcept override {
+      _swiftPart.setCustomFonts(customFonts);
     }
     inline std::optional<std::vector<DecorationGroup>> getDecorations() noexcept override {
       auto __result = _swiftPart.getDecorations();

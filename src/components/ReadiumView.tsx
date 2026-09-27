@@ -38,6 +38,7 @@ export const ReadiumView = forwardRef<ReadiumViewRef, ReadiumProps>(
       onAudiobookPlaybackStateChange,
       onAudiobookBookmarkChange,
       preferences,
+      customFonts,
       decorations,
       selectionActions,
       audiobookBookmarks,
@@ -194,6 +195,7 @@ export const ReadiumView = forwardRef<ReadiumViewRef, ReadiumProps>(
             file={file}
             reopenActiveAudiobook={reopenActiveAudiobook}
             preferences={preferences}
+            customFonts={customFonts}
             decorations={decorations}
             selectionActions={selectionActions ?? []}
             audiobookBookmarks={audiobookBookmarks}

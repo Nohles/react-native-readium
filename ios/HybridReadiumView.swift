@@ -72,6 +72,8 @@ class HybridReadiumView: HybridReadiumViewSpec {
     }
   }
 
+  var customFonts: [CustomFont]? = nil
+
   var decorations: [DecorationGroup]? = nil {
     didSet {
       updateDecorations()
@@ -210,6 +212,7 @@ class HybridReadiumView: HybridReadiumViewSpec {
       bookId: url,
       locator: readiumLocator,
       selectionActions: actionData,
+      customFonts: customFonts,
       sender: parentViewController,
       completion: { [weak self] vc in
         guard let self = self else { return }

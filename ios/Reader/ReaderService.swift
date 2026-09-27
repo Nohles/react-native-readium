@@ -34,6 +34,7 @@ final class ReaderService: Loggable {
     bookId: String,
     locator: ReadiumShared.Locator?,
     selectionActions: [SelectionActionData]?,
+    customFonts: [CustomFont]?,
     sender: UIViewController?,
     completion: @escaping (ReadiumReaderHosting) -> Void,
     onFailure: ((Error) -> Void)? = nil
@@ -74,7 +75,8 @@ final class ReaderService: Loggable {
               for: pub,
               bookId: bookId,
               locator: locator,
-              selectionActions: selectionActions
+              selectionActions: selectionActions,
+              customFonts: customFonts
             ) else {
               let error = ReaderError.formatNotSupported
               self.log(.error, "Failed to open publication: no reader format module supports this publication")

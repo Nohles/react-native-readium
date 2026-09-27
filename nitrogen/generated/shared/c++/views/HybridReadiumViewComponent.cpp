@@ -56,6 +56,16 @@ namespace margelo::nitro::readium::views {
         throw std::runtime_error(std::string("ReadiumView.preferences: ") + exc.what());
       }
     }()),
+    customFonts([&]() -> CachedProp<std::optional<std::vector<CustomFont>>> {
+      try {
+        const react::RawValue* rawValue = rawProps.at("customFonts", nullptr, nullptr);
+        if (rawValue == nullptr) return sourceProps.customFonts;
+        const auto& [runtime, value] = (std::pair<jsi::Runtime*, jsi::Value>)*rawValue;
+        return CachedProp<std::optional<std::vector<CustomFont>>>::fromRawValue(*runtime, value, sourceProps.customFonts);
+      } catch (const std::exception& exc) {
+        throw std::runtime_error(std::string("ReadiumView.customFonts: ") + exc.what());
+      }
+    }()),
     decorations([&]() -> CachedProp<std::optional<std::vector<DecorationGroup>>> {
       try {
         const react::RawValue* rawValue = rawProps.at("decorations", nullptr, nullptr);
@@ -182,6 +192,7 @@ namespace margelo::nitro::readium::views {
       case hashString("reopenActiveAudiobook"): return true;
       case hashString("file"): return true;
       case hashString("preferences"): return true;
+      case hashString("customFonts"): return true;
       case hashString("decorations"): return true;
       case hashString("selectionActions"): return true;
       case hashString("audiobookBookmarks"): return true;
