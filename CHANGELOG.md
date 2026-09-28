@@ -1,3 +1,9 @@
+# 5.0.0-rc.36
+
+### Bug Fixes
+
+* iOS decoration groups now reconcile their full visible state in order. Removing automatic highlights or changing their frequency clears stale paint without reopening the reader.
+
 # 5.0.0-rc.35
 
 Android/iOS parity pass, plus the audiobook-open fix. Consumes the byte-range fix
@@ -698,5 +704,4 @@ Co-authored-by: tyukesz <nagy.szabolcs@sonrisa.hu>
 ### Features
 
 * **src, ios:** Basic functional implementation of epub reader for iOS ([47d18e2](https://github.com/nohles/react-native-readium/commit/47d18e28b8ee9a7e6cb83eb93837fbe6169d9180))
-
 

@@ -108,6 +108,100 @@ def patch_readium_publication_media_loader(installer)
   end
 end
 
+# ReadiumNavigator 3.9.1 can leave removed decorations painted when its async
+# diff is superseded. Serialize updates and replace the visible group from its
+# complete target list so the WebView cannot retain a stale highlight.
+def patch_readium_decoration_tasks(installer)
+  path = File.join(
+    installer.sandbox.root,
+    'ReadiumNavigator/Sources/Navigator/EPUB/EPUBNavigatorViewController.swift'
+  )
+  return unless File.exist?(path)
+
+  contents = File.read(path)
+  start_marker = '    public func apply(decorations: [Decoration], in group: DecorationGroup) {'
+  end_marker = '    public func observeDecorationInteractions(inGroup group:'
+  start_index = contents.index(start_marker)
+  end_index = contents.index(end_marker, start_index || 0)
+  unless start_index && end_index
+    warn "[react-native-readium] Decoration task patch skipped (unexpected source in #{path})"
+    return
+  end
+
+  section = contents[start_index...end_index]
+  return if section.include?('let clearScript = "requestAnimationFrame(function ()')
+  unless section.include?('decorationTasks[group]?.cancel()') ||
+         section.include?('await previousDecorationTask?.value')
+    warn "[react-native-readium] Decoration task patch skipped (unexpected source in #{path})"
+    return
+  end
+
+  replacement = <<'SWIFT'
+    public func apply(decorations: [Decoration], in group: DecorationGroup) {
+        let previousDecorationTask = decorationTasks[group]
+        var task: Task<Void, Never>?
+        task = Task { [weak self] in
+            defer {
+                if let self, self.decorationTasks[group] == task {
+                    self.decorationTasks[group] = nil
+                }
+            }
+            guard let self else { return }
+            await previousDecorationTask?.value
+            await self.initialized()
+            guard let paginationView = self.paginationView else { return }
+
+            let source = self.decorations[group] ?? []
+            let target = decorations.map {
+                var decoration = $0
+                decoration.locator = self.publication.normalizeLocator(decoration.locator)
+                return DiffableDecoration(decoration: decoration)
+            }
+            guard source != target else { return }
+            self.decorations[group] = target
+
+            let clearScript = "requestAnimationFrame(function () { readium.getDecorations('\(group)').clear(); });"
+            for (_, pageView) in paginationView.loadedViews {
+                await (pageView as? EPUBSpreadView)?.evaluateScript(clearScript)
+            }
+
+            await withTaskGroup(of: Void.self) { tasks in
+                for (href, changes) in target.changesByHREF(from: []) {
+                    guard let script = changes.javascript(forGroup: group, styles: self.config.decorationTemplates) else {
+                        continue
+                    }
+                    tasks.addTask { @MainActor [weak self] in
+                        guard
+                            let spreadView = self?.loadedSpreadViewForHREF(href),
+                            spreadView.isSpreadLoaded
+                        else {
+                            return
+                        }
+                        await spreadView.evaluateScript(script, inHREF: href)
+                    }
+                }
+            }
+        }
+        decorationTasks[group] = task
+    }
+
+SWIFT
+
+  patched = contents[0...start_index] + replacement + contents[end_index..]
+  patched = patched.sub(
+    '    /// Pending decoration tasks, indexed by group name. Stored to allow' + "\n" +
+      '    /// cancellation when a new `apply(decorations:in:)` call supersedes a' + "\n" +
+      '    /// previous one.',
+    '    /// Pending decoration tasks, indexed by group name. Updates are' + "\n" +
+      '    /// serialized so the WebView paint and the model stay in sync.'
+  )
+  return if patched == contents
+
+  File.chmod(0644, path) unless File.writable?(path)
+  File.write(path, patched)
+  puts "[react-native-readium] Reconciled decoration groups (#{path})"
+end
+
 # Xcode rejects simulator builds when a pod target's deployment target is below
 # the SDK minimum (currently 15.0). Readium's transitive pods (CryptoSwift,
 # ReadiumZIPFoundation, etc.) still declare older values in their podspecs.
@@ -129,6 +223,7 @@ end
 def readium_post_install(installer)
   ensure_minimum_ios_deployment_target(installer)
   patch_readium_publication_media_loader(installer)
+  patch_readium_decoration_tasks(installer)
   # Rewrite the Minizip modulemap to drop submodules and mark as [extern_c] [system].
   # The modulemap path differs depending on whether use_frameworks! is active:
   #   - With use_frameworks!:  Target Support Files/Minizip/Minizip.modulemap
