@@ -1,3 +1,9 @@
+# 5.0.0-rc.37
+
+### Bug Fixes
+
+* Rebuild the published JavaScript and declaration files before release. The rc.36 tarball included `setNowPlayingMetadata` in source and native code but omitted it from the generated JavaScript and types.
+
 # 5.0.0-rc.36
 
 ### Bug Fixes

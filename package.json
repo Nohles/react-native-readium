@@ -1,6 +1,6 @@
 {
   "name": "@nohles/react-native-readium",
-  "version": "5.0.0-rc.36",
+  "version": "5.0.0-rc.37",
   "description": "A react-native wrapper for https://readium.org/",
   "main": "lib/src/index",
   "types": "lib/src/index.d.ts",
@@ -39,7 +39,7 @@
     "prettier": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "prettier:fix": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "prepare": "rimraf lib && tsc",
-    "prepublishOnly": "npm run typescript",
+    "prepublishOnly": "bun run prepare",
     "release": "release-it",
     "example": "yarn workspace example-native",
     "example:expo": "yarn workspace example-expo start",
