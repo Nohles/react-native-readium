@@ -295,6 +295,13 @@ internal fun readiumDecorationToNitro(dec: ReadiumDecoration): Decoration {
   return Decoration(id = dec.id, locator = locator, style = style, extras = extras)
 }
 
+// `Metadata.modified` and `Metadata.published` are `kotlin.time.Instant`.
+// That type is stable in Kotlin 2.3 (which the Readium 3.3.0 toolkit is built
+// with) but still experimental in 2.2, which is what Expo SDK 58's Expo
+// Modules V2 compiler plugin requires. Opting in explicitly keeps this file
+// compiling under both, so the library does not dictate the host's Kotlin
+// version.
+@OptIn(kotlin.time.ExperimentalTime::class)
 internal fun readiumMetadataToNitro(meta: ReadiumMetadata): PublicationMetadata {
   fun contributors(list: List<org.readium.r2.shared.publication.Contributor>): Array<Contributor>? {
     if (list.isEmpty()) return null

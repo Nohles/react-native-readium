@@ -5,7 +5,7 @@ buildscript {
         compileSdkVersion = 37
         targetSdkVersion = 36
         ndkVersion = "27.1.12297006"
-        kotlinVersion = "2.3.20"
+        kotlinVersion = "2.2.10"
     }
     repositories {
         google()
@@ -14,9 +14,13 @@ buildscript {
     dependencies {
         classpath("com.android.tools.build:gradle")
         classpath("com.facebook.react:react-native-gradle-plugin")
-        // must be >= 2.3 to read kotlin-toolkit 3.3.0 metadata; pinned
-        // explicitly because RN's default constraint resolves older
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.20")
+        // Pinned explicitly because RN's default constraint resolves older.
+        // 2.2.10 specifically, not just 2.2.x: Expo SDK 58's Expo Modules V2
+        // compiler plugin is built against exactly this release and throws
+        // AbstractMethodError against the FIR analysis API of later 2.2 patches.
+        // The library's own source opts in to kotlin.time.ExperimentalTime so
+        // it also compiles under 2.3, which the Readium 3.3.0 toolkit needs.
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.10")
     }
 }
 
