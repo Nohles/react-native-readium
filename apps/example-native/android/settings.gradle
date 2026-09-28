@@ -1,6 +1,20 @@
-pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
+// Yarn hoists react-native to the workspace root when every app in the
+// monorepo agrees on one version, so this path must tolerate either location.
+// It is written as an inline expression because pluginManagement must be the
+// first statement in a settings file, so nothing can be hoisted above it.
+pluginManagement {
+    includeBuild(
+        new File(settingsDir, "../node_modules/@react-native/gradle-plugin").exists()
+            ? "../node_modules/@react-native/gradle-plugin"
+            : "../../../node_modules/@react-native/gradle-plugin"
+    )
+}
 plugins { id("com.facebook.react.settings") }
 extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
 rootProject.name = 'ReadiumExample'
 include ':app'
-includeBuild('../node_modules/@react-native/gradle-plugin')
+includeBuild(
+    new File(settingsDir, "../node_modules/@react-native/gradle-plugin").exists()
+        ? "../node_modules/@react-native/gradle-plugin"
+        : "../../../node_modules/@react-native/gradle-plugin"
+)

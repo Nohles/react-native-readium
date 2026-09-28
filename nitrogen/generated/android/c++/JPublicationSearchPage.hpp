@@ -25,11 +25,11 @@ namespace margelo::nitro::readium {
   using namespace facebook;
 
   /**
-   * The C++ JNI bridge between the C++ struct "PublicationSearchPage" and the the Kotlin data class "PublicationSearchPage".
+   * The C++ JNI bridge between the C++ struct "PublicationSearchPage" and the Kotlin data class "PublicationSearchPage".
    */
   struct JPublicationSearchPage final: public jni::JavaClass<JPublicationSearchPage> {
   public:
-    static auto constexpr kJavaDescriptor = "Lcom/margelo/nitro/reactnativereadium/PublicationSearchPage;";
+    static constexpr auto kJavaDescriptor = "Lcom/margelo/nitro/reactnativereadium/PublicationSearchPage;";
 
   public:
     /**
@@ -49,16 +49,16 @@ namespace margelo::nitro::readium {
       jboolean hasNext = this->getFieldValue(fieldHasNext);
       return PublicationSearchPage(
         query->toStdString(),
-        [&]() {
-          size_t __size = locators->size();
+        [&](auto&& __input) {
+          size_t __size = __input->size();
           std::vector<Locator> __vector;
           __vector.reserve(__size);
           for (size_t __i = 0; __i < __size; __i++) {
-            auto __element = locators->getElement(__i);
+            auto __element = __input->getElement(__i);
             __vector.push_back(__element->toCpp());
           }
           return __vector;
-        }(),
+        }(locators),
         total != nullptr ? std::make_optional(total->value()) : std::nullopt,
         static_cast<bool>(hasNext)
       );
@@ -76,16 +76,16 @@ namespace margelo::nitro::readium {
       return create(
         clazz,
         jni::make_jstring(value.query),
-        [&]() {
-          size_t __size = value.locators.size();
+        [&](auto&& __input) {
+          size_t __size = __input.size();
           jni::local_ref<jni::JArrayClass<JLocator>> __array = jni::JArrayClass<JLocator>::newArray(__size);
           for (size_t __i = 0; __i < __size; __i++) {
-            const auto& __element = value.locators[__i];
+            const auto& __element = __input[__i];
             auto __elementJni = JLocator::fromCpp(__element);
             __array->setElement(__i, *__elementJni);
           }
           return __array;
-        }(),
+        }(value.locators),
         value.total.has_value() ? jni::JDouble::valueOf(value.total.value()) : nullptr,
         value.hasNext
       );

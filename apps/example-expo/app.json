@@ -31,8 +31,7 @@
           }
         }
       ],
-      "../../app.plugin.js",
-      "expo-ios-scene-lifecycle-plugin"
+      "../../app.plugin.js"
     ]
   }
 }

@@ -37,6 +37,13 @@ internal fun nitroPreferencesToEpub(prefs: Preferences): ReadiumEpubPreferences 
   val txtColor = prefs.textColor?.let { parseReadiumColor(it) }
     ?: if (prefs.theme == "sepia" && prefs.textColor == null) parseReadiumColor(SEPIA_TEXT) else null
 
+  if (prefs.linkColor != null) {
+    // EpubPreferences in the Android toolkit has no linkColor, so the value is
+    // dropped here. Do not name a version in this message: the resolved toolkit
+    // version moves independently of this source file.
+    android.util.Log.w("Readium", "linkColor is not supported by Readium Android EpubPreferences and was dropped")
+  }
+
   return ReadiumEpubPreferences(
     backgroundColor = bgColor,
     columnCount = prefs.columnCount?.let { parseColumnCount(it) },
@@ -288,6 +295,13 @@ internal fun readiumDecorationToNitro(dec: ReadiumDecoration): Decoration {
   return Decoration(id = dec.id, locator = locator, style = style, extras = extras)
 }
 
+// `Metadata.modified` and `Metadata.published` are `kotlin.time.Instant`.
+// That type is stable in Kotlin 2.3 (which the Readium 3.3.0 toolkit is built
+// with) but still experimental in 2.2, which is what Expo SDK 58's Expo
+// Modules V2 compiler plugin requires. Opting in explicitly keeps this file
+// compiling under both, so the library does not dictate the host's Kotlin
+// version.
+@OptIn(kotlin.time.ExperimentalTime::class)
 internal fun readiumMetadataToNitro(meta: ReadiumMetadata): PublicationMetadata {
   fun contributors(list: List<org.readium.r2.shared.publication.Contributor>): Array<Contributor>? {
     if (list.isEmpty()) return null

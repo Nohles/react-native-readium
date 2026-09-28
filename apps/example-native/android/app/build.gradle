@@ -2,11 +2,26 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
-project.ext.vectoricons = [
-    iconFontsDir: "../../../../node_modules/react-native-vector-icons/Fonts"
+// settings.gradle resolves these, because yarn hoists react-native to the
+// workspace root when every app in the monorepo agrees on one version.
+def nodeModulesCandidates = [
+    rootProject.file("../../node_modules"),
+    rootProject.file("../../../node_modules"),
 ]
+def resolveFromNodeModules = { String relativePath ->
+    def match = nodeModulesCandidates
+        .collect { new File(it, relativePath) }
+        .find { it.exists() }
+    if (match == null) {
+        throw new GradleException(
+            "Cannot find ${relativePath} in ${nodeModulesCandidates}. Run yarn install at the repository root."
+        )
+    }
+    return match
+}
 
-apply from: "../../../../node_modules/react-native-vector-icons/fonts.gradle"
+def reactNativePackageDir = resolveFromNodeModules("react-native")
+def vectorIconsFontsDir = resolveFromNodeModules("react-native-vector-icons/Fonts")
 
 /**
  * This is the configuration block to customize your React Native Android app.
@@ -17,11 +32,11 @@ react {
     //   The root of your project, i.e. where "package.json" lives. Default is '../..'
     // root = file("../../")
     //   The folder where the react-native NPM package is. Default is ../../node_modules/react-native
-    reactNativeDir = file("../../node_modules/react-native")
+    reactNativeDir = reactNativePackageDir
     //   The folder where the react-native Codegen package is. Default is ../../node_modules/@react-native/codegen
-    codegenDir = file("../../../../node_modules/@react-native/codegen")
+    codegenDir = resolveFromNodeModules("@react-native/codegen")
     //   The cli.js file which is the React Native CLI entrypoint. Default is ../../node_modules/react-native/cli.js
-    cliFile = file("../../node_modules/react-native/cli.js")
+    cliFile = new File(reactNativePackageDir, "cli.js")
 
     /* Variants */
     //   The list of variants to that are debuggable. For those we're going to
@@ -51,7 +66,7 @@ react {
 
     /* Hermes Commands */
     //   The hermes compiler command to run. By default it is 'hermesc'
-    hermesCommand = "$rootDir/../../node_modules/react-native/sdks/hermesc/%OS-BIN%/hermesc"
+    hermesCommand = "${reactNativePackageDir}/sdks/hermesc/%OS-BIN%/hermesc"
     //
     //   The list of flags to pass to the Hermes compiler. By default is "-O", "-output-source-map"
     // hermesFlags = ["-O", "-output-source-map"]
@@ -85,7 +100,15 @@ android {
 
     sourceSets {
         main {
-            assets.srcDirs += ["../../resources"]
+            assets.srcDirs = ["../../resources", "$buildDir/generated/vector-icons"]
+        }
+    }
+
+    if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+        externalNativeBuild {
+            cmake {
+                buildStagingDirectory file("../../../../.cxx/example")
+            }
         }
     }
 
@@ -114,11 +137,22 @@ android {
             // see https://reactnative.dev/docs/signed-apk-android.
             signingConfig signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
-            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
     }
     compileOptions {
         coreLibraryDesugaringEnabled true
+    }
+}
+
+tasks.register("copyReactNativeVectorIconFonts", Sync) {
+    from(vectorIconsFontsDir)
+    into("$buildDir/generated/vector-icons/fonts")
+}
+
+tasks.configureEach { task ->
+    if (task.name.startsWith("merge") && task.name.endsWith("Assets")) {
+        task.dependsOn("copyReactNativeVectorIconFonts")
     }
 }
 

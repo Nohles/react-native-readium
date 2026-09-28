@@ -1,4 +1,4 @@
-# Expo SDK 56 Example
+# Expo SDK 58 Example
 
 This development-build app consumes the Nitro-based `react-native-readium`
 package directly from the workspace. It is intentionally not compatible with
