@@ -1,3 +1,55 @@
+# 5.0.0-rc.38
+
+Upgrade to React Native 0.88 and Expo SDK 58. The JavaScript API is unchanged;
+the peer and toolchain requirements are not.
+
+### ⚠️ Required peer versions
+
+| Package | Was | Now |
+| --- | --- | --- |
+| `react-native` | `0.83.1` (dev) | `0.88.0-rc.0` |
+| `react-native-nitro-modules` | `^0.35.0` | `^0.37.1` |
+
+`react-native-nitro-modules` moves two majors. The generated native bindings
+under `nitrogen/generated/` are produced by nitrogen 0.37.1 and are **checked
+into this package**, so a consumer still resolving nitro 0.35 gets C++/Kotlin/Swift
+that its nitro runtime was not built against. Bump nitro and react-native
+together with this package or not at all.
+
+`react-native` 0.88 is a release candidate and Expo SDK 58 is a beta. Both
+targets are pre-release; pin accordingly.
+
+### Build requirements
+
+* **Kotlin 2.2.10.** The Expo config plugin pins the Kotlin Gradle plugin in the
+  host project. 2.2.10 specifically: Expo SDK 58's Expo Modules V2 compiler
+  plugin is built against that exact release and fails 2.2.20 and 2.3.20 with
+  `AbstractMethodError` on the Kotlin FIR analysis API. The library's own source
+  opts in to `kotlin.time.ExperimentalTime`, so it compiles under 2.2 and 2.3.
+* **Gradle 9.4.1** for the example app. AGP 9 refuses to configure on 9.1.0.
+* **compileSdk 37 / buildTools 37.0.0.**
+
+### Bug Fixes
+
+**Android**
+
+* The Gradle example resolves `react-native` from either the app's own
+  `node_modules` or the workspace root. When every app in a monorepo agrees on
+  one React Native version, yarn hoists it to the root and the app's hardcoded
+  `../node_modules` path no longer exists, which made the build fail to find the
+  React Native settings plugin at all.
+* The Expo config plugin recognises both the version-less `classpath` template
+  and the `findProperty`-driven one that SDK 58 generates, instead of throwing.
+* `EpubReaderFragment` no longer imports `publication.Locator` twice, which was
+  a hard compile error rather than the unused import it resembled.
+* The `linkColor` warning no longer names a toolkit version that drifts out of
+  date silently.
+
+### ⚠️ Deprecated
+
+* The `linkColor` preference is dropped on Android with a warning. Readium's
+  Android `EpubPreferences` has no such field.
+
 # 5.0.0-rc.37
 
 ### Bug Fixes

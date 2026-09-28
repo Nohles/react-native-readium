@@ -53,9 +53,11 @@ allows you to do things like:
 #### Prerequisites
 
 1. **iOS**: Requires an iOS target >= `16.4` (see the iOS section for more details).
-2. **Android**: Requires `compileSdkVersion` >= `31` (see the Android section for more details).
+2. **Android**: Requires `compileSdkVersion` >= `31` and the Kotlin Gradle plugin at `2.2.10` (see the Android section for more details).
 
 This library uses [Nitro Modules](https://nitro.margelo.com/) and supports both the old and new React Native architectures.
+
+> **Upgrading to 5.0.0-rc.38?** It requires `react-native-nitro-modules` `^0.37.1`. The native bindings under `nitrogen/generated/` ship prebuilt in this package and were produced by nitrogen 0.37.1, so a consumer resolving nitro 0.35 will fail to link. Move the three versions together. See the [CHANGELOG](CHANGELOG.md#500-rc38).
 
 #### Install Module
 
@@ -126,6 +128,13 @@ Requirements:
 
 - **JDK 17** is required to build the Android app (the library targets Java/Kotlin 17).
 - **compileSdkVersion** must be >= `31`.
+- **Kotlin must be `2.2.10`.** The Expo config plugin pins this in your root
+  `build.gradle`. It is not an arbitrary choice: Expo SDK 58's Expo Modules V2
+  compiler plugin is built against exactly 2.2.10 and fails 2.2.20 and 2.3.20
+  with `AbstractMethodError` on the Kotlin FIR analysis API. If you are not on
+  Expo SDK 58, the library's own source still compiles under 2.2 and 2.3, so
+  your build can set either — but do not pick a 2.2 patch above 2.2.10 while
+  Expo Modules V2 is on the classpath.
 
 If you're not using `compileSdkVersion` >= 31 you'll need to update that:
 
