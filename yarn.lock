@@ -8638,6 +8638,7 @@ __metadata:
     "@types/react": ^19.2.3
     babel-preset-expo: ~58.0.2
     expo: 58.0.0-preview.2
+    expo-asset: ~58.0.2
     expo-build-properties: ~58.0.2
     expo-dev-client: ~58.0.2
     expo-document-picker: ~58.0.0
