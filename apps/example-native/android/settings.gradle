@@ -1,4 +1,4 @@
-// Yarn hoists react-native to the workspace root when every app in the
+// pnpm hoists react-native to the workspace root when every app in the
 // monorepo agrees on one version, so this path must tolerate either location.
 // It is written as an inline expression because pluginManagement must be the
 // first statement in a settings file, so nothing can be hoisted above it.

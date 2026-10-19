@@ -17,6 +17,7 @@
 		A1B2C3D4E5F60718A1B2C3D5 /* the-brothers-karamazov.epub in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718A1B2C3D4 /* the-brothers-karamazov.epub */; };
 		A1B2C3D4E5F60718A1B2C3D9 /* readium-sample.cbz in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718A1B2C3D8 /* readium-sample.cbz */; };
 		A1B2C3D4E5F60718A1B2C3DB /* readium-sample.m4b in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718A1B2C3DA /* readium-sample.m4b */; };
+		A88000000000000000000001 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A88000000000000000000002 /* SceneDelegate.swift */; };
 		B1C2D3E4F5A60718A1B2C3D1 /* sense-and-sensibility.pdf in Resources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5A60718A1B2C3D0 /* sense-and-sensibility.pdf */; };
 		E461B59F65233381FD4757D0 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 0F7A153113BA277AD9F4CA21 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
@@ -48,12 +49,13 @@
 		2D02E47B1E0B4A5D006451C7 /* ReadiumExample-tvOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ReadiumExample-tvOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2D02E4901E0B4A5D006451C7 /* ReadiumExample-tvOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ReadiumExample-tvOSTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5132B95C75527C78BB94579A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = ReadiumExample/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		52EE71AC2D77A5F200617F39 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		52EE71AC2D77A5F200617F39 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadiumExample/AppDelegate.swift; sourceTree = "<group>"; };
 		670D9951AF9B76C5BB3A24CC /* Pods-ReadiumExample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ReadiumExample.release.xcconfig"; path = "Target Support Files/Pods-ReadiumExample/Pods-ReadiumExample.release.xcconfig"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = ReadiumExample/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718A1B2C3D4 /* the-brothers-karamazov.epub */ = {isa = PBXFileReference; lastKnownFileType = file; name = "the-brothers-karamazov.epub"; path = "../resources/the-brothers-karamazov.epub"; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718A1B2C3D8 /* readium-sample.cbz */ = {isa = PBXFileReference; lastKnownFileType = archive.zip; name = "readium-sample.cbz"; path = "../resources/readium-sample.cbz"; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718A1B2C3DA /* readium-sample.m4b */ = {isa = PBXFileReference; lastKnownFileType = file; name = "readium-sample.m4b"; path = "../resources/readium-sample.m4b"; sourceTree = "<group>"; };
+		A88000000000000000000002 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadiumExample/SceneDelegate.swift; sourceTree = "<group>"; };
 		B1C2D3E4F5A60718A1B2C3D0 /* sense-and-sensibility.pdf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "sense-and-sensibility.pdf"; path = "../resources/sense-and-sensibility.pdf"; sourceTree = "<group>"; };
 		B334C6DBDA9937FDFBC060B8 /* Pods-ReadiumExample.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ReadiumExample.debug.xcconfig"; path = "Target Support Files/Pods-ReadiumExample/Pods-ReadiumExample.debug.xcconfig"; sourceTree = "<group>"; };
 		B862455935D64D3826D1780F /* libPods-ReadiumExample.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ReadiumExample.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -99,6 +101,7 @@
 			children = (
 				008F07F21AC5B25A0029DE68 /* main.jsbundle */,
 				52EE71AC2D77A5F200617F39 /* AppDelegate.swift */,
+				A88000000000000000000002 /* SceneDelegate.swift */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
@@ -539,6 +542,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				52EE71AD2D77A5F200617F39 /* AppDelegate.swift in Sources */,
+				A88000000000000000000001 /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -858,7 +862,7 @@
 					" ",
 				);
 				PODFILE_DIR = "$(SRCROOT)";
-				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
 				USE_HERMES = true;
@@ -934,7 +938,7 @@
 					" ",
 				);
 				PODFILE_DIR = "$(SRCROOT)";
-				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
 				VALIDATE_PRODUCT = YES;

@@ -24,4 +24,14 @@ buildscript {
     }
 }
 
+// CMake 4.1.2 ships Ninja with Windows long-path support. Apply the same
+// toolchain to the app and native dependencies, including generated code.
+subprojects { subproject ->
+    ["com.android.application", "com.android.library"].each { pluginId ->
+        subproject.plugins.withId(pluginId) {
+            subproject.android.externalNativeBuild.cmake.version = "4.1.2"
+        }
+    }
+}
+
 apply plugin: "com.facebook.react.rootproject"

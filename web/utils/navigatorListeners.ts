@@ -21,6 +21,9 @@ export function createNavigatorListeners(
     frameLoaded: function (_wnd: Window): void {
       // noop
     },
+    timelineItemChanged: function (): void {
+      // noop
+    },
     positionChanged: function (_locator: Locator): void {
       onLocationChangeWithTotalProgression(_locator);
       if (onPositionChange) {

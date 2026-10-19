@@ -20,6 +20,7 @@
     "react-native-worklets": "*"
   },
   "devDependencies": {
-    "@gorhom/bottom-sheet": "^5.2.8"
+    "@gorhom/bottom-sheet": "^5.2.8",
+    "react-native-readium": "workspace:@nohles/react-native-readium@*"
   }
 }

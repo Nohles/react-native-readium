@@ -241,16 +241,16 @@ For native:
 
 ```bash
 cd apps/example-native
-yarn install
-yarn ios # or yarn android
+pnpm install
+pnpm ios # or pnpm android
 ```
 
 For web:
 
 ```bash
 cd apps/example-nextjs
-yarn install
-yarn dev
+pnpm install
+pnpm dev
 ```
 
 ### Testing Highlights

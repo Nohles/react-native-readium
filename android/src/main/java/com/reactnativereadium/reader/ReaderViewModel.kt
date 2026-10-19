@@ -24,15 +24,7 @@ class ReaderViewModel(
       private val initialLocation: Locator?
     ) : ViewModelProvider.NewInstanceFactory() {
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            modelClass
-              .getDeclaredConstructor(
-                Publication::class.java,
-                Locator::class.java
-              )
-              .newInstance(
-                publication,
-                initialLocation
-              )
+            modelClass.cast(ReaderViewModel(publication, initialLocation))
     }
 
     sealed class Event {

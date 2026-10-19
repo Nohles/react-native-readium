@@ -2,10 +2,9 @@
 # Publish the Nohles/kotlin-toolkit submodule to the local Maven repository
 # (~/.m2) so Android builds of this repo consume it instead of Maven Central.
 #
-# Why this exists: the toolkit requires AGP 9 while React Native 0.85 pins
-# AGP 8.12, and a Gradle build may only load a single AGP version — so a
-# composite build (includeBuild) is not possible. Publishing locally is the
-# supported iteration loop for fork-level changes:
+# Publishing locally keeps the toolkit's compiler and daemon requirements
+# separate from the consuming React Native app. The supported iteration loop
+# for fork-level changes is:
 #
 #   1. edit external/kotlin-toolkit
 #   2. ./scripts/publish-kotlin-toolkit-maven-local.sh

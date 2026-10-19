@@ -14,9 +14,12 @@ import org.readium.r2.shared.publication.services.protectionError
 import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.FileExtension
 import org.readium.r2.shared.util.Url
+import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.asset.AssetRetriever
 import org.readium.r2.shared.util.format.FormatHints
 import org.readium.r2.shared.util.http.DefaultHttpClient
+import org.readium.r2.shared.util.http.HttpRequest
+import org.readium.r2.shared.util.http.HttpTry
 import org.readium.r2.shared.util.mediatype.MediaType
 import org.readium.r2.shared.util.toUrl
 import org.readium.adapter.pdfium.document.PdfiumDocumentFactory
@@ -48,6 +51,11 @@ class ReaderService(
   private val httpClient = DefaultHttpClient(
     connectTimeout = 30.seconds,
     readTimeout = 60.seconds,
+    callback = object : DefaultHttpClient.Callback {
+      override suspend fun onStartRequest(request: HttpRequest): HttpTry<HttpRequest> =
+        // Resource streams need a reliable content length and byte offsets.
+        Try.success(request.copy { setHeader("Accept-Encoding", "identity") })
+    },
   )
   private val assetRetriever = AssetRetriever(
     reactContext.contentResolver,

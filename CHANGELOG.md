@@ -1,54 +1,36 @@
 # 5.0.0-rc.38
 
-Upgrade to React Native 0.88 and Expo SDK 58. The JavaScript API is unchanged;
-the peer and toolchain requirements are not.
+Upgrade the examples to stable React Native 0.88.0, Expo SDK 58.0.14, and React
+19.3.0. The public reader API is unchanged.
 
-### ⚠️ Required peer versions
+### Requirements
 
-| Package | Was | Now |
-| --- | --- | --- |
-| `react-native` | `0.83.1` (dev) | `0.88.0-rc.0` |
-| `react-native-nitro-modules` | `^0.35.0` | `^0.37.1` |
+- Requires `react-native-nitro-modules` `^0.37.1`. The checked-in bindings are
+  generated with nitrogen 0.37.1; update the runtime alongside this package.
+- Development uses pnpm 10.34.7 and TypeScript 6.0.3, with one workspace lockfile.
+- The Android examples use Kotlin 2.2.10, Gradle 9.4.1, AGP 9.2.1, SDK 37,
+  NDK 27.1.12297006, and CMake 4.1.2. Kotlin stays aligned with Expo Modules V2;
+  the library opts in to experimental time APIs for Kotlin 2.2 compatibility.
 
-`react-native-nitro-modules` moves two majors. The generated native bindings
-under `nitrogen/generated/` are produced by nitrogen 0.37.1 and are **checked
-into this package**, so a consumer still resolving nitro 0.35 gets C++/Kotlin/Swift
-that its nitro runtime was not built against. Bump nitro and react-native
-together with this package or not at all.
+### Fixes
 
-`react-native` 0.88 is a release candidate and Expo SDK 58 is a beta. Both
-targets are pre-release; pin accordingly.
-
-### Build requirements
-
-* **Kotlin 2.2.10.** The Expo config plugin pins the Kotlin Gradle plugin in the
-  host project. 2.2.10 specifically: Expo SDK 58's Expo Modules V2 compiler
-  plugin is built against that exact release and fails 2.2.20 and 2.3.20 with
-  `AbstractMethodError` on the Kotlin FIR analysis API. The library's own source
-  opts in to `kotlin.time.ExperimentalTime`, so it compiles under 2.2 and 2.3.
-* **Gradle 9.4.1** for the example app. AGP 9 refuses to configure on 9.1.0.
-* **compileSdk 37 / buildTools 37.0.0.**
-
-### Bug Fixes
-
-**Android**
-
-* The Gradle example resolves `react-native` from either the app's own
-  `node_modules` or the workspace root. When every app in a monorepo agrees on
-  one React Native version, yarn hoists it to the root and the app's hardcoded
-  `../node_modules` path no longer exists, which made the build fail to find the
-  React Native settings plugin at all.
-* The Expo config plugin recognises both the version-less `classpath` template
-  and the `findProperty`-driven one that SDK 58 generates, instead of throwing.
-* `EpubReaderFragment` no longer imports `publication.Locator` twice, which was
-  a hard compile error rather than the unused import it resembled.
-* The `linkColor` warning no longer names a toolkit version that drifts out of
-  date silently.
-
-### ⚠️ Deprecated
-
-* The `linkColor` preference is dropped on Android with a warning. Readium's
-  Android `EpubPreferences` has no such field.
+- Link every example to the workspace library and fix hoisted Metro, autolinking,
+  and Hermes V1 compiler paths.
+- Align the library NDK with the host app to prevent C++ runtime symbol failures.
+- Preserve JNI-created implementations in optimized Android builds and construct
+  reader ViewModels directly.
+- Keep streamed Android resources uncompressed so image lengths and byte ranges
+  stay reliable.
+- Fix Windows native builds, generated font task dependencies, and duplicate
+  Worklets packaging.
+- Adopt scene-based iOS startup and expose reader controls to accessibility.
+- Keep native Nitro audio imports out of web bundles and update web navigator
+  listeners for the resolved Readium version.
+- Handle both Expo Kotlin templates, refresh managed desugaring dependencies,
+  and configure sample HTTP access through supported plugin options.
+- Rebuild JavaScript and declarations before publishing. Remove CircleCI and
+  obsolete Yarn/bootstrap files; update the Git hooks and documentation to pnpm.
+- Keep the unsupported Android `linkColor` warning independent of toolkit versions.
 
 # 5.0.0-rc.37
 

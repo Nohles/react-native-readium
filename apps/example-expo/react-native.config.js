@@ -1,10 +1,10 @@
 const path = require('path');
-const pak = require('../../package.json');
 
 module.exports = {
   dependencies: {
-    [pak.name]: {
-      root: path.join(__dirname, '../..'),
+    // Resolve the workspace alias to its real path for Android resource tasks.
+    'react-native-readium': {
+      root: path.resolve(__dirname, '../..'),
     },
   },
 };

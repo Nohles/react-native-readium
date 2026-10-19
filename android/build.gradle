@@ -1,8 +1,6 @@
 buildscript {
-  // Pinned: the toolkit 3.3.0 artifacts carry Kotlin 2.3 metadata, so this
-  // library must compile with Kotlin >= 2.3 regardless of the host app's
-  // kotlinVersion override (hosts overriding lower will fail their own
-  // compilation of app code that reads these classes).
+  // Keep the fallback compiler aligned with the Expo example. The source also
+  // opts in to experimental kotlin.time APIs for Kotlin 2.2 compatibility.
   def kotlin_version = project.properties['Readium_kotlinVersion']
   // Consumed as a source dependency (composite build) when the host app
   // wires `includeBuild` against external/kotlin-toolkit; this Maven
@@ -15,7 +13,7 @@ buildscript {
   }
 
   dependencies {
-    classpath 'com.android.tools.build:gradle:9.0.0'
+    classpath 'com.android.tools.build:gradle:9.2.1'
     // noinspection DifferentKotlinGradleVersion
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
   }
@@ -40,6 +38,8 @@ def reactNativeArchitectures() {
 }
 
 android {
+  // Match the host C++ runtime instead of AGP's newer default NDK.
+  ndkVersion getExtOrDefault('ndkVersion')
   compileSdkVersion getExtOrIntegerDefault('compileSdkVersion')
   namespace "com.reactnativereadium"
   defaultConfig {

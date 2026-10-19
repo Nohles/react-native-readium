@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import { NitroModules } from 'react-native-nitro-modules';
+import { createNativeAudio } from './utils/createNativeAudio';
 
 import type {
   AudiobookBookmark,
@@ -29,8 +29,7 @@ let currentState: AudiobookSessionState = idleState;
 
 function getNativeAudio(): NativeReadiumAudio {
   if (!nativeAudio) {
-    nativeAudio =
-      NitroModules.createHybridObject<NativeReadiumAudio>('ReadiumAudio');
+    nativeAudio = createNativeAudio();
     nativeAudio.onStateChange = (state) => {
       emitState(state);
     };

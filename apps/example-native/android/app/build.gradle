@@ -2,10 +2,10 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
-// settings.gradle resolves these, because yarn hoists react-native to the
+// settings.gradle resolves these, because pnpm hoists react-native to the
 // workspace root when every app in the monorepo agrees on one version.
 def nodeModulesCandidates = [
-    rootProject.file("../../node_modules"),
+    rootProject.file("../node_modules"),
     rootProject.file("../../../node_modules"),
 ]
 def resolveFromNodeModules = { String relativePath ->
@@ -14,7 +14,7 @@ def resolveFromNodeModules = { String relativePath ->
         .find { it.exists() }
     if (match == null) {
         throw new GradleException(
-            "Cannot find ${relativePath} in ${nodeModulesCandidates}. Run yarn install at the repository root."
+            "Cannot find ${relativePath} in ${nodeModulesCandidates}. Run pnpm install at the repository root."
         )
     }
     return match
@@ -65,8 +65,8 @@ react {
     // extraPackagerArgs = []
 
     /* Hermes Commands */
-    //   The hermes compiler command to run. By default it is 'hermesc'
-    hermesCommand = "${reactNativePackageDir}/sdks/hermesc/%OS-BIN%/hermesc"
+    // Hermes V1 is a separate package; resolve it from the hoisted workspace.
+    hermesCommand = resolveFromNodeModules("hermes-compiler").absolutePath + "/hermesc/%OS-BIN%/hermesc"
     //
     //   The list of flags to pass to the Hermes compiler. By default is "-O", "-output-source-map"
     // hermesFlags = ["-O", "-output-source-map"]
@@ -93,6 +93,11 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+def vectorIconFonts = tasks.register("copyReactNativeVectorIconFonts", Sync) {
+    from(vectorIconsFontsDir) { into("fonts") }
+    into(layout.buildDirectory.dir("generated/vector-icons"))
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -100,16 +105,13 @@ android {
 
     sourceSets {
         main {
-            assets.srcDirs = ["../../resources", "$buildDir/generated/vector-icons"]
+            assets.srcDirs = ["../../resources"]
+            assets.srcDir(layout.buildDirectory.dir("generated/vector-icons").get().asFile)
         }
     }
 
-    if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-        externalNativeBuild {
-            cmake {
-                buildStagingDirectory file("../../../../.cxx/example")
-            }
-        }
+    packagingOptions {
+        jniLibs.pickFirsts += ["**/libworklets.so"]
     }
 
     namespace "com.example.reactnativereadium"
@@ -145,14 +147,11 @@ android {
     }
 }
 
-tasks.register("copyReactNativeVectorIconFonts", Sync) {
-    from(vectorIconsFontsDir)
-    into("$buildDir/generated/vector-icons/fonts")
-}
-
+// Both packaging and lint read the generated font assets.
 tasks.configureEach { task ->
-    if (task.name.startsWith("merge") && task.name.endsWith("Assets")) {
-        task.dependsOn("copyReactNativeVectorIconFonts")
+    if ((task.name.startsWith("merge") && task.name.endsWith("Assets")) ||
+        task.name.toLowerCase().contains("lint")) {
+        task.dependsOn(vectorIconFonts)
     }
 }
 

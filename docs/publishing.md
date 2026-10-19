@@ -15,7 +15,7 @@ The repo [`.npmrc`](../.npmrc) sets `@nohles:registry` for installs and publishe
 Authenticate once:
 
 ```bash
-npm login --registry http://192.168.1.202:4873
+pnpm login --registry http://192.168.1.202:4873
 ```
 
 Or add a token to your user `~/.npmrc` (never commit tokens):
@@ -27,7 +27,7 @@ Or add a token to your user `~/.npmrc` (never commit tokens):
 If npm errors on HTTP, for your user config only:
 
 ```bash
-npm config set strict-ssl false --location=user
+pnpm config set strict-ssl false --location=user
 ```
 
 ## Publish
@@ -35,11 +35,11 @@ npm config set strict-ssl false --location=user
 From the repository root:
 
 ```bash
-yarn install
-yarn publish:registry
+pnpm install --frozen-lockfile
+pnpm run publish:registry
 ```
 
-This runs a TypeScript check (`prepublishOnly`), compiles to `lib/` (`prepare`), and publishes with `npm publish --access public --tag rc`. Prerelease versions must use an explicit dist-tag; the registry also exposes `latest` (update with `npm dist-tag` if you want `latest` to match a new RC).
+This rebuilds JavaScript and declarations in `lib/` through `prepublishOnly`, then publishes with `pnpm publish --access public --tag rc`. Prerelease versions must use an explicit dist-tag; the registry also exposes `latest` (update with `pnpm dist-tag` if you want `latest` to match a new RC).
 
 The registry URL comes from `publishConfig` in `package.json`.
 
@@ -50,17 +50,17 @@ The registry URL comes from `publishConfig` in `package.json`.
 Prefer the existing release flow:
 
 ```bash
-yarn release
-yarn publish:registry
+pnpm run release
+pnpm run publish:registry
 ```
 
-`release-it` does not publish to npm automatically (`npm.publish: false`). Avoid `npm version` unless you intend `postversion` to publish immediately.
+`release-it` does not publish to npm automatically (`npm.publish: false`). Avoid `pnpm version` unless you intend `postversion` to publish immediately.
 
 ## Verify
 
 ```bash
-npm view @nohles/react-native-readium version --registry http://192.168.1.202:4873
-npm pack --dry-run
+pnpm view @nohles/react-native-readium version --registry http://192.168.1.202:4873
+pnpm pack --out /tmp/readium-package.tgz
 ```
 
 Open the Verdaccio web UI to confirm the tarball.
@@ -78,13 +78,13 @@ In the consuming app, add the same scope registry to `.npmrc`:
 Install with the `npm:` alias so imports stay `react-native-readium`:
 
 ```bash
-yarn add react-native-readium@npm:@nohles/react-native-readium@5.0.0-rc.18 react-native-nitro-modules
+pnpm add react-native-readium@npm:@nohles/react-native-readium@5.0.0-rc.38 react-native-nitro-modules
 ```
 
 Or in `package.json`:
 
 ```json
-"react-native-readium": "npm:@nohles/react-native-readium@5.0.0-rc.18"
+"react-native-readium": "npm:@nohles/react-native-readium@5.0.0-rc.38"
 ```
 
 Peer dependencies (`react`, `react-native`, `react-native-nitro-modules`) and runtime deps (`@readium/*`) still resolve from the public npm registry unless your Verdaccio instance proxies them.

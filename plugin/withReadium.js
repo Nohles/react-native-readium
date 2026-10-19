@@ -99,10 +99,15 @@ function withReadiumAndroidDesugaring(config) {
         `android {\n    ${ANDROID_OPTIONS_MARKER}\n    compileOptions {\n        coreLibraryDesugaringEnabled true\n    }\n`
       );
     }
-    if (!contents.includes(ANDROID_DEP_MARKER)) {
+    if (contents.includes(ANDROID_DEP_MARKER)) {
+      contents = contents.replace(
+        /coreLibraryDesugaring\s+['"]com\.android\.tools:desugar_jdk_libs:[^'"]+['"]/,
+        'coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.5"'
+      );
+    } else {
       contents = contents.replace(
         /dependencies\s*\{\s*\n/,
-        `dependencies {\n    ${ANDROID_DEP_MARKER}\n    coreLibraryDesugaring \"com.android.tools:desugar_jdk_libs:2.1.5\"\n`
+        `dependencies {\n    ${ANDROID_DEP_MARKER}\n    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.5"\n`
       );
     }
 
@@ -119,37 +124,25 @@ function withReadiumAndroidKotlin(config) {
       );
     }
 
-    // The Readium Android toolkit 3.3.0 artifacts carry Kotlin 2.3 metadata, so
-    // the plugin must be pinned to a matching version. Two template shapes have
-    // to be recognised:
-    //
-    //   classpath('org.jetbrains.kotlin:kotlin-gradle-plugin')            (older)
-    //   classpath(v ? "org...:$v" : 'org...')                             (SDK 58)
-    //
-    // The second shape reads the version from a Gradle property that
-    // `expo-build-properties` can set. Pinning the literal here rather than
-    // trusting the property keeps the floor in one place, because the property
-    // is absent by default and silently resolving to a version-less coordinate
-    // is what breaks the build.
+    // Match both literal and property-driven Kotlin dependencies emitted by
+    // Expo templates. Keep the host compiler aligned with Expo Modules V2.
     const literalPlugin =
       /classpath\((['"])org\.jetbrains\.kotlin:kotlin-gradle-plugin(?::[^'"]+)?\1\)/;
     const templatedPlugin = /classpath\([^)]*kotlin-gradle-plugin[^)]*\)/;
 
     if (literalPlugin.test(modConfig.modResults.contents)) {
-      modConfig.modResults.contents =
-        modConfig.modResults.contents.replace(
-          literalPlugin,
-          `classpath('org.jetbrains.kotlin:kotlin-gradle-plugin:${ANDROID_KOTLIN_VERSION}')`
-        );
+      modConfig.modResults.contents = modConfig.modResults.contents.replace(
+        literalPlugin,
+        `classpath('org.jetbrains.kotlin:kotlin-gradle-plugin:${ANDROID_KOTLIN_VERSION}')`
+      );
       return modConfig;
     }
 
     if (templatedPlugin.test(modConfig.modResults.contents)) {
-      modConfig.modResults.contents =
-        modConfig.modResults.contents.replace(
-          templatedPlugin,
-          `classpath('org.jetbrains.kotlin:kotlin-gradle-plugin:${ANDROID_KOTLIN_VERSION}')`
-        );
+      modConfig.modResults.contents = modConfig.modResults.contents.replace(
+        templatedPlugin,
+        `classpath('org.jetbrains.kotlin:kotlin-gradle-plugin:${ANDROID_KOTLIN_VERSION}')`
+      );
       return modConfig;
     }
 
@@ -159,9 +152,9 @@ function withReadiumAndroidKotlin(config) {
   });
 }
 
-function withReadiumAndroidManifest(config) {
+function withReadiumAndroidManifest(config, usesCleartextTraffic) {
   return withAndroidManifest(config, (modConfig) => {
-    if (config.android?.usesCleartextTraffic !== true) {
+    if (usesCleartextTraffic !== true) {
       return modConfig;
     }
 
@@ -173,6 +166,7 @@ function withReadiumAndroidManifest(config) {
         'react-native-readium could not locate the Android application manifest entry.'
       );
     }
+    application['android:usesCleartextTraffic'] = 'true';
 
     const removals = new Set(
       (application['tools:remove'] || '')
@@ -196,10 +190,10 @@ function withReadiumIosBackgroundAudio(config) {
   });
 }
 
-const withReadium = (config) => {
+const withReadium = (config, { android = {} } = {}) => {
   config = withReadiumIosBackgroundAudio(config);
   config = withReadiumPods(config);
-  config = withReadiumAndroidManifest(config);
+  config = withReadiumAndroidManifest(config, android.usesCleartextTraffic);
   config = withReadiumAndroidKotlin(config);
   return withReadiumAndroidDesugaring(config);
 };

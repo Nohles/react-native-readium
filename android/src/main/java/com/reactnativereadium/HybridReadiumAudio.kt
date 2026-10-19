@@ -1,5 +1,6 @@
 package com.margelo.nitro.reactnativereadium
 
+import androidx.annotation.Keep
 import com.reactnativereadium.audio.AudiobookSession
 import com.reactnativereadium.utils.nitroBookmarkToReadium
 import com.reactnativereadium.utils.nitroLocatorToReadium
@@ -16,6 +17,8 @@ import kotlinx.coroutines.launch
  * Android implementation of the `ReadiumAudio` Nitro spec. A thin delegate to
  * the persistent [AudiobookSession], mirroring iOS `HybridReadiumAudio.swift`.
  */
+// Constructed by generated C++ JNI code.
+@Keep
 class HybridReadiumAudio : HybridReadiumAudioSpec() {
 
   private companion object {

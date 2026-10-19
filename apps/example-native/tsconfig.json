@@ -10,7 +10,6 @@
     "jsx": "react-native",
     "lib": ["es2017", "DOM", "DOM.Iterable"],
     "moduleResolution": "bundler",
-    "baseUrl": ".",
     "paths": {
       "react-native-readium": ["../../src/index.tsx"]
     },

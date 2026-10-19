@@ -73,21 +73,6 @@ yarn-error.log
 # testing
 /coverage
 
-# Yarn
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/sdks
-!.yarn/versions
-
-apps/example-native/.yarn/*
-!apps/example-native/.yarn/patches
-!apps/example-native/.yarn/plugins
-!apps/example-native/.yarn/releases
-!apps/example-native/.yarn/sdks
-!apps/example-native/.yarn/versions
-
 # Expo
 .expo/*
 apps/example-expo/ios/

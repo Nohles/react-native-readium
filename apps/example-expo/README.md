@@ -5,12 +5,16 @@ package directly from the workspace. It is intentionally not compatible with
 Expo Go because Readium requires native code.
 
 ```sh
-yarn install
-yarn workspace example-expo expo prebuild --clean
-yarn workspace example-expo ios
+pnpm install
+pnpm --filter example-expo prebuild --clean
+pnpm --filter example-expo ios
 # or:
-yarn workspace example-expo android
+pnpm --filter example-expo android
 ```
+
+The Readium plugin's `android.usesCleartextTraffic` option is enabled in this
+sample so LAN-hosted publication URLs work. Production consumers can omit it to
+keep the default loopback-only network policy.
 
 The example exercises EPUB, PDF, CBZ, audiobook, and streamed WebPub reading on
 iOS and Android, including metadata, location updates, navigation, preferences,
@@ -26,8 +30,8 @@ screen can be minimized and reopened while the mini-player remains active.
    - `EXPO_PUBLIC_PROXIED_AUDIOBOOK_MANIFEST_URL` — full manifest URL from a live
      `/readium/open/audiobooks/...` session (the default UUID expires when the proxy restarts).
    - Optional: `EXPO_PUBLIC_READER_WEB_URL` + `EXPO_PUBLIC_AUDIOBOOK_FILE_ID` to open by file id instead.
-3. Rebuild the dev client if you change native code: `yarn workspace example-expo ios`
-   or `yarn workspace example-expo android`.
+3. Rebuild the dev client if you change native code: `pnpm --filter example-expo ios`
+   or `pnpm --filter example-expo android`.
 4. Open the proxied sample and filter Metro for `[AudiobookDebug]`.
 
 Expect `onPublicationReady` after the native embed fix in `HybridReadiumView.swift`.

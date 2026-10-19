@@ -1,4 +1,4 @@
-# Yarn (committed in .npmrc)
+# pnpm (committed in .npmrc)
 node-linker=hoisted
 auto-install-peers=true
 
