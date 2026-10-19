@@ -27,7 +27,7 @@ namespace margelo::nitro::readium {
    */
   struct JFunc_void_AudiobookPlaybackState: public jni::JavaClass<JFunc_void_AudiobookPlaybackState> {
   public:
-    static auto constexpr kJavaDescriptor = "Lcom/margelo/nitro/reactnativereadium/Func_void_AudiobookPlaybackState;";
+    static constexpr auto kJavaDescriptor = "Lcom/margelo/nitro/reactnativereadium/Func_void_AudiobookPlaybackState;";
 
   public:
     /**
@@ -63,7 +63,7 @@ namespace margelo::nitro::readium {
     }
 
   public:
-    static auto constexpr kJavaDescriptor = "Lcom/margelo/nitro/reactnativereadium/Func_void_AudiobookPlaybackState_cxx;";
+    static constexpr auto kJavaDescriptor = "Lcom/margelo/nitro/reactnativereadium/Func_void_AudiobookPlaybackState_cxx;";
     static void registerNatives() {
       registerHybrid({makeNativeMethod("invoke_cxx", JFunc_void_AudiobookPlaybackState_cxx::invoke_cxx)});
     }

@@ -38,7 +38,7 @@ export function HomeScreen({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Readium Expo SDK 56</Text>
+      <Text style={styles.title}>Readium Expo SDK 58</Text>
       <Text style={styles.subtitle}>Choose a publication to open</Text>
       <View style={styles.library}>
         {samples.map((sample) => (

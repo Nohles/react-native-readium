@@ -16,23 +16,32 @@
       }
     },
     "android": {
-      "package": "com.example.readiumexpo",
-      "usesCleartextTraffic": true
+      "package": "com.example.readiumexpo"
     },
     "plugins": [
       [
         "expo-build-properties",
         {
           "android": {
-            "kotlinVersion": "2.3.20"
+            "kotlinVersion": "2.2.10",
+            "packagingOptions": {
+              "pickFirst": ["**/libworklets.so"]
+            },
+            "cmakeVersion": "4.1.2"
           },
           "ios": {
             "deploymentTarget": "17.0"
           }
         }
       ],
-      "../../app.plugin.js",
-      "expo-ios-scene-lifecycle-plugin"
+      [
+        "../../app.plugin.js",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
     ]
   }
 }

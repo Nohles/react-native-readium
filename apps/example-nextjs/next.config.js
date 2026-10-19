@@ -57,7 +57,7 @@ const config = {
     // Configure aliases - must be done for both client and server
     webpackConfig.resolve.alias = {
       ...(webpackConfig.resolve.alias || {}),
-      // Ensure single React instance (use workspace root for Yarn workspaces)
+      // Ensure single React instance (use workspace root for the pnpm workspace)
       'react': path.resolve(__dirname, '../../node_modules/react'),
       'react-dom': path.resolve(__dirname, '../../node_modules/react-dom'),
       // Alias react-native to react-native-web

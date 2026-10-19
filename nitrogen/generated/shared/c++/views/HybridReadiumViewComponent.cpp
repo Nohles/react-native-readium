@@ -7,18 +7,12 @@
 
 #include "HybridReadiumViewComponent.hpp"
 
-#include <string>
-#include <exception>
-#include <utility>
-#include <NitroModules/NitroDefines.hpp>
-#include <NitroModules/JSIConverter.hpp>
-#include <NitroModules/PropNameIDCache.hpp>
-#include <react/renderer/core/RawValue.h>
-#include <react/renderer/core/ShadowNode.h>
-#include <react/renderer/core/ComponentDescriptor.h>
-#include <react/renderer/components/view/ViewProps.h>
+#include <NitroModules/NitroHash.hpp>
+#include <NitroModules/ReactProp.hpp>
 
 namespace margelo::nitro::readium::views {
+
+  using namespace facebook;
 
   extern const char HybridReadiumViewComponentName[] = "ReadiumView";
 
@@ -26,166 +20,22 @@ namespace margelo::nitro::readium::views {
                                                  const HybridReadiumViewProps& sourceProps,
                                                  const react::RawProps& rawProps):
     react::ViewProps(context, sourceProps, rawProps, filterObjectKeys),
-    reopenActiveAudiobook([&]() -> CachedProp<std::optional<bool>> {
-      try {
-        const react::RawValue* rawValue = rawProps.at("reopenActiveAudiobook", nullptr, nullptr);
-        if (rawValue == nullptr) return sourceProps.reopenActiveAudiobook;
-        const auto& [runtime, value] = (std::pair<jsi::Runtime*, jsi::Value>)*rawValue;
-        return CachedProp<std::optional<bool>>::fromRawValue(*runtime, value, sourceProps.reopenActiveAudiobook);
-      } catch (const std::exception& exc) {
-        throw std::runtime_error(std::string("ReadiumView.reopenActiveAudiobook: ") + exc.what());
-      }
-    }()),
-    file([&]() -> CachedProp<std::optional<ReadiumFile>> {
-      try {
-        const react::RawValue* rawValue = rawProps.at("file", nullptr, nullptr);
-        if (rawValue == nullptr) return sourceProps.file;
-        const auto& [runtime, value] = (std::pair<jsi::Runtime*, jsi::Value>)*rawValue;
-        return CachedProp<std::optional<ReadiumFile>>::fromRawValue(*runtime, value, sourceProps.file);
-      } catch (const std::exception& exc) {
-        throw std::runtime_error(std::string("ReadiumView.file: ") + exc.what());
-      }
-    }()),
-    preferences([&]() -> CachedProp<std::optional<Preferences>> {
-      try {
-        const react::RawValue* rawValue = rawProps.at("preferences", nullptr, nullptr);
-        if (rawValue == nullptr) return sourceProps.preferences;
-        const auto& [runtime, value] = (std::pair<jsi::Runtime*, jsi::Value>)*rawValue;
-        return CachedProp<std::optional<Preferences>>::fromRawValue(*runtime, value, sourceProps.preferences);
-      } catch (const std::exception& exc) {
-        throw std::runtime_error(std::string("ReadiumView.preferences: ") + exc.what());
-      }
-    }()),
-    customFonts([&]() -> CachedProp<std::optional<std::vector<CustomFont>>> {
-      try {
-        const react::RawValue* rawValue = rawProps.at("customFonts", nullptr, nullptr);
-        if (rawValue == nullptr) return sourceProps.customFonts;
-        const auto& [runtime, value] = (std::pair<jsi::Runtime*, jsi::Value>)*rawValue;
-        return CachedProp<std::optional<std::vector<CustomFont>>>::fromRawValue(*runtime, value, sourceProps.customFonts);
-      } catch (const std::exception& exc) {
-        throw std::runtime_error(std::string("ReadiumView.customFonts: ") + exc.what());
-      }
-    }()),
-    decorations([&]() -> CachedProp<std::optional<std::vector<DecorationGroup>>> {
-      try {
-        const react::RawValue* rawValue = rawProps.at("decorations", nullptr, nullptr);
-        if (rawValue == nullptr) return sourceProps.decorations;
-        const auto& [runtime, value] = (std::pair<jsi::Runtime*, jsi::Value>)*rawValue;
-        return CachedProp<std::optional<std::vector<DecorationGroup>>>::fromRawValue(*runtime, value, sourceProps.decorations);
-      } catch (const std::exception& exc) {
-        throw std::runtime_error(std::string("ReadiumView.decorations: ") + exc.what());
-      }
-    }()),
-    selectionActions([&]() -> CachedProp<std::optional<std::vector<SelectionAction>>> {
-      try {
-        const react::RawValue* rawValue = rawProps.at("selectionActions", nullptr, nullptr);
-        if (rawValue == nullptr) return sourceProps.selectionActions;
-        const auto& [runtime, value] = (std::pair<jsi::Runtime*, jsi::Value>)*rawValue;
-        return CachedProp<std::optional<std::vector<SelectionAction>>>::fromRawValue(*runtime, value, sourceProps.selectionActions);
-      } catch (const std::exception& exc) {
-        throw std::runtime_error(std::string("ReadiumView.selectionActions: ") + exc.what());
-      }
-    }()),
-    audiobookBookmarks([&]() -> CachedProp<std::optional<std::vector<AudiobookBookmark>>> {
-      try {
-        const react::RawValue* rawValue = rawProps.at("audiobookBookmarks", nullptr, nullptr);
-        if (rawValue == nullptr) return sourceProps.audiobookBookmarks;
-        const auto& [runtime, value] = (std::pair<jsi::Runtime*, jsi::Value>)*rawValue;
-        return CachedProp<std::optional<std::vector<AudiobookBookmark>>>::fromRawValue(*runtime, value, sourceProps.audiobookBookmarks);
-      } catch (const std::exception& exc) {
-        throw std::runtime_error(std::string("ReadiumView.audiobookBookmarks: ") + exc.what());
-      }
-    }()),
-    onLocationChange([&]() -> CachedProp<std::optional<std::function<void(const Locator& /* locator */)>>> {
-      try {
-        const react::RawValue* rawValue = rawProps.at("onLocationChange", nullptr, nullptr);
-        if (rawValue == nullptr) return sourceProps.onLocationChange;
-        const auto& [runtime, value] = (std::pair<jsi::Runtime*, jsi::Value>)*rawValue;
-        return CachedProp<std::optional<std::function<void(const Locator& /* locator */)>>>::fromRawValue(*runtime, value.asObject(*runtime).getProperty(*runtime, PropNameIDCache::get(*runtime, "f")), sourceProps.onLocationChange);
-      } catch (const std::exception& exc) {
-        throw std::runtime_error(std::string("ReadiumView.onLocationChange: ") + exc.what());
-      }
-    }()),
-    onTap([&]() -> CachedProp<std::optional<std::function<void(const Point& /* point */)>>> {
-      try {
-        const react::RawValue* rawValue = rawProps.at("onTap", nullptr, nullptr);
-        if (rawValue == nullptr) return sourceProps.onTap;
-        const auto& [runtime, value] = (std::pair<jsi::Runtime*, jsi::Value>)*rawValue;
-        return CachedProp<std::optional<std::function<void(const Point& /* point */)>>>::fromRawValue(*runtime, value.asObject(*runtime).getProperty(*runtime, PropNameIDCache::get(*runtime, "f")), sourceProps.onTap);
-      } catch (const std::exception& exc) {
-        throw std::runtime_error(std::string("ReadiumView.onTap: ") + exc.what());
-      }
-    }()),
-    onPublicationReady([&]() -> CachedProp<std::optional<std::function<void(const PublicationReadyEvent& /* event */)>>> {
-      try {
-        const react::RawValue* rawValue = rawProps.at("onPublicationReady", nullptr, nullptr);
-        if (rawValue == nullptr) return sourceProps.onPublicationReady;
-        const auto& [runtime, value] = (std::pair<jsi::Runtime*, jsi::Value>)*rawValue;
-        return CachedProp<std::optional<std::function<void(const PublicationReadyEvent& /* event */)>>>::fromRawValue(*runtime, value.asObject(*runtime).getProperty(*runtime, PropNameIDCache::get(*runtime, "f")), sourceProps.onPublicationReady);
-      } catch (const std::exception& exc) {
-        throw std::runtime_error(std::string("ReadiumView.onPublicationReady: ") + exc.what());
-      }
-    }()),
-    onDecorationActivated([&]() -> CachedProp<std::optional<std::function<void(const DecorationActivatedEvent& /* event */)>>> {
-      try {
-        const react::RawValue* rawValue = rawProps.at("onDecorationActivated", nullptr, nullptr);
-        if (rawValue == nullptr) return sourceProps.onDecorationActivated;
-        const auto& [runtime, value] = (std::pair<jsi::Runtime*, jsi::Value>)*rawValue;
-        return CachedProp<std::optional<std::function<void(const DecorationActivatedEvent& /* event */)>>>::fromRawValue(*runtime, value.asObject(*runtime).getProperty(*runtime, PropNameIDCache::get(*runtime, "f")), sourceProps.onDecorationActivated);
-      } catch (const std::exception& exc) {
-        throw std::runtime_error(std::string("ReadiumView.onDecorationActivated: ") + exc.what());
-      }
-    }()),
-    onSelectionChange([&]() -> CachedProp<std::optional<std::function<void(const SelectionEvent& /* event */)>>> {
-      try {
-        const react::RawValue* rawValue = rawProps.at("onSelectionChange", nullptr, nullptr);
-        if (rawValue == nullptr) return sourceProps.onSelectionChange;
-        const auto& [runtime, value] = (std::pair<jsi::Runtime*, jsi::Value>)*rawValue;
-        return CachedProp<std::optional<std::function<void(const SelectionEvent& /* event */)>>>::fromRawValue(*runtime, value.asObject(*runtime).getProperty(*runtime, PropNameIDCache::get(*runtime, "f")), sourceProps.onSelectionChange);
-      } catch (const std::exception& exc) {
-        throw std::runtime_error(std::string("ReadiumView.onSelectionChange: ") + exc.what());
-      }
-    }()),
-    onSelectionAction([&]() -> CachedProp<std::optional<std::function<void(const SelectionActionEvent& /* event */)>>> {
-      try {
-        const react::RawValue* rawValue = rawProps.at("onSelectionAction", nullptr, nullptr);
-        if (rawValue == nullptr) return sourceProps.onSelectionAction;
-        const auto& [runtime, value] = (std::pair<jsi::Runtime*, jsi::Value>)*rawValue;
-        return CachedProp<std::optional<std::function<void(const SelectionActionEvent& /* event */)>>>::fromRawValue(*runtime, value.asObject(*runtime).getProperty(*runtime, PropNameIDCache::get(*runtime, "f")), sourceProps.onSelectionAction);
-      } catch (const std::exception& exc) {
-        throw std::runtime_error(std::string("ReadiumView.onSelectionAction: ") + exc.what());
-      }
-    }()),
-    onAudiobookPlaybackStateChange([&]() -> CachedProp<std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>> {
-      try {
-        const react::RawValue* rawValue = rawProps.at("onAudiobookPlaybackStateChange", nullptr, nullptr);
-        if (rawValue == nullptr) return sourceProps.onAudiobookPlaybackStateChange;
-        const auto& [runtime, value] = (std::pair<jsi::Runtime*, jsi::Value>)*rawValue;
-        return CachedProp<std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>>::fromRawValue(*runtime, value.asObject(*runtime).getProperty(*runtime, PropNameIDCache::get(*runtime, "f")), sourceProps.onAudiobookPlaybackStateChange);
-      } catch (const std::exception& exc) {
-        throw std::runtime_error(std::string("ReadiumView.onAudiobookPlaybackStateChange: ") + exc.what());
-      }
-    }()),
-    onAudiobookBookmarkChange([&]() -> CachedProp<std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>> {
-      try {
-        const react::RawValue* rawValue = rawProps.at("onAudiobookBookmarkChange", nullptr, nullptr);
-        if (rawValue == nullptr) return sourceProps.onAudiobookBookmarkChange;
-        const auto& [runtime, value] = (std::pair<jsi::Runtime*, jsi::Value>)*rawValue;
-        return CachedProp<std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>>::fromRawValue(*runtime, value.asObject(*runtime).getProperty(*runtime, PropNameIDCache::get(*runtime, "f")), sourceProps.onAudiobookBookmarkChange);
-      } catch (const std::exception& exc) {
-        throw std::runtime_error(std::string("ReadiumView.onAudiobookBookmarkChange: ") + exc.what());
-      }
-    }()),
-    hybridRef([&]() -> CachedProp<std::optional<std::function<void(const std::shared_ptr<HybridReadiumViewSpec>& /* ref */)>>> {
-      try {
-        const react::RawValue* rawValue = rawProps.at("hybridRef", nullptr, nullptr);
-        if (rawValue == nullptr) return sourceProps.hybridRef;
-        const auto& [runtime, value] = (std::pair<jsi::Runtime*, jsi::Value>)*rawValue;
-        return CachedProp<std::optional<std::function<void(const std::shared_ptr<HybridReadiumViewSpec>& /* ref */)>>>::fromRawValue(*runtime, value.asObject(*runtime).getProperty(*runtime, PropNameIDCache::get(*runtime, "f")), sourceProps.hybridRef);
-      } catch (const std::exception& exc) {
-        throw std::runtime_error(std::string("ReadiumView.hybridRef: ") + exc.what());
-      }
-    }()) { }
+    reopenActiveAudiobook(nitro::ReactProp<std::optional<bool>>::fromRawValue("ReadiumView", "reopenActiveAudiobook", rawProps, sourceProps.reopenActiveAudiobook)),
+    file(nitro::ReactProp<std::optional<ReadiumFile>>::fromRawValue("ReadiumView", "file", rawProps, sourceProps.file)),
+    preferences(nitro::ReactProp<std::optional<Preferences>>::fromRawValue("ReadiumView", "preferences", rawProps, sourceProps.preferences)),
+    customFonts(nitro::ReactProp<std::optional<std::vector<CustomFont>>>::fromRawValue("ReadiumView", "customFonts", rawProps, sourceProps.customFonts)),
+    decorations(nitro::ReactProp<std::optional<std::vector<DecorationGroup>>>::fromRawValue("ReadiumView", "decorations", rawProps, sourceProps.decorations)),
+    selectionActions(nitro::ReactProp<std::optional<std::vector<SelectionAction>>>::fromRawValue("ReadiumView", "selectionActions", rawProps, sourceProps.selectionActions)),
+    audiobookBookmarks(nitro::ReactProp<std::optional<std::vector<AudiobookBookmark>>>::fromRawValue("ReadiumView", "audiobookBookmarks", rawProps, sourceProps.audiobookBookmarks)),
+    onLocationChange(nitro::ReactProp<std::optional<std::function<void(const Locator& /* locator */)>>>::fromRawValue("ReadiumView", "onLocationChange", rawProps, sourceProps.onLocationChange)),
+    onTap(nitro::ReactProp<std::optional<std::function<void(const Point& /* point */)>>>::fromRawValue("ReadiumView", "onTap", rawProps, sourceProps.onTap)),
+    onPublicationReady(nitro::ReactProp<std::optional<std::function<void(const PublicationReadyEvent& /* event */)>>>::fromRawValue("ReadiumView", "onPublicationReady", rawProps, sourceProps.onPublicationReady)),
+    onDecorationActivated(nitro::ReactProp<std::optional<std::function<void(const DecorationActivatedEvent& /* event */)>>>::fromRawValue("ReadiumView", "onDecorationActivated", rawProps, sourceProps.onDecorationActivated)),
+    onSelectionChange(nitro::ReactProp<std::optional<std::function<void(const SelectionEvent& /* event */)>>>::fromRawValue("ReadiumView", "onSelectionChange", rawProps, sourceProps.onSelectionChange)),
+    onSelectionAction(nitro::ReactProp<std::optional<std::function<void(const SelectionActionEvent& /* event */)>>>::fromRawValue("ReadiumView", "onSelectionAction", rawProps, sourceProps.onSelectionAction)),
+    onAudiobookPlaybackStateChange(nitro::ReactProp<std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>>::fromRawValue("ReadiumView", "onAudiobookPlaybackStateChange", rawProps, sourceProps.onAudiobookPlaybackStateChange)),
+    onAudiobookBookmarkChange(nitro::ReactProp<std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>>::fromRawValue("ReadiumView", "onAudiobookBookmarkChange", rawProps, sourceProps.onAudiobookBookmarkChange)),
+    hybridRef(nitro::ReactProp<std::optional<std::function<void(const std::shared_ptr<HybridReadiumViewSpec>& /* ref */)>>>::fromRawValue("ReadiumView", "hybridRef", rawProps, sourceProps.hybridRef)) { }
 
   bool HybridReadiumViewProps::filterObjectKeys(const std::string& propName) {
     switch (hashString(propName)) {
@@ -208,30 +58,5 @@ namespace margelo::nitro::readium::views {
       default: return false;
     }
   }
-
-  HybridReadiumViewComponentDescriptor::HybridReadiumViewComponentDescriptor(const react::ComponentDescriptorParameters& parameters)
-    : ConcreteComponentDescriptor(parameters,
-                                  react::RawPropsParser(/* enableJsiParser */ true)) {}
-
-  std::shared_ptr<const react::Props> HybridReadiumViewComponentDescriptor::cloneProps(const react::PropsParserContext& context,
-                                                                                       const std::shared_ptr<const react::Props>& props,
-                                                                                       react::RawProps rawProps) const {
-    // 1. Prepare raw props parser
-    rawProps.parse(rawPropsParser_);
-    // 2. Copy props with Nitro's cached copy constructor
-    return HybridReadiumViewShadowNode::Props(context, /* & */ rawProps, props);
-  }
-
-#ifdef ANDROID
-  void HybridReadiumViewComponentDescriptor::adopt(react::ShadowNode& shadowNode) const {
-    // This is called immediately after `ShadowNode` is created, cloned or in progress.
-    // On Android, we need to wrap props in our state, which gets routed through Java and later unwrapped in JNI/C++.
-    auto& concreteShadowNode = static_cast<HybridReadiumViewShadowNode&>(shadowNode);
-    const std::shared_ptr<const HybridReadiumViewProps>& constProps = concreteShadowNode.getConcreteSharedProps();
-    const std::shared_ptr<HybridReadiumViewProps>& props = std::const_pointer_cast<HybridReadiumViewProps>(constProps);
-    HybridReadiumViewState state{props};
-    concreteShadowNode.setStateData(std::move(state));
-  }
-#endif
 
 } // namespace margelo::nitro::readium::views

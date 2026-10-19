@@ -1,3 +1,37 @@
+# 5.0.0-rc.38
+
+Upgrade the examples to stable React Native 0.88.0, Expo SDK 58.0.14, and React
+19.3.0. The public reader API is unchanged.
+
+### Requirements
+
+- Requires `react-native-nitro-modules` `^0.37.1`. The checked-in bindings are
+  generated with nitrogen 0.37.1; update the runtime alongside this package.
+- Development uses pnpm 10.34.7 and TypeScript 6.0.3, with one workspace lockfile.
+- The Android examples use Kotlin 2.2.10, Gradle 9.4.1, AGP 9.2.1, SDK 37,
+  NDK 27.1.12297006, and CMake 4.1.2. Kotlin stays aligned with Expo Modules V2;
+  the library opts in to experimental time APIs for Kotlin 2.2 compatibility.
+
+### Fixes
+
+- Link every example to the workspace library and fix hoisted Metro, autolinking,
+  and Hermes V1 compiler paths.
+- Align the library NDK with the host app to prevent C++ runtime symbol failures.
+- Preserve JNI-created implementations in optimized Android builds and construct
+  reader ViewModels directly.
+- Keep streamed Android resources uncompressed so image lengths and byte ranges
+  stay reliable.
+- Fix Windows native builds, generated font task dependencies, and duplicate
+  Worklets packaging.
+- Adopt scene-based iOS startup and expose reader controls to accessibility.
+- Keep native Nitro audio imports out of web bundles and update web navigator
+  listeners for the resolved Readium version.
+- Handle both Expo Kotlin templates, refresh managed desugaring dependencies,
+  and configure sample HTTP access through supported plugin options.
+- Rebuild JavaScript and declarations before publishing. Remove CircleCI and
+  obsolete Yarn/bootstrap files; update the Git hooks and documentation to pnpm.
+- Keep the unsupported Android `linkColor` warning independent of toolkit versions.
+
 # 5.0.0-rc.37
 
 ### Bug Fixes

@@ -16,14 +16,14 @@ This is a Next.js web example demonstrating the use of `react-native-readium` in
 ### Prerequisites
 
 - Node.js >= 20
-- Yarn
+- pnpm (the version pinned in the root package.json)
 
 ### Installation
 
 From the root of the monorepo:
 
 ```bash
-yarn install
+pnpm install
 ```
 
 ### Development
@@ -32,10 +32,10 @@ Run the development server:
 
 ```bash
 # From the root
-yarn example:nextjs dev
+pnpm example:nextjs dev
 
 # Or from this directory
-yarn dev
+pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
@@ -45,7 +45,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 Build the production bundle:
 
 ```bash
-yarn build:next
+pnpm build:next
 ```
 
 ### Analyze Bundle
@@ -53,7 +53,7 @@ yarn build:next
 To analyze the bundle size:
 
 ```bash
-yarn build:analyze
+pnpm build:analyze
 ```
 
 ## Project Structure

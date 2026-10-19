@@ -1,49 +1,40 @@
-# Example App
+# Native example
 
-The example app is used as the basis of building and testing the core library.
-If you have an issue that we're unable to reproduce easily, we'll likely ask you
-to come here, build and run the example app, and see if you can reproduce it
-in that app.
+This app uses React Native 0.88 and links the library source from the pnpm workspace.
+Changes to `src/` are picked up by Metro; changes to Swift, Kotlin, C++, or Nitro
+bindings require rebuilding the app.
 
-## Building & Running
+Run these commands from the repository root:
 
-The most important thing to know about how to run this project, is to understand
-that it installs the `react-native-readium` library located in the parent
-directory (`../`) and **NOT from npm**. This means that before you can properly
-run the `example` you need to build the core library. Similarly, if you make a
-change to the code located in the parent directory, you need to rebuild then
-reinstall it in the `example` directory.
+```sh
+pnpm install
+pnpm run pods
+pnpm example ios --no-packager
+# or:
+pnpm example android --no-packager
+```
 
-Here are the steps:
+Start Metro separately when needed:
 
-### 1. Bootstrap The Library
+```sh
+pnpm example start
+```
 
-All commands are going to be run from the root directory. Meaning relative to
-this file you should run them from `../`.
+Metro uses port **8191** so the example does not connect to another app on 8081.
+For a standalone simulator build that needs no Metro server, use the Release
+configuration.
 
-`yarn bootstrap`
+Install Android SDK 37, NDK 27.1.12297006, and CMake 4.1.2 through the
+Android SDK Manager. The examples use CMake 4.1.2 for Windows long-path support.
 
-The bootstrap command builds the parent project and installs it in the `example`.
+Android builds use the pinned Kotlin toolkit fork. Initialize and publish it
+locally before building:
 
-### 2. Running The App
+```sh
+git submodule update --init --depth 1 external/kotlin-toolkit
+SKIP_SIGNING=1 ./scripts/publish-kotlin-toolkit-maven-local.sh
+```
 
-All commands are going to be run from the root directory. Meaning relative to
-this file you should run them from `../`.
-
-**Start Metro**
-
-`yarn example start`
-
-**Run iOS or Android**
-
-`yarn example [android | ios]`
-
-Ex. `yarn example ios`.
-
-Thats it! :tada:, you should now be running the example project.
-
-### Metro port (8191)
-
-This example uses Metro port **8191** instead of the default **8081**, so it does not accidentally bundle against another React Native or Expo dev server you may have running (for example the Reader app on 8081).
-
-If you see `Unable to resolve module ./index from /Users/rich/Code/Reader/.`, the simulator is still pointed at the wrong packager. Stop other Metro instances, run `yarn example start`, rebuild with `yarn example ios`, and reload the simulator (**⌘R**).
+The publishing script reports the JDK and Android SDK prerequisites if either
+is missing. See `android/build.gradle` for the toolkit artifacts used by the
+library.

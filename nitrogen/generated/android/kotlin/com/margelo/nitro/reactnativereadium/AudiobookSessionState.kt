@@ -9,6 +9,7 @@ package com.margelo.nitro.reactnativereadium
 
 import androidx.annotation.Keep
 import com.facebook.proguard.annotations.DoNotStrip
+import java.util.Objects
 
 
 /**
@@ -49,6 +50,36 @@ data class AudiobookSessionState(
   val error: String?
 ) {
   /* primary constructor */
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is AudiobookSessionState) return false
+    return Objects.deepEquals(this.status, other.status)
+      && Objects.deepEquals(this.publication, other.publication)
+      && Objects.deepEquals(this.position, other.position)
+      && Objects.deepEquals(this.duration, other.duration)
+      && Objects.deepEquals(this.rate, other.rate)
+      && Objects.deepEquals(this.volume, other.volume)
+      && Objects.deepEquals(this.currentHref, other.currentHref)
+      && Objects.deepEquals(this.currentTitle, other.currentTitle)
+      && Objects.deepEquals(this.sleepTimerRemaining, other.sleepTimerRemaining)
+      && Objects.deepEquals(this.error, other.error)
+  }
+
+  override fun hashCode(): Int {
+    return arrayOf<Any?>(
+      status,
+      publication,
+      position,
+      duration,
+      rate,
+      volume,
+      currentHref,
+      currentTitle,
+      sleepTimerRemaining,
+      error
+    ).contentDeepHashCode()
+  }
 
   companion object {
     /**

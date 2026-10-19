@@ -53,9 +53,11 @@ allows you to do things like:
 #### Prerequisites
 
 1. **iOS**: Requires an iOS target >= `16.4` (see the iOS section for more details).
-2. **Android**: Requires `compileSdkVersion` >= `31` (see the Android section for more details).
+2. **Android**: The React Native 0.88 examples use `compileSdkVersion` `37`, JDK 17 or newer, and Kotlin `2.2.10` (see the Android section).
 
-This library uses [Nitro Modules](https://nitro.margelo.com/) and supports both the old and new React Native architectures.
+This library uses [Nitro Modules](https://nitro.margelo.com/). The examples validate React Native 0.88 with the New Architecture.
+
+> **Upgrading to 5.0.0-rc.38?** It requires `react-native-nitro-modules` `^0.37.1`. The native bindings under `nitrogen/generated/` ship prebuilt in this package and were produced by nitrogen 0.37.1, so a consumer resolving nitro 0.35 will fail to link. Move the three versions together. See the [CHANGELOG](CHANGELOG.md#500-rc38).
 
 #### Install Module
 
@@ -125,9 +127,16 @@ Most apps won’t need code changes, but your **Android build configuration** mi
 Requirements:
 
 - **JDK 17** is required to build the Android app (the library targets Java/Kotlin 17).
-- **compileSdkVersion** must be >= `31`.
+- **compileSdkVersion 37** is used by the React Native 0.88 examples.
+- **Kotlin must be `2.2.10`.** The Expo config plugin pins this in your root
+  `build.gradle`. It is not an arbitrary choice: Expo SDK 58's Expo Modules V2
+  compiler plugin is built against exactly 2.2.10 and fails 2.2.20 and 2.3.20
+  with `AbstractMethodError` on the Kotlin FIR analysis API. If you are not on
+  Expo SDK 58, the library's own source still compiles under 2.2 and 2.3, so
+  your build can set either — but do not pick a 2.2 patch above 2.2.10 while
+  Expo Modules V2 is on the classpath.
 
-If you're not using `compileSdkVersion` >= 31 you'll need to update that:
+For the React Native 0.88 toolchain, configure the app to compile against SDK 37:
 
 ```groovy
 // android/build.gradle
@@ -136,7 +145,7 @@ buildscript {
     ...
     ext {
         ...
-        compileSdkVersion = 31
+        compileSdkVersion = 37
 ...
 ```
 
@@ -165,10 +174,10 @@ If your app uses Expo managed workflow (native `android/` is generated via `preb
 apply the desugaring settings through an Expo config plugin (or `expo-build-properties`) so
 they persist across builds.
 
-#### Expo SDK 56 / development builds
+#### Expo SDK 58 / development builds
 
 This package contains native Readium and Nitro code and therefore does **not** run in Expo Go.
-Use an Expo development build or an EAS build. Expo SDK 56 apps must target iOS 16.4 or newer.
+Use an Expo development build or an EAS build. Expo SDK 58 apps must target iOS 16.4 or newer.
 
 The package exports a config plugin that installs the Readium CocoaPods source/helpers,
 enables iOS background audio, and applies Android EPUB desugaring setup during
@@ -185,7 +194,7 @@ enables iOS background audio, and applies Android EPUB desugaring setup during
 }
 ```
 
-See `apps/example-expo` for an Expo SDK 56 development-build consumer.
+See `apps/example-expo` for an Expo SDK 58 development-build consumer.
 
 ## Usage
 
@@ -277,7 +286,7 @@ Copy any of these into `File.url` for quick testing:
 
 The example apps maintain longer lists of sample URLs:
 
-- [`apps/example-expo/types.ts`](apps/example-expo/types.ts) — Expo SDK 56 development build
+- [`apps/example-expo/types.ts`](apps/example-expo/types.ts) — Expo SDK 58 development build
 - [`apps/example-native/src/App.tsx`](apps/example-native/src/App.tsx) — native example
 - [`apps/example-nextjs/components/ReaderApp.tsx`](apps/example-nextjs/components/ReaderApp.tsx) — web (CDN-hosted manifests)
 
@@ -440,12 +449,12 @@ Key concepts:
 
 #### Format Support
 
-| Format     | Platforms    | Notes                                                                                                                                                                                                                                      |
-| ---------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Format     | Platforms    | Notes                                                                                                                                                                                                                                       |
+| ---------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | EPUB 2 / 3 | iOS, Android | Rendering, navigation, preferences, highlights, and selection actions. Packaged EPUB on all platforms; streamed WebPub via `manifest.json` supported everywhere (see [Streamed Web Publications](#streamed-web-publications-manifestjson)). |
 | Audiobook  | iOS, Android | Playback and persistent `ReadiumAudio` session.                                                                                                                                                                                             |
-| PDF        | iOS, Android | Rendering and navigation.                                                                                                                                                                                                                  |
-| CBZ        | iOS, Android | Rendering, navigation, comic canvas presets, fit, spread, and reading direction through a bespoke reader (see [CBZ / Comic Canvas Presets](#cbz--comic-canvas-presets)).                                                     |
+| PDF        | iOS, Android | Rendering and navigation.                                                                                                                                                                                                                   |
+| CBZ        | iOS, Android | Rendering, navigation, comic canvas presets, fit, spread, and reading direction through a bespoke reader (see [CBZ / Comic Canvas Presets](#cbz--comic-canvas-presets)).                                                                    |
 
 **Missing a format you need?** Reach out and see if it can be added to the roadmap.
 
@@ -590,16 +599,16 @@ ReadiumAudio.setNowPlayingMetadata({
 Pass `undefined` to fall back to the publication's own metadata.
 
 - iOS writes `MPNowPlayingInfoCenter`, so a host may keep using that directly if
-  it prefers. Playback *timing* (elapsed, duration, rate) is the host's to
+  it prefers. Playback _timing_ (elapsed, duration, rate) is the host's to
   publish on iOS.
 - Android has no `MediaSession.setMediaMetadata` — the lock screen and media
-  notification read the *player's* playlist metadata, and the library owns that
+  notification read the _player's_ playlist metadata, and the library owns that
   session. The library therefore applies the fields itself and derives timing
   from the player, so a host cannot reach the same session from app code.
 
 `setNowPlayingInfoEnabled(false)` suppresses the library's own publishing. This
 is cheap on iOS (`MPNowPlayingInfoCenter` is a passive dictionary) but on Android
-it also stops `AudiobookMediaService`, which *is* the background-playback
+it also stops `AudiobookMediaService`, which _is_ the background-playback
 mechanism — you would lose the media notification and the lock-screen transport
 controls. Prefer `setNowPlayingMetadata` on Android and leave the flag on.
 
@@ -618,7 +627,7 @@ iOS additionally emits `onAudiobookBookmarkChange` from its own built-in
 bookmark UI; Android has no such UI, so those events come only from the methods
 above.
 
-**Chapter skip.** `goForward` / `goBackward` move by *chapter* on both platforms,
+**Chapter skip.** `goForward` / `goBackward` move by _chapter_ on both platforms,
 derived from the publication's table of contents. A publication whose TOC does
 not resolve against its reading order falls back to reading-order items.
 
@@ -629,24 +638,9 @@ repository and the development workflow.
 
 ## Release
 
-The standard release command for this project is:
-
-```
-yarn version
-```
-
-This command will:
-
-1. Generate/update the Changelog
-1. Bump the package version
-1. Tag & pushing the commit
-
-e.g.
-
-```
-yarn version --new-version 1.2.17
-yarn version --patch // 1.2.17 -> 1.2.18
-```
+Use `pnpm run release` to prepare a version and `pnpm run publish:registry` to
+publish it. See [publishing](docs/publishing.md) for registry configuration and
+package verification.
 
 ## Sponsor The Library
 

@@ -196,16 +196,16 @@ namespace margelo::nitro::readium {
   }
   void JHybridReadiumAudioSpec::setBookmarks(const std::vector<AudiobookBookmark>& bookmarks) {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JArrayClass<JAudiobookBookmark>> /* bookmarks */)>("setBookmarks");
-    method(_javaPart, [&]() {
-      size_t __size = bookmarks.size();
+    method(_javaPart, [&](auto&& __input) {
+      size_t __size = __input.size();
       jni::local_ref<jni::JArrayClass<JAudiobookBookmark>> __array = jni::JArrayClass<JAudiobookBookmark>::newArray(__size);
       for (size_t __i = 0; __i < __size; __i++) {
-        const auto& __element = bookmarks[__i];
+        const auto& __element = __input[__i];
         auto __elementJni = JAudiobookBookmark::fromCpp(__element);
         __array->setElement(__i, *__elementJni);
       }
       return __array;
-    }());
+    }(bookmarks));
   }
   void JHybridReadiumAudioSpec::addBookmark(double position, const std::optional<std::string>& note) {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void(double /* position */, jni::alias_ref<jni::JString> /* note */)>("addBookmark");

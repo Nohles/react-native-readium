@@ -156,6 +156,7 @@ export const ReaderBottomSheet: React.FC<ReaderBottomSheetProps> = ({
   return (
     <BottomSheet
       ref={bottomSheetRef}
+      accessible={false}
       index={0}
       snapPoints={snapPoints}
       onChange={handleSheetChange}

@@ -9,6 +9,7 @@ package com.margelo.nitro.reactnativereadium
 
 import androidx.annotation.Keep
 import com.facebook.proguard.annotations.DoNotStrip
+import java.util.Objects
 
 
 /**
@@ -25,6 +26,20 @@ data class PublicationCapabilities(
   val searchHref: String?
 ) {
   /* primary constructor */
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is PublicationCapabilities) return false
+    return Objects.deepEquals(this.search, other.search)
+      && Objects.deepEquals(this.searchHref, other.searchHref)
+  }
+
+  override fun hashCode(): Int {
+    return arrayOf<Any?>(
+      search,
+      searchHref
+    ).contentDeepHashCode()
+  }
 
   companion object {
     /**

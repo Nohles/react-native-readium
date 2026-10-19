@@ -1,5 +1,6 @@
 package com.margelo.nitro.reactnativereadium
 
+import androidx.annotation.Keep
 import android.util.Log
 import android.view.Choreographer
 import android.view.View
@@ -36,6 +37,8 @@ import org.readium.r2.shared.publication.services.search.isSearchable
 import org.readium.r2.shared.publication.services.search.search
 
 @OptIn(ExperimentalReadiumApi::class)
+// Constructed by generated C++ JNI code.
+@Keep
 class HybridReadiumView(private val context: android.content.Context) : HybridReadiumViewSpec() {
   companion object {
     private const val CONTAINER_ID_ATTEMPTS = 20

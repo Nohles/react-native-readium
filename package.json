@@ -1,6 +1,6 @@
 {
   "name": "@nohles/react-native-readium",
-  "version": "5.0.0-rc.37",
+  "version": "5.0.0-rc.38",
   "description": "A react-native wrapper for https://readium.org/",
   "main": "lib/src/index",
   "types": "lib/src/index.d.ts",
@@ -39,19 +39,20 @@
     "prettier": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "prettier:fix": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "prepare": "rimraf lib && tsc",
-    "prepublishOnly": "bun run prepare",
+    "prepublishOnly": "pnpm run prepare",
     "release": "release-it",
-    "example": "yarn workspace example-native",
-    "example:expo": "yarn workspace example-expo start",
-    "example:nextjs": "yarn workspace example-nextjs",
-    "nitrogen": "npx nitrogen ./src/specs --config ./nitro.json --out ./nitrogen/generated",
+    "example": "pnpm --filter example-native",
+    "example:expo": "pnpm --filter example-expo start",
+    "example:nextjs": "pnpm --filter example-nextjs",
+    "nitrogen": "nitrogen ./src/specs --config ./nitro.json --out ./nitrogen/generated",
     "pods": "cd apps/example-native && pod-install --quiet",
-    "bootstrap": "yarn example && yarn && yarn pods",
-    "version": "yarn changelog && git add CHANGELOG.md",
-    "postversion": "npm run publish:registry",
-    "publish:registry": "npm run prepare && npm publish --access public --tag rc",
-    "publish:npm": "npm run publish:registry",
-    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0"
+    "bootstrap": "pnpm install && pnpm run pods",
+    "version": "pnpm run changelog && git add CHANGELOG.md",
+    "postversion": "pnpm run publish:registry",
+    "publish:registry": "pnpm publish --access public --tag rc",
+    "publish:npm": "pnpm run publish:registry",
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
+    "typecheck:examples": "tsc --noEmit -p apps/example-native/tsconfig.json && tsc --noEmit -p apps/example-expo/tsconfig.json && tsc --noEmit -p apps/example-nextjs/tsconfig.json"
   },
   "keywords": [
     "react-native",
@@ -77,38 +78,40 @@
   "devDependencies": {
     "@commitlint/config-conventional": "^17.0.2",
     "@evilmartians/lefthook": "^1.5.0",
-    "@react-native/eslint-config": "0.83.0",
+    "@react-native/eslint-config": "0.88.0",
+    "@react-native/jest-preset": "0.88.0",
     "@release-it/conventional-changelog": "^5.0.0",
     "@types/jest": "^29.5.13",
-    "@types/react": "^19.2.0",
+    "@types/react": "~19.3.0",
+    "@types/react-native-vector-icons": "^6.4.18",
     "commitlint": "^17.0.2",
     "conventional-changelog-cli": "^2.2.2",
     "del-cli": "^5.1.0",
     "eslint": "^8.19.0",
     "eslint-config-prettier": "^9.0.0",
-    "eslint-plugin-prettier": "^5.0.1",
+    "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-unused-imports": "^4.3.0",
     "husky": "^6.0.0",
     "jest": "^29.6.3",
-    "nitrogen": "^0.35.0",
+    "nitrogen": "0.37.1",
     "pod-install": "^0.1.0",
     "prettier": "2.8.8",
-    "react": "19.0.0",
-    "react-native": "0.83.1",
+    "react": "19.3.0",
+    "react-native": "0.88.0",
     "react-native-builder-bob": "^0.23.2",
-    "react-native-nitro-modules": "^0.35.0",
+    "react-native-nitro-modules": "0.37.1",
     "release-it": "^15.0.0",
     "rimraf": "^5.0.7",
     "turbo": "^1.10.7",
-    "typescript": "^5.8.3"
+    "typescript": "~6.0.3"
   },
   "peerDependencies": {
     "react": "*",
     "react-native": ">=0.78.0",
-    "react-native-nitro-modules": "*"
+    "react-native-nitro-modules": "^0.37.1"
   },
   "jest": {
-    "preset": "react-native",
+    "preset": "@react-native/jest-preset",
     "modulePathIgnorePatterns": [
       "<rootDir>/example/node_modules",
       "<rootDir>/lib/"
@@ -150,6 +153,7 @@
       "prettier/prettier": [
         "error",
         {
+          "endOfLine": "auto",
           "quoteProps": "consistent",
           "singleQuote": true,
           "tabWidth": 2,
@@ -190,8 +194,8 @@
     "use-deep-compare": "^1.1.0"
   },
   "engines": {
-    "node": ">=20"
+    "node": "^22.13.0 || ^24.3.0 || >=26.0.0"
   },
-  "packageManager": "yarn@3.6.4",
+  "packageManager": "pnpm@10.34.7",
   "stableVersion": "1.2.1"
 }

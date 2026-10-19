@@ -9,6 +9,7 @@ package com.margelo.nitro.reactnativereadium
 
 import androidx.annotation.Keep
 import com.facebook.proguard.annotations.DoNotStrip
+import java.util.Objects
 
 
 /**
@@ -28,6 +29,22 @@ data class LocatorLocations(
   val totalProgression: Double?
 ) {
   /* primary constructor */
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is LocatorLocations) return false
+    return Objects.deepEquals(this.progression, other.progression)
+      && Objects.deepEquals(this.position, other.position)
+      && Objects.deepEquals(this.totalProgression, other.totalProgression)
+  }
+
+  override fun hashCode(): Int {
+    return arrayOf<Any?>(
+      progression,
+      position,
+      totalProgression
+    ).contentDeepHashCode()
+  }
 
   companion object {
     /**

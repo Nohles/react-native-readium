@@ -15,97 +15,129 @@ namespace margelo::nitro::readium::views {
 using namespace facebook;
 using ConcreteStateData = react::ConcreteState<HybridReadiumViewState>;
 
-void JHybridReadiumViewStateUpdater::updateViewProps(jni::alias_ref<jni::JClass> /* class */,
-                                           jni::alias_ref<JHybridReadiumViewSpec::JavaPart> javaView,
-                                           jni::alias_ref<JStateWrapper::javaobject> stateWrapperInterface) {
-  std::shared_ptr<JHybridReadiumViewSpec> hybridView = javaView->getJHybridReadiumViewSpec();
-
-  // Get concrete StateWrapperImpl from passed StateWrapper interface object
-  jobject rawStateWrapper = stateWrapperInterface.get();
-  if (!stateWrapperInterface->isInstanceOf(react::StateWrapperImpl::javaClassStatic())) [[unlikely]] {
-      throw std::runtime_error("StateWrapper is not a StateWrapperImpl");
+std::shared_ptr<const HybridReadiumViewProps> JHybridReadiumViewStateUpdater::getPropsFromStateWrapper(
+    jni::alias_ref<JStateWrapper::javaobject> stateWrapper) {
+  if (stateWrapper.get() == nullptr) {
+    return nullptr;
   }
-  auto stateWrapper = jni::alias_ref<react::StateWrapperImpl::javaobject>{
-            static_cast<react::StateWrapperImpl::javaobject>(rawStateWrapper)};
-  std::shared_ptr<const react::State> state = stateWrapper->cthis()->getState();
+  // Get concrete StateWrapperImpl from passed StateWrapper interface object
+  jobject rawStateWrapper = stateWrapper.get();
+  if (!stateWrapper->isInstanceOf(react::StateWrapperImpl::javaClassStatic())) [[unlikely]] {
+    throw std::runtime_error("StateWrapper is not a StateWrapperImpl");
+  }
+  auto stateWrapperImpl = jni::alias_ref<react::StateWrapperImpl::javaobject>{
+    static_cast<react::StateWrapperImpl::javaobject>(rawStateWrapper)
+  };
+  std::shared_ptr<const react::State> state = stateWrapperImpl->cthis()->getState();
+  if (state == nullptr) {
+    return nullptr;
+  }
   auto concreteState = std::static_pointer_cast<const ConcreteStateData>(state);
   const HybridReadiumViewState& data = concreteState->getData();
-  const std::shared_ptr<HybridReadiumViewProps>& props = data.getProps();
+  const std::shared_ptr<const HybridReadiumViewProps>& props = data.getProps();
   if (props == nullptr) [[unlikely]] {
-    // Props aren't set yet!
     throw std::runtime_error("HybridReadiumViewState's data doesn't contain any props!");
   }
+  return props;
+}
 
-  // Update all props if they are dirty
-  if (props->reopenActiveAudiobook.isDirty) {
-    hybridView->setReopenActiveAudiobook(props->reopenActiveAudiobook.value);
-    props->reopenActiveAudiobook.isDirty = false;
+void JHybridReadiumViewStateUpdater::updateViewProps(jni::alias_ref<jni::JClass> /* class */,
+                                           jni::alias_ref<JHybridReadiumViewSpec::JavaPart> javaView,
+                                           jni::alias_ref<JStateWrapper::javaobject> newState,
+                                           jni::alias_ref<JStateWrapper::javaobject> oldState) {
+  std::shared_ptr<JHybridReadiumViewSpec> hybridView = javaView->getJHybridReadiumViewSpec();
+  std::shared_ptr<const HybridReadiumViewProps> newProps = getPropsFromStateWrapper(newState);
+  std::shared_ptr<const HybridReadiumViewProps> oldProps = getPropsFromStateWrapper(oldState);
+  if (newProps == nullptr) [[unlikely]] {
+    throw std::runtime_error("Current StateWrapper doesn't contain any props!");
   }
-  if (props->file.isDirty) {
-    hybridView->setFile(props->file.value);
-    props->file.isDirty = false;
+
+  // Update only props that differ from the previous State snapshot.
+  if (oldProps == nullptr
+        ? newProps->reopenActiveAudiobook.isProvided()
+        : !newProps->reopenActiveAudiobook.hasSameValue(oldProps->reopenActiveAudiobook)) {
+    hybridView->setReopenActiveAudiobook(newProps->reopenActiveAudiobook.get());
   }
-  if (props->preferences.isDirty) {
-    hybridView->setPreferences(props->preferences.value);
-    props->preferences.isDirty = false;
+  if (oldProps == nullptr
+        ? newProps->file.isProvided()
+        : !newProps->file.hasSameValue(oldProps->file)) {
+    hybridView->setFile(newProps->file.get());
   }
-  if (props->customFonts.isDirty) {
-    hybridView->setCustomFonts(props->customFonts.value);
-    props->customFonts.isDirty = false;
+  if (oldProps == nullptr
+        ? newProps->preferences.isProvided()
+        : !newProps->preferences.hasSameValue(oldProps->preferences)) {
+    hybridView->setPreferences(newProps->preferences.get());
   }
-  if (props->decorations.isDirty) {
-    hybridView->setDecorations(props->decorations.value);
-    props->decorations.isDirty = false;
+  if (oldProps == nullptr
+        ? newProps->customFonts.isProvided()
+        : !newProps->customFonts.hasSameValue(oldProps->customFonts)) {
+    hybridView->setCustomFonts(newProps->customFonts.get());
   }
-  if (props->selectionActions.isDirty) {
-    hybridView->setSelectionActions(props->selectionActions.value);
-    props->selectionActions.isDirty = false;
+  if (oldProps == nullptr
+        ? newProps->decorations.isProvided()
+        : !newProps->decorations.hasSameValue(oldProps->decorations)) {
+    hybridView->setDecorations(newProps->decorations.get());
   }
-  if (props->audiobookBookmarks.isDirty) {
-    hybridView->setAudiobookBookmarks(props->audiobookBookmarks.value);
-    props->audiobookBookmarks.isDirty = false;
+  if (oldProps == nullptr
+        ? newProps->selectionActions.isProvided()
+        : !newProps->selectionActions.hasSameValue(oldProps->selectionActions)) {
+    hybridView->setSelectionActions(newProps->selectionActions.get());
   }
-  if (props->onLocationChange.isDirty) {
-    hybridView->setOnLocationChange(props->onLocationChange.value);
-    props->onLocationChange.isDirty = false;
+  if (oldProps == nullptr
+        ? newProps->audiobookBookmarks.isProvided()
+        : !newProps->audiobookBookmarks.hasSameValue(oldProps->audiobookBookmarks)) {
+    hybridView->setAudiobookBookmarks(newProps->audiobookBookmarks.get());
   }
-  if (props->onTap.isDirty) {
-    hybridView->setOnTap(props->onTap.value);
-    props->onTap.isDirty = false;
+  if (oldProps == nullptr
+        ? newProps->onLocationChange.isProvided()
+        : !newProps->onLocationChange.hasSameValue(oldProps->onLocationChange)) {
+    hybridView->setOnLocationChange(newProps->onLocationChange.get());
   }
-  if (props->onPublicationReady.isDirty) {
-    hybridView->setOnPublicationReady(props->onPublicationReady.value);
-    props->onPublicationReady.isDirty = false;
+  if (oldProps == nullptr
+        ? newProps->onTap.isProvided()
+        : !newProps->onTap.hasSameValue(oldProps->onTap)) {
+    hybridView->setOnTap(newProps->onTap.get());
   }
-  if (props->onDecorationActivated.isDirty) {
-    hybridView->setOnDecorationActivated(props->onDecorationActivated.value);
-    props->onDecorationActivated.isDirty = false;
+  if (oldProps == nullptr
+        ? newProps->onPublicationReady.isProvided()
+        : !newProps->onPublicationReady.hasSameValue(oldProps->onPublicationReady)) {
+    hybridView->setOnPublicationReady(newProps->onPublicationReady.get());
   }
-  if (props->onSelectionChange.isDirty) {
-    hybridView->setOnSelectionChange(props->onSelectionChange.value);
-    props->onSelectionChange.isDirty = false;
+  if (oldProps == nullptr
+        ? newProps->onDecorationActivated.isProvided()
+        : !newProps->onDecorationActivated.hasSameValue(oldProps->onDecorationActivated)) {
+    hybridView->setOnDecorationActivated(newProps->onDecorationActivated.get());
   }
-  if (props->onSelectionAction.isDirty) {
-    hybridView->setOnSelectionAction(props->onSelectionAction.value);
-    props->onSelectionAction.isDirty = false;
+  if (oldProps == nullptr
+        ? newProps->onSelectionChange.isProvided()
+        : !newProps->onSelectionChange.hasSameValue(oldProps->onSelectionChange)) {
+    hybridView->setOnSelectionChange(newProps->onSelectionChange.get());
   }
-  if (props->onAudiobookPlaybackStateChange.isDirty) {
-    hybridView->setOnAudiobookPlaybackStateChange(props->onAudiobookPlaybackStateChange.value);
-    props->onAudiobookPlaybackStateChange.isDirty = false;
+  if (oldProps == nullptr
+        ? newProps->onSelectionAction.isProvided()
+        : !newProps->onSelectionAction.hasSameValue(oldProps->onSelectionAction)) {
+    hybridView->setOnSelectionAction(newProps->onSelectionAction.get());
   }
-  if (props->onAudiobookBookmarkChange.isDirty) {
-    hybridView->setOnAudiobookBookmarkChange(props->onAudiobookBookmarkChange.value);
-    props->onAudiobookBookmarkChange.isDirty = false;
+  if (oldProps == nullptr
+        ? newProps->onAudiobookPlaybackStateChange.isProvided()
+        : !newProps->onAudiobookPlaybackStateChange.hasSameValue(oldProps->onAudiobookPlaybackStateChange)) {
+    hybridView->setOnAudiobookPlaybackStateChange(newProps->onAudiobookPlaybackStateChange.get());
+  }
+  if (oldProps == nullptr
+        ? newProps->onAudiobookBookmarkChange.isProvided()
+        : !newProps->onAudiobookBookmarkChange.hasSameValue(oldProps->onAudiobookBookmarkChange)) {
+    hybridView->setOnAudiobookBookmarkChange(newProps->onAudiobookBookmarkChange.get());
   }
 
   // Update hybridRef if it changed
-  if (props->hybridRef.isDirty) {
+  if (oldProps == nullptr
+        ? newProps->hybridRef.isProvided()
+        : !newProps->hybridRef.hasSameValue(oldProps->hybridRef)) {
     // hybridRef changed - call it with new this
-    const auto& maybeFunc = props->hybridRef.value;
+    const auto& maybeFunc = newProps->hybridRef.get();
     if (maybeFunc.has_value()) {
       maybeFunc.value()(hybridView);
     }
-    props->hybridRef.isDirty = false;
   }
 }
 

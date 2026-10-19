@@ -201,110 +201,110 @@ namespace margelo::nitro::readium {
   std::optional<std::vector<CustomFont>> JHybridReadiumViewSpec::getCustomFonts() {
     static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<jni::JArrayClass<JCustomFont>>()>("getCustomFonts");
     auto __result = method(_javaPart);
-    return __result != nullptr ? std::make_optional([&]() {
-      size_t __size = __result->size();
+    return __result != nullptr ? std::make_optional([&](auto&& __input) {
+      size_t __size = __input->size();
       std::vector<CustomFont> __vector;
       __vector.reserve(__size);
       for (size_t __i = 0; __i < __size; __i++) {
-        auto __element = __result->getElement(__i);
+        auto __element = __input->getElement(__i);
         __vector.push_back(__element->toCpp());
       }
       return __vector;
-    }()) : std::nullopt;
+    }(__result)) : std::nullopt;
   }
   void JHybridReadiumViewSpec::setCustomFonts(const std::optional<std::vector<CustomFont>>& customFonts) {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JArrayClass<JCustomFont>> /* customFonts */)>("setCustomFonts");
-    method(_javaPart, customFonts.has_value() ? [&]() {
-      size_t __size = customFonts.value().size();
+    method(_javaPart, customFonts.has_value() ? [&](auto&& __input) {
+      size_t __size = __input.size();
       jni::local_ref<jni::JArrayClass<JCustomFont>> __array = jni::JArrayClass<JCustomFont>::newArray(__size);
       for (size_t __i = 0; __i < __size; __i++) {
-        const auto& __element = customFonts.value()[__i];
+        const auto& __element = __input[__i];
         auto __elementJni = JCustomFont::fromCpp(__element);
         __array->setElement(__i, *__elementJni);
       }
       return __array;
-    }() : nullptr);
+    }(customFonts.value()) : nullptr);
   }
   std::optional<std::vector<DecorationGroup>> JHybridReadiumViewSpec::getDecorations() {
     static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<jni::JArrayClass<JDecorationGroup>>()>("getDecorations");
     auto __result = method(_javaPart);
-    return __result != nullptr ? std::make_optional([&]() {
-      size_t __size = __result->size();
+    return __result != nullptr ? std::make_optional([&](auto&& __input) {
+      size_t __size = __input->size();
       std::vector<DecorationGroup> __vector;
       __vector.reserve(__size);
       for (size_t __i = 0; __i < __size; __i++) {
-        auto __element = __result->getElement(__i);
+        auto __element = __input->getElement(__i);
         __vector.push_back(__element->toCpp());
       }
       return __vector;
-    }()) : std::nullopt;
+    }(__result)) : std::nullopt;
   }
   void JHybridReadiumViewSpec::setDecorations(const std::optional<std::vector<DecorationGroup>>& decorations) {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JArrayClass<JDecorationGroup>> /* decorations */)>("setDecorations");
-    method(_javaPart, decorations.has_value() ? [&]() {
-      size_t __size = decorations.value().size();
+    method(_javaPart, decorations.has_value() ? [&](auto&& __input) {
+      size_t __size = __input.size();
       jni::local_ref<jni::JArrayClass<JDecorationGroup>> __array = jni::JArrayClass<JDecorationGroup>::newArray(__size);
       for (size_t __i = 0; __i < __size; __i++) {
-        const auto& __element = decorations.value()[__i];
+        const auto& __element = __input[__i];
         auto __elementJni = JDecorationGroup::fromCpp(__element);
         __array->setElement(__i, *__elementJni);
       }
       return __array;
-    }() : nullptr);
+    }(decorations.value()) : nullptr);
   }
   std::optional<std::vector<SelectionAction>> JHybridReadiumViewSpec::getSelectionActions() {
     static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<jni::JArrayClass<JSelectionAction>>()>("getSelectionActions");
     auto __result = method(_javaPart);
-    return __result != nullptr ? std::make_optional([&]() {
-      size_t __size = __result->size();
+    return __result != nullptr ? std::make_optional([&](auto&& __input) {
+      size_t __size = __input->size();
       std::vector<SelectionAction> __vector;
       __vector.reserve(__size);
       for (size_t __i = 0; __i < __size; __i++) {
-        auto __element = __result->getElement(__i);
+        auto __element = __input->getElement(__i);
         __vector.push_back(__element->toCpp());
       }
       return __vector;
-    }()) : std::nullopt;
+    }(__result)) : std::nullopt;
   }
   void JHybridReadiumViewSpec::setSelectionActions(const std::optional<std::vector<SelectionAction>>& selectionActions) {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JArrayClass<JSelectionAction>> /* selectionActions */)>("setSelectionActions");
-    method(_javaPart, selectionActions.has_value() ? [&]() {
-      size_t __size = selectionActions.value().size();
+    method(_javaPart, selectionActions.has_value() ? [&](auto&& __input) {
+      size_t __size = __input.size();
       jni::local_ref<jni::JArrayClass<JSelectionAction>> __array = jni::JArrayClass<JSelectionAction>::newArray(__size);
       for (size_t __i = 0; __i < __size; __i++) {
-        const auto& __element = selectionActions.value()[__i];
+        const auto& __element = __input[__i];
         auto __elementJni = JSelectionAction::fromCpp(__element);
         __array->setElement(__i, *__elementJni);
       }
       return __array;
-    }() : nullptr);
+    }(selectionActions.value()) : nullptr);
   }
   std::optional<std::vector<AudiobookBookmark>> JHybridReadiumViewSpec::getAudiobookBookmarks() {
     static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<jni::JArrayClass<JAudiobookBookmark>>()>("getAudiobookBookmarks");
     auto __result = method(_javaPart);
-    return __result != nullptr ? std::make_optional([&]() {
-      size_t __size = __result->size();
+    return __result != nullptr ? std::make_optional([&](auto&& __input) {
+      size_t __size = __input->size();
       std::vector<AudiobookBookmark> __vector;
       __vector.reserve(__size);
       for (size_t __i = 0; __i < __size; __i++) {
-        auto __element = __result->getElement(__i);
+        auto __element = __input->getElement(__i);
         __vector.push_back(__element->toCpp());
       }
       return __vector;
-    }()) : std::nullopt;
+    }(__result)) : std::nullopt;
   }
   void JHybridReadiumViewSpec::setAudiobookBookmarks(const std::optional<std::vector<AudiobookBookmark>>& audiobookBookmarks) {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JArrayClass<JAudiobookBookmark>> /* audiobookBookmarks */)>("setAudiobookBookmarks");
-    method(_javaPart, audiobookBookmarks.has_value() ? [&]() {
-      size_t __size = audiobookBookmarks.value().size();
+    method(_javaPart, audiobookBookmarks.has_value() ? [&](auto&& __input) {
+      size_t __size = __input.size();
       jni::local_ref<jni::JArrayClass<JAudiobookBookmark>> __array = jni::JArrayClass<JAudiobookBookmark>::newArray(__size);
       for (size_t __i = 0; __i < __size; __i++) {
-        const auto& __element = audiobookBookmarks.value()[__i];
+        const auto& __element = __input[__i];
         auto __elementJni = JAudiobookBookmark::fromCpp(__element);
         __array->setElement(__i, *__elementJni);
       }
       return __array;
-    }() : nullptr);
+    }(audiobookBookmarks.value()) : nullptr);
   }
   std::optional<std::function<void(const Locator& /* locator */)>> JHybridReadiumViewSpec::getOnLocationChange() {
     static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<JFunc_void_Locator::javaobject>()>("getOnLocationChange_cxx");
