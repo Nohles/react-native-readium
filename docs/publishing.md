@@ -78,13 +78,13 @@ In the consuming app, add the same scope registry to `.npmrc`:
 Install with the `npm:` alias so imports stay `react-native-readium`:
 
 ```bash
-pnpm add react-native-readium@npm:@nohles/react-native-readium@5.0.0-rc.38 react-native-nitro-modules
+pnpm add react-native-readium@npm:@nohles/react-native-readium@5.0.0-rc.39 react-native-nitro-modules
 ```
 
 Or in `package.json`:
 
 ```json
-"react-native-readium": "npm:@nohles/react-native-readium@5.0.0-rc.38"
+"react-native-readium": "npm:@nohles/react-native-readium@5.0.0-rc.39"
 ```
 
 Peer dependencies (`react`, `react-native`, `react-native-nitro-modules`) and runtime deps (`@readium/*`) still resolve from the public npm registry unless your Verdaccio instance proxies them.
