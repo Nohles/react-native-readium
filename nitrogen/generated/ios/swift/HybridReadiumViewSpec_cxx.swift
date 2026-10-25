@@ -299,6 +299,23 @@ open class HybridReadiumViewSpec_cxx {
     }
   }
   
+  public final var comicBoundaryPages: bridge.std__optional_ComicBoundaryPages_ {
+    @inline(__always)
+    get {
+      return { () -> bridge.std__optional_ComicBoundaryPages_ in
+        if let __unwrappedValue = self.__implementation.comicBoundaryPages {
+          return bridge.create_std__optional_ComicBoundaryPages_(__unwrappedValue)
+        } else {
+          return .init()
+        }
+      }()
+    }
+    @inline(__always)
+    set {
+      self.__implementation.comicBoundaryPages = newValue.value
+    }
+  }
+  
   public final var onLocationChange: bridge.std__optional_std__function_void_const_Locator_____locator______ {
     @inline(__always)
     get {
@@ -545,6 +562,70 @@ open class HybridReadiumViewSpec_cxx {
           return { () -> (AudiobookBookmarkChangeEvent) -> Void in
             let __wrappedFunction = bridge.wrap_Func_void_AudiobookBookmarkChangeEvent(__unwrapped)
             return { (__event: AudiobookBookmarkChangeEvent) -> Void in
+              __wrappedFunction.call(__event)
+            }
+          }()
+        } else {
+          return nil
+        }
+      }()
+    }
+  }
+  
+  public final var onComicBoundaryChange: bridge.std__optional_std__function_void_const_ComicBoundaryChangeEvent_____event______ {
+    @inline(__always)
+    get {
+      return { () -> bridge.std__optional_std__function_void_const_ComicBoundaryChangeEvent_____event______ in
+        if let __unwrappedValue = self.__implementation.onComicBoundaryChange {
+          return bridge.create_std__optional_std__function_void_const_ComicBoundaryChangeEvent_____event______({ () -> bridge.Func_void_ComicBoundaryChangeEvent in
+            let __closureWrapper = Func_void_ComicBoundaryChangeEvent(__unwrappedValue)
+            return bridge.create_Func_void_ComicBoundaryChangeEvent(__closureWrapper.toUnsafe())
+          }())
+        } else {
+          return .init()
+        }
+      }()
+    }
+    @inline(__always)
+    set {
+      self.__implementation.onComicBoundaryChange = { () -> ((_ event: ComicBoundaryChangeEvent) -> Void)? in
+        if bridge.has_value_std__optional_std__function_void_const_ComicBoundaryChangeEvent_____event______(newValue) {
+          let __unwrapped = bridge.get_std__optional_std__function_void_const_ComicBoundaryChangeEvent_____event______(newValue)
+          return { () -> (ComicBoundaryChangeEvent) -> Void in
+            let __wrappedFunction = bridge.wrap_Func_void_ComicBoundaryChangeEvent(__unwrapped)
+            return { (__event: ComicBoundaryChangeEvent) -> Void in
+              __wrappedFunction.call(__event)
+            }
+          }()
+        } else {
+          return nil
+        }
+      }()
+    }
+  }
+  
+  public final var onComicBoundaryAction: bridge.std__optional_std__function_void_const_ComicBoundaryActionEvent_____event______ {
+    @inline(__always)
+    get {
+      return { () -> bridge.std__optional_std__function_void_const_ComicBoundaryActionEvent_____event______ in
+        if let __unwrappedValue = self.__implementation.onComicBoundaryAction {
+          return bridge.create_std__optional_std__function_void_const_ComicBoundaryActionEvent_____event______({ () -> bridge.Func_void_ComicBoundaryActionEvent in
+            let __closureWrapper = Func_void_ComicBoundaryActionEvent(__unwrappedValue)
+            return bridge.create_Func_void_ComicBoundaryActionEvent(__closureWrapper.toUnsafe())
+          }())
+        } else {
+          return .init()
+        }
+      }()
+    }
+    @inline(__always)
+    set {
+      self.__implementation.onComicBoundaryAction = { () -> ((_ event: ComicBoundaryActionEvent) -> Void)? in
+        if bridge.has_value_std__optional_std__function_void_const_ComicBoundaryActionEvent_____event______(newValue) {
+          let __unwrapped = bridge.get_std__optional_std__function_void_const_ComicBoundaryActionEvent_____event______(newValue)
+          return { () -> (ComicBoundaryActionEvent) -> Void in
+            let __wrappedFunction = bridge.wrap_Func_void_ComicBoundaryActionEvent(__unwrapped)
+            return { (__event: ComicBoundaryActionEvent) -> Void in
               __wrappedFunction.call(__event)
             }
           }()

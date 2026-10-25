@@ -64,6 +64,8 @@ namespace margelo::nitro::readium {
     void setSelectionActions(const std::optional<std::vector<SelectionAction>>& selectionActions) override;
     std::optional<std::vector<AudiobookBookmark>> getAudiobookBookmarks() override;
     void setAudiobookBookmarks(const std::optional<std::vector<AudiobookBookmark>>& audiobookBookmarks) override;
+    std::optional<ComicBoundaryPages> getComicBoundaryPages() override;
+    void setComicBoundaryPages(const std::optional<ComicBoundaryPages>& comicBoundaryPages) override;
     std::optional<std::function<void(const Locator& /* locator */)>> getOnLocationChange() override;
     void setOnLocationChange(const std::optional<std::function<void(const Locator& /* locator */)>>& onLocationChange) override;
     std::optional<std::function<void(const Point& /* point */)>> getOnTap() override;
@@ -80,6 +82,10 @@ namespace margelo::nitro::readium {
     void setOnAudiobookPlaybackStateChange(const std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>& onAudiobookPlaybackStateChange) override;
     std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>> getOnAudiobookBookmarkChange() override;
     void setOnAudiobookBookmarkChange(const std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>& onAudiobookBookmarkChange) override;
+    std::optional<std::function<void(const ComicBoundaryChangeEvent& /* event */)>> getOnComicBoundaryChange() override;
+    void setOnComicBoundaryChange(const std::optional<std::function<void(const ComicBoundaryChangeEvent& /* event */)>>& onComicBoundaryChange) override;
+    std::optional<std::function<void(const ComicBoundaryActionEvent& /* event */)>> getOnComicBoundaryAction() override;
+    void setOnComicBoundaryAction(const std::optional<std::function<void(const ComicBoundaryActionEvent& /* event */)>>& onComicBoundaryAction) override;
 
   public:
     // Methods

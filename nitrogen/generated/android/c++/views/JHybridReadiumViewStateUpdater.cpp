@@ -89,6 +89,11 @@ void JHybridReadiumViewStateUpdater::updateViewProps(jni::alias_ref<jni::JClass>
     hybridView->setAudiobookBookmarks(newProps->audiobookBookmarks.get());
   }
   if (oldProps == nullptr
+        ? newProps->comicBoundaryPages.isProvided()
+        : !newProps->comicBoundaryPages.hasSameValue(oldProps->comicBoundaryPages)) {
+    hybridView->setComicBoundaryPages(newProps->comicBoundaryPages.get());
+  }
+  if (oldProps == nullptr
         ? newProps->onLocationChange.isProvided()
         : !newProps->onLocationChange.hasSameValue(oldProps->onLocationChange)) {
     hybridView->setOnLocationChange(newProps->onLocationChange.get());
@@ -127,6 +132,16 @@ void JHybridReadiumViewStateUpdater::updateViewProps(jni::alias_ref<jni::JClass>
         ? newProps->onAudiobookBookmarkChange.isProvided()
         : !newProps->onAudiobookBookmarkChange.hasSameValue(oldProps->onAudiobookBookmarkChange)) {
     hybridView->setOnAudiobookBookmarkChange(newProps->onAudiobookBookmarkChange.get());
+  }
+  if (oldProps == nullptr
+        ? newProps->onComicBoundaryChange.isProvided()
+        : !newProps->onComicBoundaryChange.hasSameValue(oldProps->onComicBoundaryChange)) {
+    hybridView->setOnComicBoundaryChange(newProps->onComicBoundaryChange.get());
+  }
+  if (oldProps == nullptr
+        ? newProps->onComicBoundaryAction.isProvided()
+        : !newProps->onComicBoundaryAction.hasSameValue(oldProps->onComicBoundaryAction)) {
+    hybridView->setOnComicBoundaryAction(newProps->onComicBoundaryAction.get());
   }
 
   // Update hybridRef if it changed

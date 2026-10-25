@@ -13,4 +13,13 @@ export * from './AudiobookPlaybackState';
 export * from './AudiobookSessionState';
 export * from './AudiobookBookmark';
 export * from './Comic';
-export type { Rect, Point, CustomFont } from '../specs/ReadiumView.nitro';
+export type {
+  Rect,
+  Point,
+  CustomFont,
+  ComicBoundaryAction,
+  ComicBoundaryPage,
+  ComicBoundaryPages,
+  ComicBoundaryChangeEvent,
+  ComicBoundaryActionEvent,
+} from '../specs/ReadiumView.nitro';

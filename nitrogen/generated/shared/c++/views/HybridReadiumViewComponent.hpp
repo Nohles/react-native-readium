@@ -25,6 +25,7 @@
 #include "DecorationGroup.hpp"
 #include "SelectionAction.hpp"
 #include "AudiobookBookmark.hpp"
+#include "ComicBoundaryPages.hpp"
 #include "Locator.hpp"
 #include <functional>
 #include "Point.hpp"
@@ -34,6 +35,8 @@
 #include "SelectionActionEvent.hpp"
 #include "AudiobookPlaybackState.hpp"
 #include "AudiobookBookmarkChangeEvent.hpp"
+#include "ComicBoundaryChangeEvent.hpp"
+#include "ComicBoundaryActionEvent.hpp"
 #include <memory>
 #include "HybridReadiumViewSpec.hpp"
 
@@ -64,6 +67,7 @@ namespace margelo::nitro::readium::views {
     nitro::ReactProp<std::optional<std::vector<DecorationGroup>>> decorations;
     nitro::ReactProp<std::optional<std::vector<SelectionAction>>> selectionActions;
     nitro::ReactProp<std::optional<std::vector<AudiobookBookmark>>> audiobookBookmarks;
+    nitro::ReactProp<std::optional<ComicBoundaryPages>> comicBoundaryPages;
     nitro::ReactProp<std::optional<std::function<void(const Locator& /* locator */)>>> onLocationChange;
     nitro::ReactProp<std::optional<std::function<void(const Point& /* point */)>>> onTap;
     nitro::ReactProp<std::optional<std::function<void(const PublicationReadyEvent& /* event */)>>> onPublicationReady;
@@ -72,6 +76,8 @@ namespace margelo::nitro::readium::views {
     nitro::ReactProp<std::optional<std::function<void(const SelectionActionEvent& /* event */)>>> onSelectionAction;
     nitro::ReactProp<std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>> onAudiobookPlaybackStateChange;
     nitro::ReactProp<std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>> onAudiobookBookmarkChange;
+    nitro::ReactProp<std::optional<std::function<void(const ComicBoundaryChangeEvent& /* event */)>>> onComicBoundaryChange;
+    nitro::ReactProp<std::optional<std::function<void(const ComicBoundaryActionEvent& /* event */)>>> onComicBoundaryAction;
     nitro::ReactProp<std::optional<std::function<void(const std::shared_ptr<HybridReadiumViewSpec>& /* ref */)>>> hybridRef;
 
     [[nodiscard]]
@@ -83,6 +89,7 @@ namespace margelo::nitro::readium::views {
              decorations.hasSameValue(other.decorations) &&
              selectionActions.hasSameValue(other.selectionActions) &&
              audiobookBookmarks.hasSameValue(other.audiobookBookmarks) &&
+             comicBoundaryPages.hasSameValue(other.comicBoundaryPages) &&
              onLocationChange.hasSameValue(other.onLocationChange) &&
              onTap.hasSameValue(other.onTap) &&
              onPublicationReady.hasSameValue(other.onPublicationReady) &&
@@ -91,6 +98,8 @@ namespace margelo::nitro::readium::views {
              onSelectionAction.hasSameValue(other.onSelectionAction) &&
              onAudiobookPlaybackStateChange.hasSameValue(other.onAudiobookPlaybackStateChange) &&
              onAudiobookBookmarkChange.hasSameValue(other.onAudiobookBookmarkChange) &&
+             onComicBoundaryChange.hasSameValue(other.onComicBoundaryChange) &&
+             onComicBoundaryAction.hasSameValue(other.onComicBoundaryAction) &&
              hybridRef.hasSameValue(other.hybridRef);
     }
 
@@ -103,6 +112,7 @@ namespace margelo::nitro::readium::views {
              decorations.isProvided() ||
              selectionActions.isProvided() ||
              audiobookBookmarks.isProvided() ||
+             comicBoundaryPages.isProvided() ||
              onLocationChange.isProvided() ||
              onTap.isProvided() ||
              onPublicationReady.isProvided() ||
@@ -111,6 +121,8 @@ namespace margelo::nitro::readium::views {
              onSelectionAction.isProvided() ||
              onAudiobookPlaybackStateChange.isProvided() ||
              onAudiobookBookmarkChange.isProvided() ||
+             onComicBoundaryChange.isProvided() ||
+             onComicBoundaryAction.isProvided() ||
              hybridRef.isProvided();
     }
 

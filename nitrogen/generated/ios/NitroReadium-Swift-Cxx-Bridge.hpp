@@ -24,6 +24,16 @@ namespace margelo::nitro::readium { struct AudiobookSessionState; }
 namespace margelo::nitro::readium { enum class AudiobookSessionStatus; }
 // Forward declaration of `BelongsTo` to properly resolve imports.
 namespace margelo::nitro::readium { struct BelongsTo; }
+// Forward declaration of `ComicBoundaryActionEvent` to properly resolve imports.
+namespace margelo::nitro::readium { struct ComicBoundaryActionEvent; }
+// Forward declaration of `ComicBoundaryAction` to properly resolve imports.
+namespace margelo::nitro::readium { struct ComicBoundaryAction; }
+// Forward declaration of `ComicBoundaryChangeEvent` to properly resolve imports.
+namespace margelo::nitro::readium { struct ComicBoundaryChangeEvent; }
+// Forward declaration of `ComicBoundaryPage` to properly resolve imports.
+namespace margelo::nitro::readium { struct ComicBoundaryPage; }
+// Forward declaration of `ComicBoundaryPages` to properly resolve imports.
+namespace margelo::nitro::readium { struct ComicBoundaryPages; }
 // Forward declaration of `Contributor` to properly resolve imports.
 namespace margelo::nitro::readium { struct Contributor; }
 // Forward declaration of `CustomFont` to properly resolve imports.
@@ -92,6 +102,11 @@ namespace NitroReadium { class HybridReadiumViewSpec_cxx; }
 #include "AudiobookSessionState.hpp"
 #include "AudiobookSessionStatus.hpp"
 #include "BelongsTo.hpp"
+#include "ComicBoundaryAction.hpp"
+#include "ComicBoundaryActionEvent.hpp"
+#include "ComicBoundaryChangeEvent.hpp"
+#include "ComicBoundaryPage.hpp"
+#include "ComicBoundaryPages.hpp"
 #include "Contributor.hpp"
 #include "CustomFont.hpp"
 #include "Decoration.hpp"
@@ -684,6 +699,62 @@ namespace margelo::nitro::readium::bridge::swift {
     return optional.value();
   }
   
+  // pragma MARK: std::vector<ComicBoundaryAction>
+  /**
+   * Specialized version of `std::vector<ComicBoundaryAction>`.
+   */
+  using std__vector_ComicBoundaryAction_ = std::vector<ComicBoundaryAction>;
+  inline std::vector<ComicBoundaryAction> create_std__vector_ComicBoundaryAction_(size_t size) noexcept {
+    std::vector<ComicBoundaryAction> vector;
+    vector.reserve(size);
+    return vector;
+  }
+  
+  // pragma MARK: std::optional<std::vector<ComicBoundaryAction>>
+  /**
+   * Specialized version of `std::optional<std::vector<ComicBoundaryAction>>`.
+   */
+  using std__optional_std__vector_ComicBoundaryAction__ = std::optional<std::vector<ComicBoundaryAction>>;
+  inline std::optional<std::vector<ComicBoundaryAction>> create_std__optional_std__vector_ComicBoundaryAction__(const std::vector<ComicBoundaryAction>& value) noexcept {
+    return std::optional<std::vector<ComicBoundaryAction>>(value);
+  }
+  inline bool has_value_std__optional_std__vector_ComicBoundaryAction__(const std::optional<std::vector<ComicBoundaryAction>>& optional) noexcept {
+    return optional.has_value();
+  }
+  inline std::vector<ComicBoundaryAction> get_std__optional_std__vector_ComicBoundaryAction__(const std::optional<std::vector<ComicBoundaryAction>>& optional) noexcept {
+    return optional.value();
+  }
+  
+  // pragma MARK: std::optional<ComicBoundaryPage>
+  /**
+   * Specialized version of `std::optional<ComicBoundaryPage>`.
+   */
+  using std__optional_ComicBoundaryPage_ = std::optional<ComicBoundaryPage>;
+  inline std::optional<ComicBoundaryPage> create_std__optional_ComicBoundaryPage_(const ComicBoundaryPage& value) noexcept {
+    return std::optional<ComicBoundaryPage>(value);
+  }
+  inline bool has_value_std__optional_ComicBoundaryPage_(const std::optional<ComicBoundaryPage>& optional) noexcept {
+    return optional.has_value();
+  }
+  inline ComicBoundaryPage get_std__optional_ComicBoundaryPage_(const std::optional<ComicBoundaryPage>& optional) noexcept {
+    return optional.value();
+  }
+  
+  // pragma MARK: std::optional<ComicBoundaryPages>
+  /**
+   * Specialized version of `std::optional<ComicBoundaryPages>`.
+   */
+  using std__optional_ComicBoundaryPages_ = std::optional<ComicBoundaryPages>;
+  inline std::optional<ComicBoundaryPages> create_std__optional_ComicBoundaryPages_(const ComicBoundaryPages& value) noexcept {
+    return std::optional<ComicBoundaryPages>(value);
+  }
+  inline bool has_value_std__optional_ComicBoundaryPages_(const std::optional<ComicBoundaryPages>& optional) noexcept {
+    return optional.has_value();
+  }
+  inline ComicBoundaryPages get_std__optional_ComicBoundaryPages_(const std::optional<ComicBoundaryPages>& optional) noexcept {
+    return optional.value();
+  }
+  
   // pragma MARK: std::function<void(const Locator& /* locator */)>
   /**
    * Specialized version of `std::function<void(const Locator&)>`.
@@ -992,6 +1063,80 @@ namespace margelo::nitro::readium::bridge::swift {
     return optional.has_value();
   }
   inline std::function<void(const AudiobookPlaybackState& /* state */)> get_std__optional_std__function_void_const_AudiobookPlaybackState_____state______(const std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>& optional) noexcept {
+    return optional.value();
+  }
+  
+  // pragma MARK: std::function<void(const ComicBoundaryChangeEvent& /* event */)>
+  /**
+   * Specialized version of `std::function<void(const ComicBoundaryChangeEvent&)>`.
+   */
+  using Func_void_ComicBoundaryChangeEvent = std::function<void(const ComicBoundaryChangeEvent& /* event */)>;
+  /**
+   * Wrapper class for a `std::function<void(const ComicBoundaryChangeEvent& / * event * /)>`, this can be used from Swift.
+   */
+  class Func_void_ComicBoundaryChangeEvent_Wrapper final {
+  public:
+    explicit Func_void_ComicBoundaryChangeEvent_Wrapper(std::function<void(const ComicBoundaryChangeEvent& /* event */)>&& func): _function(std::make_unique<std::function<void(const ComicBoundaryChangeEvent& /* event */)>>(std::move(func))) {}
+    inline void call(ComicBoundaryChangeEvent event) const noexcept {
+      _function->operator()(event);
+    }
+  private:
+    std::unique_ptr<std::function<void(const ComicBoundaryChangeEvent& /* event */)>> _function;
+  } SWIFT_NONCOPYABLE;
+  Func_void_ComicBoundaryChangeEvent create_Func_void_ComicBoundaryChangeEvent(void* NON_NULL swiftClosureWrapper) noexcept;
+  inline Func_void_ComicBoundaryChangeEvent_Wrapper wrap_Func_void_ComicBoundaryChangeEvent(Func_void_ComicBoundaryChangeEvent value) noexcept {
+    return Func_void_ComicBoundaryChangeEvent_Wrapper(std::move(value));
+  }
+  
+  // pragma MARK: std::optional<std::function<void(const ComicBoundaryChangeEvent& /* event */)>>
+  /**
+   * Specialized version of `std::optional<std::function<void(const ComicBoundaryChangeEvent& / * event * /)>>`.
+   */
+  using std__optional_std__function_void_const_ComicBoundaryChangeEvent_____event______ = std::optional<std::function<void(const ComicBoundaryChangeEvent& /* event */)>>;
+  inline std::optional<std::function<void(const ComicBoundaryChangeEvent& /* event */)>> create_std__optional_std__function_void_const_ComicBoundaryChangeEvent_____event______(const std::function<void(const ComicBoundaryChangeEvent& /* event */)>& value) noexcept {
+    return std::optional<std::function<void(const ComicBoundaryChangeEvent& /* event */)>>(value);
+  }
+  inline bool has_value_std__optional_std__function_void_const_ComicBoundaryChangeEvent_____event______(const std::optional<std::function<void(const ComicBoundaryChangeEvent& /* event */)>>& optional) noexcept {
+    return optional.has_value();
+  }
+  inline std::function<void(const ComicBoundaryChangeEvent& /* event */)> get_std__optional_std__function_void_const_ComicBoundaryChangeEvent_____event______(const std::optional<std::function<void(const ComicBoundaryChangeEvent& /* event */)>>& optional) noexcept {
+    return optional.value();
+  }
+  
+  // pragma MARK: std::function<void(const ComicBoundaryActionEvent& /* event */)>
+  /**
+   * Specialized version of `std::function<void(const ComicBoundaryActionEvent&)>`.
+   */
+  using Func_void_ComicBoundaryActionEvent = std::function<void(const ComicBoundaryActionEvent& /* event */)>;
+  /**
+   * Wrapper class for a `std::function<void(const ComicBoundaryActionEvent& / * event * /)>`, this can be used from Swift.
+   */
+  class Func_void_ComicBoundaryActionEvent_Wrapper final {
+  public:
+    explicit Func_void_ComicBoundaryActionEvent_Wrapper(std::function<void(const ComicBoundaryActionEvent& /* event */)>&& func): _function(std::make_unique<std::function<void(const ComicBoundaryActionEvent& /* event */)>>(std::move(func))) {}
+    inline void call(ComicBoundaryActionEvent event) const noexcept {
+      _function->operator()(event);
+    }
+  private:
+    std::unique_ptr<std::function<void(const ComicBoundaryActionEvent& /* event */)>> _function;
+  } SWIFT_NONCOPYABLE;
+  Func_void_ComicBoundaryActionEvent create_Func_void_ComicBoundaryActionEvent(void* NON_NULL swiftClosureWrapper) noexcept;
+  inline Func_void_ComicBoundaryActionEvent_Wrapper wrap_Func_void_ComicBoundaryActionEvent(Func_void_ComicBoundaryActionEvent value) noexcept {
+    return Func_void_ComicBoundaryActionEvent_Wrapper(std::move(value));
+  }
+  
+  // pragma MARK: std::optional<std::function<void(const ComicBoundaryActionEvent& /* event */)>>
+  /**
+   * Specialized version of `std::optional<std::function<void(const ComicBoundaryActionEvent& / * event * /)>>`.
+   */
+  using std__optional_std__function_void_const_ComicBoundaryActionEvent_____event______ = std::optional<std::function<void(const ComicBoundaryActionEvent& /* event */)>>;
+  inline std::optional<std::function<void(const ComicBoundaryActionEvent& /* event */)>> create_std__optional_std__function_void_const_ComicBoundaryActionEvent_____event______(const std::function<void(const ComicBoundaryActionEvent& /* event */)>& value) noexcept {
+    return std::optional<std::function<void(const ComicBoundaryActionEvent& /* event */)>>(value);
+  }
+  inline bool has_value_std__optional_std__function_void_const_ComicBoundaryActionEvent_____event______(const std::optional<std::function<void(const ComicBoundaryActionEvent& /* event */)>>& optional) noexcept {
+    return optional.has_value();
+  }
+  inline std::function<void(const ComicBoundaryActionEvent& /* event */)> get_std__optional_std__function_void_const_ComicBoundaryActionEvent_____event______(const std::optional<std::function<void(const ComicBoundaryActionEvent& /* event */)>>& optional) noexcept {
     return optional.value();
   }
   

@@ -24,6 +24,16 @@ namespace margelo::nitro::readium { struct AudiobookSessionState; }
 namespace margelo::nitro::readium { enum class AudiobookSessionStatus; }
 // Forward declaration of `BelongsTo` to properly resolve imports.
 namespace margelo::nitro::readium { struct BelongsTo; }
+// Forward declaration of `ComicBoundaryActionEvent` to properly resolve imports.
+namespace margelo::nitro::readium { struct ComicBoundaryActionEvent; }
+// Forward declaration of `ComicBoundaryAction` to properly resolve imports.
+namespace margelo::nitro::readium { struct ComicBoundaryAction; }
+// Forward declaration of `ComicBoundaryChangeEvent` to properly resolve imports.
+namespace margelo::nitro::readium { struct ComicBoundaryChangeEvent; }
+// Forward declaration of `ComicBoundaryPage` to properly resolve imports.
+namespace margelo::nitro::readium { struct ComicBoundaryPage; }
+// Forward declaration of `ComicBoundaryPages` to properly resolve imports.
+namespace margelo::nitro::readium { struct ComicBoundaryPages; }
 // Forward declaration of `Contributor` to properly resolve imports.
 namespace margelo::nitro::readium { struct Contributor; }
 // Forward declaration of `CustomFont` to properly resolve imports.
@@ -86,6 +96,11 @@ namespace margelo::nitro::readium { struct Subject; }
 #include "AudiobookSessionState.hpp"
 #include "AudiobookSessionStatus.hpp"
 #include "BelongsTo.hpp"
+#include "ComicBoundaryAction.hpp"
+#include "ComicBoundaryActionEvent.hpp"
+#include "ComicBoundaryChangeEvent.hpp"
+#include "ComicBoundaryPage.hpp"
+#include "ComicBoundaryPages.hpp"
 #include "Contributor.hpp"
 #include "CustomFont.hpp"
 #include "Decoration.hpp"

@@ -11,6 +11,7 @@
     "decorations": true,
     "selectionActions": true,
     "audiobookBookmarks": true,
+    "comicBoundaryPages": true,
     "onLocationChange": true,
     "onTap": true,
     "onPublicationReady": true,
@@ -19,6 +20,8 @@
     "onSelectionAction": true,
     "onAudiobookPlaybackStateChange": true,
     "onAudiobookBookmarkChange": true,
+    "onComicBoundaryChange": true,
+    "onComicBoundaryAction": true,
     "hybridRef": true
   }
 }

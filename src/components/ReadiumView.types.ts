@@ -13,6 +13,9 @@ import type {
   AudiobookBookmarkChangeEvent,
   PublicationSearchPage,
   CustomFont,
+  ComicBoundaryPages,
+  ComicBoundaryChangeEvent,
+  ComicBoundaryActionEvent,
 } from '../interfaces';
 
 export type ReadiumViewRef = {
@@ -38,6 +41,11 @@ export type ReadiumProps = {
   decorations?: DecorationGroup[];
   selectionActions?: SelectionAction[];
   audiobookBookmarks?: AudiobookBookmark[];
+  /**
+   * Chapter boundary pages for the comic reader's scroll modes. Paginated
+   * modes ignore them.
+   */
+  comicBoundaryPages?: ComicBoundaryPages;
   style?: any;
   onLocationChange?: (locator: Locator) => void;
   onTap?: (point: { x: number; y: number }) => void;
@@ -47,4 +55,6 @@ export type ReadiumProps = {
   onSelectionAction?: (event: SelectionActionEvent) => void;
   onAudiobookPlaybackStateChange?: (state: AudiobookPlaybackState) => void;
   onAudiobookBookmarkChange?: (event: AudiobookBookmarkChangeEvent) => void;
+  onComicBoundaryChange?: (event: ComicBoundaryChangeEvent) => void;
+  onComicBoundaryAction?: (event: ComicBoundaryActionEvent) => void;
 };
