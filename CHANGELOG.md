@@ -1,3 +1,13 @@
+# 5.0.0-rc.39
+
+### Fixes
+
+- iOS: keep EPUB and PDF content inside the horizontal safe area. Readium only
+  applies the vertical safe area to reflowable text, so text ran under side
+  insets such as the iPhone Duo status rail and the landscape notch. The strips
+  beside the publication take the navigator's page color and follow theme
+  changes. Comics stay full-bleed.
+
 # 5.0.0-rc.38
 
 Upgrade the examples to stable React Native 0.88.0, Expo SDK 58.0.14, and React

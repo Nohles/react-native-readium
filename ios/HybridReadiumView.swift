@@ -252,9 +252,11 @@ class HybridReadiumView: HybridReadiumViewSpec {
       return
     }
 
-    guard let navigator = (readerHost as? ReaderViewController)?.navigator as? EPUBNavigatorViewController else { return }
+    guard let reader = readerHost as? ReaderViewController,
+          let navigator = reader.navigator as? EPUBNavigatorViewController else { return }
     let epubPrefs = nitroPreferencesToEPUB(prefs)
     navigator.submitPreferences(epubPrefs)
+    reader.syncBackgroundWithNavigator()
   }
 
   // MARK: - Decorations

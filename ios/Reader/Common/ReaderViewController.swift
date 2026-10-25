@@ -78,11 +78,15 @@ class ReaderViewController: UIViewController, Loggable {
     let topConstraint = stackView.topAnchor.constraint(equalTo: view.topAnchor)
     // `accessibilityTopMargin` takes precedence when VoiceOver is enabled.
     topConstraint.priority = .defaultHigh
+    // Readium only applies the vertical safe area to reflowable content, so
+    // text would run under side insets such as the iPhone Duo status rail.
+    // Keep the publication inside the horizontal safe area; the strips beside
+    // it take the page color (see `syncBackgroundWithNavigator`).
     NSLayoutConstraint.activate([
       topConstraint,
-      stackView.rightAnchor.constraint(equalTo: view.rightAnchor),
+      stackView.rightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.rightAnchor),
       stackView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-      stackView.leftAnchor.constraint(equalTo: view.leftAnchor)
+      stackView.leftAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leftAnchor)
     ])
 
     addChild(navigator)
@@ -96,6 +100,19 @@ class ReaderViewController: UIViewController, Loggable {
     positionLabel.isHidden = true
 
     configureNavigatorInteractions()
+  }
+
+  override func viewDidLayoutSubviews() {
+    super.viewDidLayoutSubviews()
+    syncBackgroundWithNavigator()
+  }
+
+  /// Paints the safe-area strips beside the publication in the navigator's
+  /// page color. Call after submitting preferences that change the theme.
+  func syncBackgroundWithNavigator() {
+    if let color = navigator.view.backgroundColor, color != .clear {
+      view.backgroundColor = color
+    }
   }
 
   override func viewWillAppear(_ animated: Bool) {
