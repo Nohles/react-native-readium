@@ -35,5 +35,6 @@ export interface Preferences
   comicWidthLimitEnabled?: boolean;
   comicWidthLimitPercent?: number;
   comicScrollAmountPercent?: number;
+  /** @deprecated Ignored by the native comic readers. */
   comicImagePreloadAmount?: number;
 }

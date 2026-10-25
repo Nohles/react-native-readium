@@ -14,15 +14,28 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
   private let stackView = UIStackView()
   private let loadingIndicator = UIActivityIndicatorView(style: .large)
   private let links: [RLink]
+  /// Decoded images; only pages in `ComicPagePlanner.decodeWindow` hold one.
   private var images: [UIImage?]
+  /// Intrinsic pixel size per page, known from the image header before decoding.
+  private var pageSizes: [CGSize?]
   private var imageViews: [UIImageView] = []
+  /// Stack-to-scroll-view constraints for the current mode.
   private var imageSizeConstraints: [NSLayoutConstraint] = []
+  /// Per-page width/height constraints, kept and updated in place so a page
+  /// learning its size re-lays out that page only.
+  private var pageConstraints: [Int: (width: NSLayoutConstraint, height: NSLayoutConstraint)] = [:]
   private var initialLocator: ReadiumShared.Locator?
   private var currentIndex = 0
   private var preferences: Preferences?
   private var isApplyingProgrammaticScroll = false
   private var isClampingContentOffset = false
-  private var loadingIndices = Set<Int>()
+  /// Reading direction of the last page change, in index space (+1 forward).
+  private var loadDirection = 1
+  private var warmer: ComicPageWarmer?
+  private var decodingIndices = Set<Int>()
+  private var inFlightData: [Int: Task<Data?, Never>] = [:]
+  private var pendingSizeIndices = Set<Int>()
+  private var isSizeFlushScheduled = false
 
   /// Taps on the page, in this reader's coordinate space. Android's
   /// ComicReaderFragment emits the same event from its own touch stream.
@@ -39,6 +52,7 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     let bitmapLinks = publication.readingOrder.filter { $0.mediaType?.isBitmap == true }
     self.links = bitmapLinks.isEmpty ? publication.readingOrder : bitmapLinks
     self.images = Array(repeating: nil, count: links.count)
+    self.pageSizes = Array(repeating: nil, count: links.count)
     super.init(nibName: nil, bundle: nil)
   }
 
@@ -70,7 +84,6 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     }
     applyLayoutForCurrentPreferences()
     navigateToIndex(currentIndex, animated: false, emit: false)
-    Task { await loadImages(around: currentIndex) }
   }
 
   func positions() -> [ReadiumShared.Locator] {
@@ -172,7 +185,15 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     }
 
     let startIndex = initialLocator.flatMap(index(for:)) ?? 0
-    await loadImages(around: startIndex)
+    await MainActor.run {
+      currentIndex = startIndex
+      warmer = ComicPageWarmer { [weak self] index in
+        guard let self else { throw CancellationError() }
+        try await self.warmPage(index)
+      }
+    }
+    // The first page goes first; navigating below plans everything else.
+    await decodePage(startIndex)
 
     await MainActor.run {
       loadingIndicator.stopAnimating()
@@ -182,33 +203,192 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     }
   }
 
+  // MARK: - Page loading
+  //
+  // Every page is downloaded in reading order by `ComicPageWarmer` (streamed
+  // pages land in `ComicPageDiskCache`); each download reads the page's pixel
+  // size from its header so placeholders match the page before it is decoded;
+  // only pages inside `ComicPagePlanner.decodeWindow` hold a decoded image.
+  // Mirrors Android's ComicReaderFragment.
+
+  /// Moves the cursor and re-plans downloads and decoded pages around it.
   @MainActor
-  private func loadImages(around index: Int) async {
-    guard !links.isEmpty else { return }
-    let amount = isPaginatedMode
-      ? max(isDoublePageMode ? 1 : 0, imagePreloadAmount)
-      : imagePreloadAmount
-    let lowerBound = max(0, index - amount)
-    let upperBound = min(links.count - 1, index + amount + (isDoublePageMode ? 1 : 0))
-
-    for index in lowerBound...upperBound {
-      guard images[index] == nil, !loadingIndices.contains(index) else { continue }
-      loadingIndices.insert(index)
-      let link = links[index]
-      guard
-        let resource = publication.get(link),
-        let data = try? await resource.read().get(),
-        let image = UIImage(data: data)
-      else {
-        loadingIndices.remove(index)
-        continue
-      }
-
-      images[index] = image
-      loadingIndices.remove(index)
-      imageViews[index].image = image
-      applyLayoutForCurrentPreferences()
+  private func setCurrentIndex(_ index: Int) {
+    if index != currentIndex {
+      loadDirection = index > currentIndex ? 1 : -1
     }
+    currentIndex = index
+    refreshPageLoading()
+  }
+
+  @MainActor
+  private func refreshPageLoading() {
+    guard !links.isEmpty, !imageViews.isEmpty else { return }
+    warmer?.plan(
+      ComicPagePlanner.warmupOrder(pageCount: links.count, cursor: currentIndex, direction: loadDirection)
+    )
+    let window = currentDecodeWindow
+    for index in images.indices where images[index] != nil && !window.contains(index) {
+      images[index] = nil
+      imageViews[index].image = nil
+    }
+    // Decode nearest-first so the visible page never waits behind its neighbours.
+    for index in window.sorted(by: { abs($0 - currentIndex) < abs($1 - currentIndex) }) {
+      Task { await decodePage(index) }
+    }
+  }
+
+  private var currentDecodeWindow: Set<Int> {
+    ComicPagePlanner.decodeWindow(
+      pageCount: links.count,
+      cursor: currentIndex,
+      direction: loadDirection,
+      paginated: isPaginatedMode,
+      doublePage: isDoublePageMode
+    )
+  }
+
+  /// Warmup task: fetch (and disk-cache) the page and learn its size from the header.
+  @MainActor
+  private func warmPage(_ index: Int) async throws {
+    guard let data = await pageData(index) else {
+      throw CocoaError(.fileReadUnknown)
+    }
+    let size = await Task.detached(priority: .utility) { ComicPageImage.pixelSize(of: data) }.value
+    if let size {
+      setPageSize(size, at: index)
+    }
+  }
+
+  @MainActor
+  private func decodePage(_ index: Int) async {
+    guard images.indices.contains(index), images[index] == nil, !decodingIndices.contains(index) else { return }
+    decodingIndices.insert(index)
+    defer { decodingIndices.remove(index) }
+
+    guard let data = await pageData(index) else { return }
+    if pageSizes[index] == nil {
+      let size = await Task.detached(priority: .userInitiated) { ComicPageImage.pixelSize(of: data) }.value
+      if let size { setPageSize(size, at: index) }
+    }
+    guard let naturalSize = pageSizes[index] else { return }
+
+    let viewport = scrollView.bounds.size.width > 0 ? scrollView.bounds.size : view.bounds.size
+    let displaySize = displayedImageSize(for: naturalSize, viewport: viewport)
+    let maxPixelSize = max(displaySize.width, displaySize.height) * traitCollection.displayScale
+    let image = await Task.detached(priority: .userInitiated) {
+      ComicPageImage.decode(data, maxPixelSize: maxPixelSize)
+    }.value
+
+    guard let image, currentDecodeWindow.contains(index) else { return }
+    images[index] = image
+    imageViews[index].image = image
+  }
+
+  /// Page bytes, shared between the warmer and the decoder so a page is never
+  /// fetched twice at once. Streamed pages are served from (and written to)
+  /// the disk cache; local publications read straight from the publication.
+  @MainActor
+  private func pageData(_ index: Int) async -> Data? {
+    if let pending = inFlightData[index] {
+      return await pending.value
+    }
+    let publication = publication
+    let link = links[index]
+    let task = Task.detached(priority: .userInitiated) { () -> Data? in
+      guard let resource = publication.get(link) else { return nil }
+      let cacheKey = resource.sourceURL.flatMap { ComicPageDiskCache.key(for: $0.url) }
+      let cache = cacheKey == nil ? nil : ComicPageDiskCache.shared
+      if let cacheKey, let cached = cache?.read(cacheKey) {
+        return cached
+      }
+      guard let data = try? await resource.read().get() else { return nil }
+      if let cacheKey {
+        cache?.write(data, for: cacheKey)
+      }
+      return data
+    }
+    inFlightData[index] = task
+    let data = await task.value
+    if inFlightData[index] == task {
+      inFlightData[index] = nil
+    }
+    return data
+  }
+
+  @MainActor
+  private func setPageSize(_ size: CGSize, at index: Int) {
+    guard pageSizes.indices.contains(index), pageSizes[index] != size else { return }
+    pageSizes[index] = size
+    pendingSizeIndices.insert(index)
+    guard !isSizeFlushScheduled else { return }
+    isSizeFlushScheduled = true
+    // Coalesce the sizes learned in one run-loop turn into a single layout pass.
+    Task { @MainActor [weak self] in
+      self?.flushPageSizes()
+    }
+  }
+
+  /// Re-sizes pages whose size became known, holding the current page in place
+  /// so content above it cannot shift the reader.
+  private func flushPageSizes() {
+    isSizeFlushScheduled = false
+    let indices = pendingSizeIndices
+    pendingSizeIndices.removeAll()
+    let viewport = scrollView.bounds.size
+    guard isViewLoaded, viewport.width > 0, viewport.height > 0 else { return }
+
+    let anchor = scrollAnchor()
+    for index in indices where imageViews.indices.contains(index) && imageViews[index].superview != nil {
+      let naturalSize = pageSizes[index] ?? viewport
+      setPageConstraints(index, size: displayedImageSize(for: naturalSize, viewport: viewport))
+    }
+    guard let anchor else { return }
+    scrollView.layoutIfNeeded()
+    restoreScrollAnchor(anchor)
+  }
+
+  private func scrollAnchor() -> (index: Int, offset: CGFloat)? {
+    guard !isPaginatedMode, !isApplyingProgrammaticScroll, imageViews.indices.contains(currentIndex) else {
+      return nil
+    }
+    let anchorView = imageViews[currentIndex]
+    guard anchorView.superview != nil else { return nil }
+    return (currentIndex, anchorPosition(of: anchorView))
+  }
+
+  private func restoreScrollAnchor(_ anchor: (index: Int, offset: CGFloat)) {
+    let drift = anchorPosition(of: imageViews[anchor.index]) - anchor.offset
+    guard abs(drift) >= 0.5 else { return }
+    var offset = scrollView.contentOffset
+    if isHorizontalScrollMode {
+      offset.x = max(offset.x + drift, 0)
+    } else {
+      offset.y = max(offset.y + drift, 0)
+    }
+    // Assigning (rather than setContentOffset(_:animated:)) keeps any
+    // in-flight deceleration going from the corrected position.
+    scrollView.contentOffset = offset
+  }
+
+  private func anchorPosition(of view: UIView) -> CGFloat {
+    let frame = view.convert(view.bounds, to: scrollView)
+    return isHorizontalScrollMode
+      ? frame.minX - scrollView.contentOffset.x
+      : frame.minY - scrollView.contentOffset.y
+  }
+
+  private func setPageConstraints(_ index: Int, size: CGSize) {
+    if let constraints = pageConstraints[index] {
+      if constraints.width.constant != size.width { constraints.width.constant = size.width }
+      if constraints.height.constant != size.height { constraints.height.constant = size.height }
+      return
+    }
+    let imageView = imageViews[index]
+    let width = imageView.widthAnchor.constraint(equalToConstant: size.width)
+    let height = imageView.heightAnchor.constraint(equalToConstant: size.height)
+    NSLayoutConstraint.activate([width, height])
+    pageConstraints[index] = (width, height)
   }
 
   private func rebuildArrangedSubviews() {
@@ -272,14 +452,13 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
       imageSizeConstraints.append(stackView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor))
     }
 
-    for (index, imageView) in imageViews.enumerated() where imageView.superview != nil {
-      let naturalSize = images[index]?.size ?? viewport
-      let displaySize = displayedImageSize(for: naturalSize, viewport: viewport)
-      imageSizeConstraints.append(imageView.widthAnchor.constraint(equalToConstant: displaySize.width))
-      imageSizeConstraints.append(imageView.heightAnchor.constraint(equalToConstant: displaySize.height))
-    }
-
     NSLayoutConstraint.activate(imageSizeConstraints)
+
+    // Pages whose size is not known yet reserve the viewport.
+    for (index, imageView) in imageViews.enumerated() where imageView.superview != nil {
+      let naturalSize = pageSizes[index] ?? viewport
+      setPageConstraints(index, size: displayedImageSize(for: naturalSize, viewport: viewport))
+    }
     clampContentOffsetForCurrentMode()
   }
 
@@ -295,8 +474,7 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
 
   private func navigateToIndex(_ index: Int, animated: Bool, emit: Bool = true) {
     guard !links.isEmpty else { return }
-    currentIndex = min(max(index, 0), links.count - 1)
-    Task { await loadImages(around: currentIndex) }
+    setCurrentIndex(min(max(index, 0), links.count - 1))
 
     if isPaginatedMode {
       rebuildArrangedSubviews()
@@ -323,30 +501,38 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     }
   }
 
+  /// Probe point at the viewport center along the scroll axis; nearest page
+  /// center wins. Page centers are monotonic along the axis, so the distance to
+  /// the probe is unimodal in the page index: walk from the current page toward
+  /// the probe instead of measuring every page on every scroll event.
   private func updateCurrentIndexFromScrollPosition() {
-    guard !isPaginatedMode, !links.isEmpty else { return }
+    guard !isPaginatedMode, !links.isEmpty, imageViews.indices.contains(currentIndex) else { return }
 
     let probe = isHorizontalScrollMode
-      ? CGPoint(x: scrollView.contentOffset.x + scrollView.bounds.width / 2, y: scrollView.bounds.height / 2)
-      : CGPoint(x: scrollView.bounds.width / 2, y: scrollView.contentOffset.y + scrollView.bounds.height / 2)
+      ? scrollView.contentOffset.x + scrollView.bounds.width / 2
+      : scrollView.contentOffset.y + scrollView.bounds.height / 2
+
+    func distance(_ index: Int) -> CGFloat? {
+      guard imageViews.indices.contains(index) else { return nil }
+      let imageView = imageViews[index]
+      guard imageView.superview != nil else { return nil }
+      let frame = imageView.convert(imageView.bounds, to: scrollView)
+      return abs((isHorizontalScrollMode ? frame.midX : frame.midY) - probe)
+    }
 
     var closestIndex = currentIndex
-    var closestDistance = CGFloat.greatestFiniteMagnitude
-
-    for imageView in imageViews {
-      let frame = imageView.convert(imageView.bounds, to: scrollView)
-      let center = isHorizontalScrollMode ? frame.midX : frame.midY
-      let target = isHorizontalScrollMode ? probe.x : probe.y
-      let distance = abs(center - target)
-      if distance < closestDistance {
-        closestDistance = distance
-        closestIndex = imageView.tag
+    guard var closestDistance = distance(closestIndex) else { return }
+    for step in [1, -1] {
+      var candidate = closestIndex + step
+      while let candidateDistance = distance(candidate), candidateDistance < closestDistance {
+        closestIndex = candidate
+        closestDistance = candidateDistance
+        candidate += step
       }
     }
 
     guard closestIndex != currentIndex else { return }
-    currentIndex = closestIndex
-    Task { await loadImages(around: closestIndex) }
+    setCurrentIndex(closestIndex)
     subject.send(locator(for: closestIndex))
   }
 
@@ -411,10 +597,6 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
 
   private var gap: CGFloat {
     CGFloat(max(preferences?.pageMargins ?? 0, 0) * 16)
-  }
-
-  private var imagePreloadAmount: Int {
-    Int(min(max(preferences?.comicImagePreloadAmount ?? 5, 0), 10))
   }
 
   private var readerBackgroundColor: UIColor {

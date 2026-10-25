@@ -51,6 +51,10 @@ export interface ComicReaderSettings {
   autoScrollSmooth?: boolean;
   readingModePreview?: boolean;
   tapZonePreview?: boolean;
+  /**
+   * @deprecated Ignored. The comic reader downloads every page in reading
+   * order, next pages first, and keeps only nearby pages decoded.
+   */
   imagePreloadAmount?: number;
   comicChapterBoundaries?: boolean;
   /** @deprecated Use readingMode. Kept for existing callers. */
@@ -83,7 +87,6 @@ export const DEFAULT_COMIC_READER_SETTINGS = {
   autoScrollSmooth: true,
   readingModePreview: true,
   tapZonePreview: false,
-  imagePreloadAmount: 5,
   comicChapterBoundaries: true,
 } as const satisfies Required<
   Pick<
@@ -109,7 +112,6 @@ export const DEFAULT_COMIC_READER_SETTINGS = {
     | 'autoScrollSmooth'
     | 'readingModePreview'
     | 'tapZonePreview'
-    | 'imagePreloadAmount'
     | 'comicChapterBoundaries'
   >
 >;
@@ -213,12 +215,6 @@ export function createComicPreferences(
         DEFAULT_COMIC_READER_SETTINGS.scrollAmountPercent,
       10,
       100
-    ),
-    comicImagePreloadAmount: clamp(
-      settings.imagePreloadAmount ??
-        DEFAULT_COMIC_READER_SETTINGS.imagePreloadAmount,
-      0,
-      10
     ),
   };
 }
