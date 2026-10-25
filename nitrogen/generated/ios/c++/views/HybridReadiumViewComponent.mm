@@ -140,6 +140,12 @@ using namespace margelo::nitro::readium::views;
           : !newViewProps.audiobookBookmarks.hasSameValue(oldViewProps->audiobookBookmarks)) {
       swiftPart.setAudiobookBookmarks(newViewProps.audiobookBookmarks.get());
     }
+    // comicBoundaryPages: optional
+    if (oldViewProps == nullptr
+          ? newViewProps.comicBoundaryPages.isProvided()
+          : !newViewProps.comicBoundaryPages.hasSameValue(oldViewProps->comicBoundaryPages)) {
+      swiftPart.setComicBoundaryPages(newViewProps.comicBoundaryPages.get());
+    }
     // onLocationChange: optional
     if (oldViewProps == nullptr
           ? newViewProps.onLocationChange.isProvided()
@@ -187,6 +193,18 @@ using namespace margelo::nitro::readium::views;
           ? newViewProps.onAudiobookBookmarkChange.isProvided()
           : !newViewProps.onAudiobookBookmarkChange.hasSameValue(oldViewProps->onAudiobookBookmarkChange)) {
       swiftPart.setOnAudiobookBookmarkChange(newViewProps.onAudiobookBookmarkChange.get());
+    }
+    // onComicBoundaryChange: optional
+    if (oldViewProps == nullptr
+          ? newViewProps.onComicBoundaryChange.isProvided()
+          : !newViewProps.onComicBoundaryChange.hasSameValue(oldViewProps->onComicBoundaryChange)) {
+      swiftPart.setOnComicBoundaryChange(newViewProps.onComicBoundaryChange.get());
+    }
+    // onComicBoundaryAction: optional
+    if (oldViewProps == nullptr
+          ? newViewProps.onComicBoundaryAction.isProvided()
+          : !newViewProps.onComicBoundaryAction.hasSameValue(oldViewProps->onComicBoundaryAction)) {
+      swiftPart.setOnComicBoundaryAction(newViewProps.onComicBoundaryAction.get());
     }
 
     // Update hybridRef if it changed

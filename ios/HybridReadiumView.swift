@@ -93,6 +93,10 @@ class HybridReadiumView: HybridReadiumViewSpec {
     }
   }
 
+  var comicBoundaryPages: ComicBoundaryPages? = nil {
+    didSet { updateComicBoundaryPages() }
+  }
+
   var onLocationChange: ((Locator) -> Void)? = nil
   var onTap: ((Point) -> Void)? = nil {
     didSet { bindReaderTapHandler() }
@@ -103,6 +107,8 @@ class HybridReadiumView: HybridReadiumViewSpec {
   var onSelectionAction: ((SelectionActionEvent) -> Void)? = nil
   var onAudiobookPlaybackStateChange: ((AudiobookPlaybackState) -> Void)? = nil
   var onAudiobookBookmarkChange: ((AudiobookBookmarkChangeEvent) -> Void)? = nil
+  var onComicBoundaryChange: ((ComicBoundaryChangeEvent) -> Void)? = nil
+  var onComicBoundaryAction: ((ComicBoundaryActionEvent) -> Void)? = nil
 
   // MARK: - Private state
 
@@ -376,6 +382,40 @@ class HybridReadiumView: HybridReadiumViewSpec {
     if preferences != nil { updatePreferences() }
     if decorations != nil { updateDecorations() }
     bindReaderTapHandler()
+    bindComicBoundaryHandlers()
+    updateComicBoundaryPages()
+  }
+
+  // MARK: - Comic chapter boundaries
+
+  private func updateComicBoundaryPages() {
+    guard let comicReader = readerHost as? ComicImageViewController else { return }
+    comicReader.setBoundaryPages(
+      previous: comicBoundaryPages?.previous.map(comicBoundaryContent),
+      next: comicBoundaryPages?.next.map(comicBoundaryContent)
+    )
+  }
+
+  private func bindComicBoundaryHandlers() {
+    guard let comicReader = readerHost as? ComicImageViewController else { return }
+    comicReader.onBoundaryChange = { [weak self] kind in
+      self?.onComicBoundaryChange?(ComicBoundaryChangeEvent(kind: kind?.rawValue))
+    }
+    comicReader.onBoundaryAction = { [weak self] kind, actionId in
+      self?.onComicBoundaryAction?(ComicBoundaryActionEvent(kind: kind.rawValue, actionId: actionId))
+    }
+  }
+
+  private func comicBoundaryContent(_ page: ComicBoundaryPage) -> ComicBoundaryContent {
+    ComicBoundaryContent(
+      finishedLabel: page.finishedLabel,
+      finishedTitle: page.finishedTitle,
+      label: page.label,
+      title: page.title,
+      actions: (page.actions ?? []).map {
+        ComicBoundaryContent.Action(id: $0.id, label: $0.label, secondary: $0.secondary ?? false)
+      }
+    )
   }
 
   private func bindReaderTapHandler() {

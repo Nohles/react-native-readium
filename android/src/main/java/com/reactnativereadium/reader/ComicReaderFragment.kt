@@ -112,6 +112,17 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
   private var touchDownTime = 0L
 
   private var isLayoutDirty = true
+
+  /** Chapter boundary pages; attached around the pages in scroll modes only. */
+  private val boundaryContent = HashMap<ComicBoundaryKind, ComicBoundaryContent>()
+  private val boundaryViews = HashMap<ComicBoundaryKind, ComicBoundaryPageView>()
+  private var activeBoundary: ComicBoundaryKind? = null
+
+  /** The boundary page that fills the viewport, or null when a comic page does. */
+  var onBoundaryChange: ((ComicBoundaryKind?) -> Unit)? = null
+
+  /** A boundary page button was pressed. */
+  var onBoundaryAction: ((ComicBoundaryKind, String) -> Unit)? = null
   private var appliedViewportWidth = -1
   private var appliedViewportHeight = -1
 
@@ -173,6 +184,8 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
     pendingScrollAnchor = null
     programmaticScrollAnimator?.cancel()
     programmaticScrollAnimator = null
+    boundaryViews.clear()
+    activeBoundary = null
     rootView?.removeAllViews()
     rootView = null
     scrollContainer = null
@@ -218,6 +231,30 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
     refreshPageLoading()
   }
 
+  /**
+   * Sets the chapter boundary pages. Adding or removing one keeps the current
+   * page where it is on screen — iOS `setBoundaryPages`.
+   */
+  fun setBoundaryPages(previous: ComicBoundaryContent?, next: ComicBoundaryContent?) {
+    val content = buildMap {
+      previous?.let { put(ComicBoundaryKind.PREVIOUS, it) }
+      next?.let { put(ComicBoundaryKind.NEXT, it) }
+    }
+    if (content == boundaryContent) return
+    val presenceChanged = content.keys != boundaryContent.keys
+    boundaryContent.clear()
+    boundaryContent.putAll(content)
+    if (!isContentBuilt) return
+    if (presenceChanged && !isPaginatedMode) {
+      captureScrollAnchor()
+      attachBoundaryViews()
+      invalidateLayout()
+      rootView?.post { updateActiveBoundary() }
+    } else {
+      configureBoundaryViews()
+    }
+  }
+
   override suspend fun computePositions(): List<Locator> =
     links.indices.map { locatorAt(it) }
 
@@ -242,6 +279,12 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
       scrollWebtoon(forward = true)
       return true
     }
+    if (currentIndex >= links.size - 1) {
+      attachedBoundaryView(ComicBoundaryKind.NEXT)?.let {
+        scrollToBoundary(it)
+        return true
+      }
+    }
     val step = if (isDoublePageMode) 2 else 1
     navigateToIndex(min(currentIndex + step, max(links.size - 1, 0)), animated = true)
     return true
@@ -252,6 +295,12 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
     if (isWebtoonMode) {
       scrollWebtoon(forward = false)
       return true
+    }
+    if (currentIndex <= 0) {
+      attachedBoundaryView(ComicBoundaryKind.PREVIOUS)?.let {
+        scrollToBoundary(it)
+        return true
+      }
     }
     val step = if (isDoublePageMode) 2 else 1
     navigateToIndex(max(currentIndex - step, 0), animated = true)
@@ -388,6 +437,115 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
         stack.removeViewAt(i)
       }
     }
+    attachBoundaryViews()
+  }
+
+  // MARK: - Chapter boundary pages
+
+  /** Keeps the previous boundary first and the next boundary last in scroll modes. */
+  private fun attachBoundaryViews() {
+    val stack = stackView ?: return
+    for (kind in ComicBoundaryKind.values()) {
+      val content = boundaryContent[kind]
+      if (isPaginatedMode || content == null) {
+        boundaryViews[kind]?.takeIf { it.parent === stack }?.let { stack.removeView(it) }
+        continue
+      }
+      val boundary = boundaryViews.getOrPut(kind) {
+        ComicBoundaryPageView(stack.context, kind).apply {
+          onAction = { actionId -> onBoundaryAction?.invoke(kind, actionId) }
+        }
+      }
+      boundary.configure(content, readerTextColor(), readerBackgroundColor())
+      val targetIndex = if (kind == ComicBoundaryKind.PREVIOUS) 0 else stack.childCount - 1
+      if (boundary.parent === stack && stack.indexOfChild(boundary) == targetIndex) continue
+      (boundary.parent as? ViewGroup)?.removeView(boundary)
+      val params = LinearLayout.LayoutParams(
+        scrollContainer?.width?.takeIf { it > 0 } ?: ViewGroup.LayoutParams.MATCH_PARENT,
+        scrollContainer?.height?.takeIf { it > 0 } ?: ViewGroup.LayoutParams.MATCH_PARENT
+      )
+      if (kind == ComicBoundaryKind.PREVIOUS) {
+        stack.addView(boundary, 0, params)
+      } else {
+        stack.addView(boundary, params)
+      }
+    }
+  }
+
+  private fun attachedBoundaryView(kind: ComicBoundaryKind): ComicBoundaryPageView? {
+    if (isPaginatedMode) return null
+    return boundaryViews[kind]?.takeIf { it.parent === stackView && stackView != null }
+  }
+
+  private fun configureBoundaryViews() {
+    for ((kind, boundary) in boundaryViews) {
+      val content = boundaryContent[kind] ?: continue
+      boundary.configure(content, readerTextColor(), readerBackgroundColor())
+    }
+  }
+
+  private fun scrollToBoundary(boundary: View) {
+    val scrollView = scrollContainer ?: return
+    val stack = stackView ?: return
+    if (isHorizontalScrollMode) {
+      val maxX = max(stack.width - scrollView.width, 0)
+      scrollToOffset(boundary.left.coerceIn(0, maxX), 0, animated = true)
+    } else {
+      val maxY = max(stack.height - scrollView.height, 0)
+      scrollToOffset(0, boundary.top.coerceIn(0, maxY), animated = true)
+    }
+  }
+
+  /**
+   * Offsets that keep boundary pages out of view, so programmatic page
+   * navigation lands on comic pages and only an explicit move past the first
+   * or last page reveals a boundary — iOS `pageOffsetRange`. Measured
+   * physically because RTL horizontal scrolling mirrors the child order.
+   */
+  private fun pageOffsetRange(scrollView: ViewGroup): IntRange {
+    val first = imageViews.firstOrNull() ?: return 0..Int.MAX_VALUE
+    val last = imageViews.last()
+    return if (isHorizontalScrollMode) {
+      val start = min(first.left, last.left)
+      start..max(max(first.right, last.right) - scrollView.width, start)
+    } else {
+      first.top..max(last.bottom - scrollView.height, first.top)
+    }
+  }
+
+  /**
+   * Same rule as the web reader: a boundary page is active when the scroll
+   * sits at that end and the page covers the viewport center.
+   */
+  private fun updateActiveBoundary() {
+    val active = currentActiveBoundary()
+    if (active == activeBoundary) return
+    activeBoundary = active
+    onBoundaryChange?.invoke(active)
+  }
+
+  private fun currentActiveBoundary(): ComicBoundaryKind? {
+    val scrollView = scrollContainer ?: return null
+    val stack = stackView ?: return null
+    val horizontal = isHorizontalScrollMode
+    val offset = if (horizontal) scrollView.scrollX else scrollView.scrollY
+    val viewportLength = if (horizontal) scrollView.width else scrollView.height
+    val contentLength = if (horizontal) stack.width else stack.height
+    if (viewportLength <= 0) return null
+    val center = offset + viewportLength / 2
+    val edgeTolerance = (2 * resources.displayMetrics.density).roundToInt()
+    val atStart = offset <= edgeTolerance
+    val atEnd = offset + viewportLength >= contentLength - edgeTolerance
+    for (kind in ComicBoundaryKind.values()) {
+      val boundary = attachedBoundaryView(kind) ?: continue
+      val start = if (horizontal) boundary.left else boundary.top
+      val end = if (horizontal) boundary.right else boundary.bottom
+      // RTL horizontal scrolling puts the previous boundary at the physical end.
+      val scrolledToIt = (start <= edgeTolerance && atStart) ||
+        (end >= contentLength - edgeTolerance && atEnd)
+      if (scrolledToIt && center in start..end) return kind
+    }
+    return null
   }
 
   /**
@@ -481,6 +639,7 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
     attachVisiblePages()
 
     scrollView.setOnScrollChangeListener { _, _, _, _, _ ->
+      updateActiveBoundary()
       updateCurrentIndexFromScrollPosition()
     }
     // Mirror of iOS scrollViewWillBeginDragging (:535-537): a user *drag* takes
@@ -581,6 +740,24 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
     val gap = gapPx
     val viewport = Size(viewportWidth.toFloat(), viewportHeight.toFloat())
     val attached = stack.children.toList()
+
+    for (boundary in boundaryViews.values) {
+      if (boundary.parent !== stack) continue
+      // A boundary page fills the viewport, like the web reader's.
+      val params = boundary.layoutParams as? LinearLayout.LayoutParams
+        ?: LinearLayout.LayoutParams(0, 0)
+      params.width = viewportWidth
+      params.height = viewportHeight
+      val trailingGap = if (boundary.kind == ComicBoundaryKind.PREVIOUS) gap else 0
+      if (stack.orientation == LinearLayout.HORIZONTAL) {
+        params.marginEnd = trailingGap
+        params.bottomMargin = 0
+      } else {
+        params.bottomMargin = trailingGap
+        params.marginEnd = 0
+      }
+      boundary.layoutParams = params
+    }
 
     for ((index, imageView) in imageViews.withIndex()) {
       if (imageView.parent !== stack) continue
@@ -757,14 +934,17 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
       val target = imageViews.getOrNull(currentIndex)
       val scrollView = scrollContainer
       if (target != null && scrollView != null && target.parent === stackView) {
+        val range = pageOffsetRange(scrollView)
         val x: Int
         val y: Int
         if (isHorizontalScrollMode) {
           x = max(target.left + target.width / 2 - scrollView.width / 2, 0)
+            .coerceIn(range.first, range.last)
           y = 0
         } else {
           x = 0
           y = max(target.top + target.height / 2 - scrollView.height / 2, 0)
+            .coerceIn(range.first, range.last)
         }
         scrollToOffset(x, y, animated)
       }
@@ -772,6 +952,9 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
 
     if (emit) {
       emitLocator(currentIndex)
+    }
+    if (isPaginatedMode) {
+      updateActiveBoundary()
     }
   }
 
@@ -1214,6 +1397,20 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
     }
   }
 
+  /** Hex text color defaulting to white, used by the boundary pages. */
+  private fun readerTextColor(): Int {
+    val hex = preferences.textColor
+      ?.trim()
+      ?.filter { it.isLetterOrDigit() }
+      ?: return Color.WHITE
+    if (hex.length != 6) return Color.WHITE
+    return try {
+      Color.parseColor("#$hex")
+    } catch (e: Exception) {
+      Color.WHITE
+    }
+  }
+
   /**
    * Background color propagated to every reader surface — iOS `applyTheme`
    * (:401-407).
@@ -1226,6 +1423,7 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
     if (::imageViews.isInitialized) {
       imageViews.forEach { it.setBackgroundColor(color) }
     }
+    configureBoundaryViews()
   }
 
   private data class Size(val width: Float, val height: Float)

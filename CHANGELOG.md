@@ -1,3 +1,18 @@
+# 5.0.0-rc.41
+
+### Features
+
+- Comics (iOS and Android): chapter boundary pages in scroll modes. Pass
+  `comicBoundaryPages` to show a full-screen page before the first and after
+  the last page, laid out like the web reader's: an optional "Finished"
+  section, the adjacent chapter or an end-of-series message, and buttons.
+  `onComicBoundaryChange` reports which boundary page fills the screen and
+  `onComicBoundaryAction` reports button presses. Paged modes ignore them.
+- Comics: moving past the last or first page with `goForward`/`goBackward`
+  scrolls to the boundary page; jumping to a page keeps boundary pages out of
+  view.
+- Android: comic preferences pass `textColor` through to the reader.
+
 # 5.0.0-rc.40
 
 ### Fixes

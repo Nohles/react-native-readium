@@ -29,6 +29,12 @@ namespace margelo::nitro::readium { struct DecorationStyle; }
 namespace margelo::nitro::readium { struct SelectionAction; }
 // Forward declaration of `AudiobookBookmark` to properly resolve imports.
 namespace margelo::nitro::readium { struct AudiobookBookmark; }
+// Forward declaration of `ComicBoundaryPages` to properly resolve imports.
+namespace margelo::nitro::readium { struct ComicBoundaryPages; }
+// Forward declaration of `ComicBoundaryPage` to properly resolve imports.
+namespace margelo::nitro::readium { struct ComicBoundaryPage; }
+// Forward declaration of `ComicBoundaryAction` to properly resolve imports.
+namespace margelo::nitro::readium { struct ComicBoundaryAction; }
 // Forward declaration of `Point` to properly resolve imports.
 namespace margelo::nitro::readium { struct Point; }
 // Forward declaration of `PublicationReadyEvent` to properly resolve imports.
@@ -63,6 +69,10 @@ namespace margelo::nitro::readium { struct SelectionActionEvent; }
 namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
 // Forward declaration of `AudiobookBookmarkChangeEvent` to properly resolve imports.
 namespace margelo::nitro::readium { struct AudiobookBookmarkChangeEvent; }
+// Forward declaration of `ComicBoundaryChangeEvent` to properly resolve imports.
+namespace margelo::nitro::readium { struct ComicBoundaryChangeEvent; }
+// Forward declaration of `ComicBoundaryActionEvent` to properly resolve imports.
+namespace margelo::nitro::readium { struct ComicBoundaryActionEvent; }
 // Forward declaration of `PublicationSearchPage` to properly resolve imports.
 namespace margelo::nitro::readium { struct PublicationSearchPage; }
 
@@ -92,6 +102,12 @@ namespace margelo::nitro::readium { struct PublicationSearchPage; }
 #include "JSelectionAction.hpp"
 #include "AudiobookBookmark.hpp"
 #include "JAudiobookBookmark.hpp"
+#include "ComicBoundaryPages.hpp"
+#include "JComicBoundaryPages.hpp"
+#include "ComicBoundaryPage.hpp"
+#include "JComicBoundaryPage.hpp"
+#include "ComicBoundaryAction.hpp"
+#include "JComicBoundaryAction.hpp"
 #include <functional>
 #include "JFunc_void_Locator.hpp"
 #include <NitroModules/JNICallable.hpp>
@@ -136,6 +152,12 @@ namespace margelo::nitro::readium { struct PublicationSearchPage; }
 #include "AudiobookBookmarkChangeEvent.hpp"
 #include "JFunc_void_AudiobookBookmarkChangeEvent.hpp"
 #include "JAudiobookBookmarkChangeEvent.hpp"
+#include "ComicBoundaryChangeEvent.hpp"
+#include "JFunc_void_ComicBoundaryChangeEvent.hpp"
+#include "JComicBoundaryChangeEvent.hpp"
+#include "ComicBoundaryActionEvent.hpp"
+#include "JFunc_void_ComicBoundaryActionEvent.hpp"
+#include "JComicBoundaryActionEvent.hpp"
 #include "PublicationSearchPage.hpp"
 #include <NitroModules/Promise.hpp>
 #include <NitroModules/JPromise.hpp>
@@ -306,6 +328,15 @@ namespace margelo::nitro::readium {
       return __array;
     }(audiobookBookmarks.value()) : nullptr);
   }
+  std::optional<ComicBoundaryPages> JHybridReadiumViewSpec::getComicBoundaryPages() {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<JComicBoundaryPages>()>("getComicBoundaryPages");
+    auto __result = method(_javaPart);
+    return __result != nullptr ? std::make_optional(__result->toCpp()) : std::nullopt;
+  }
+  void JHybridReadiumViewSpec::setComicBoundaryPages(const std::optional<ComicBoundaryPages>& comicBoundaryPages) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<JComicBoundaryPages> /* comicBoundaryPages */)>("setComicBoundaryPages");
+    method(_javaPart, comicBoundaryPages.has_value() ? JComicBoundaryPages::fromCpp(comicBoundaryPages.value()) : nullptr);
+  }
   std::optional<std::function<void(const Locator& /* locator */)>> JHybridReadiumViewSpec::getOnLocationChange() {
     static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<JFunc_void_Locator::javaobject>()>("getOnLocationChange_cxx");
     auto __result = method(_javaPart);
@@ -441,6 +472,40 @@ namespace margelo::nitro::readium {
   void JHybridReadiumViewSpec::setOnAudiobookBookmarkChange(const std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>& onAudiobookBookmarkChange) {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<JFunc_void_AudiobookBookmarkChangeEvent::javaobject> /* onAudiobookBookmarkChange */)>("setOnAudiobookBookmarkChange_cxx");
     method(_javaPart, onAudiobookBookmarkChange.has_value() ? JFunc_void_AudiobookBookmarkChangeEvent_cxx::fromCpp(onAudiobookBookmarkChange.value()) : nullptr);
+  }
+  std::optional<std::function<void(const ComicBoundaryChangeEvent& /* event */)>> JHybridReadiumViewSpec::getOnComicBoundaryChange() {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<JFunc_void_ComicBoundaryChangeEvent::javaobject>()>("getOnComicBoundaryChange_cxx");
+    auto __result = method(_javaPart);
+    return __result != nullptr ? std::make_optional([&]() -> std::function<void(const ComicBoundaryChangeEvent& /* event */)> {
+      if (__result->isInstanceOf(JFunc_void_ComicBoundaryChangeEvent_cxx::javaClassStatic())) [[likely]] {
+        auto downcast = jni::static_ref_cast<JFunc_void_ComicBoundaryChangeEvent_cxx::javaobject>(__result);
+        return downcast->cthis()->getFunction();
+      } else {
+        auto __resultRef = jni::make_global(__result);
+        return JNICallable<JFunc_void_ComicBoundaryChangeEvent, void(ComicBoundaryChangeEvent)>(std::move(__resultRef));
+      }
+    }()) : std::nullopt;
+  }
+  void JHybridReadiumViewSpec::setOnComicBoundaryChange(const std::optional<std::function<void(const ComicBoundaryChangeEvent& /* event */)>>& onComicBoundaryChange) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<JFunc_void_ComicBoundaryChangeEvent::javaobject> /* onComicBoundaryChange */)>("setOnComicBoundaryChange_cxx");
+    method(_javaPart, onComicBoundaryChange.has_value() ? JFunc_void_ComicBoundaryChangeEvent_cxx::fromCpp(onComicBoundaryChange.value()) : nullptr);
+  }
+  std::optional<std::function<void(const ComicBoundaryActionEvent& /* event */)>> JHybridReadiumViewSpec::getOnComicBoundaryAction() {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<JFunc_void_ComicBoundaryActionEvent::javaobject>()>("getOnComicBoundaryAction_cxx");
+    auto __result = method(_javaPart);
+    return __result != nullptr ? std::make_optional([&]() -> std::function<void(const ComicBoundaryActionEvent& /* event */)> {
+      if (__result->isInstanceOf(JFunc_void_ComicBoundaryActionEvent_cxx::javaClassStatic())) [[likely]] {
+        auto downcast = jni::static_ref_cast<JFunc_void_ComicBoundaryActionEvent_cxx::javaobject>(__result);
+        return downcast->cthis()->getFunction();
+      } else {
+        auto __resultRef = jni::make_global(__result);
+        return JNICallable<JFunc_void_ComicBoundaryActionEvent, void(ComicBoundaryActionEvent)>(std::move(__resultRef));
+      }
+    }()) : std::nullopt;
+  }
+  void JHybridReadiumViewSpec::setOnComicBoundaryAction(const std::optional<std::function<void(const ComicBoundaryActionEvent& /* event */)>>& onComicBoundaryAction) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<JFunc_void_ComicBoundaryActionEvent::javaobject> /* onComicBoundaryAction */)>("setOnComicBoundaryAction_cxx");
+    method(_javaPart, onComicBoundaryAction.has_value() ? JFunc_void_ComicBoundaryActionEvent_cxx::fromCpp(onComicBoundaryAction.value()) : nullptr);
   }
 
   // Methods

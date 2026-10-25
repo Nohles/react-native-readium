@@ -17,6 +17,7 @@ import com.reactnativereadium.reader.ReaderViewModel
 import com.reactnativereadium.reader.SelectionAction as FragmentSelectionAction
 import com.reactnativereadium.utils.nitroPreferencesToEpub
 import com.reactnativereadium.utils.nitroPreferencesToComic
+import com.reactnativereadium.utils.nitroComicBoundaryToContent
 import com.reactnativereadium.utils.nitroLocatorToReadium
 import com.reactnativereadium.utils.nitroDecorationToReadium
 import com.reactnativereadium.utils.readiumLocatorToNitro
@@ -141,6 +142,13 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
     }
 
   override var audiobookBookmarks: Array<AudiobookBookmark>? = null
+
+  override var comicBoundaryPages: ComicBoundaryPages? = null
+    set(value) {
+      field = value
+      updateComicBoundaryPages()
+    }
+
   override var onLocationChange: ((locator: Locator) -> Unit)? = null
   override var onTap: ((point: Point) -> Unit)? = null
   override var onPublicationReady: ((event: PublicationReadyEvent) -> Unit)? = null
@@ -149,6 +157,8 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
   override var onSelectionAction: ((event: SelectionActionEvent) -> Unit)? = null
   override var onAudiobookPlaybackStateChange: ((state: AudiobookPlaybackState) -> Unit)? = null
   override var onAudiobookBookmarkChange: ((event: AudiobookBookmarkChangeEvent) -> Unit)? = null
+  override var onComicBoundaryChange: ((event: ComicBoundaryChangeEvent) -> Unit)? = null
+  override var onComicBoundaryAction: ((event: ComicBoundaryActionEvent) -> Unit)? = null
 
   private fun ensureService(): Boolean {
     if (svc != null) return true
@@ -176,6 +186,26 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
       is EpubReaderFragment -> frag.updatePreferences(nitroPreferencesToEpub(prefs))
       is ComicReaderFragment -> frag.updatePreferences(nitroPreferencesToComic(prefs))
       else -> Unit
+    }
+  }
+
+  // MARK: - Comic chapter boundaries
+
+  private fun updateComicBoundaryPages() {
+    val frag = fragment as? ComicReaderFragment ?: return
+    frag.setBoundaryPages(
+      previous = comicBoundaryPages?.previous?.let { nitroComicBoundaryToContent(it) },
+      next = comicBoundaryPages?.next?.let { nitroComicBoundaryToContent(it) }
+    )
+  }
+
+  private fun bindComicBoundaryHandlers() {
+    val frag = fragment as? ComicReaderFragment ?: return
+    frag.onBoundaryChange = { kind ->
+      onComicBoundaryChange?.invoke(ComicBoundaryChangeEvent(kind = kind?.value))
+    }
+    frag.onBoundaryAction = { kind, actionId ->
+      onComicBoundaryAction?.invoke(ComicBoundaryActionEvent(kind = kind.value, actionId = actionId))
     }
   }
 
@@ -537,6 +567,8 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
 
     preferences?.let { updatePreferences() }
     decorations?.let { updateDecorations() }
+    bindComicBoundaryHandlers()
+    updateComicBoundaryPages()
 
     frag.channel.receive(frag) { event ->
       when (event) {

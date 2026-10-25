@@ -27,6 +27,7 @@ namespace margelo::nitro::readium::views {
     decorations(nitro::ReactProp<std::optional<std::vector<DecorationGroup>>>::fromRawValue("ReadiumView", "decorations", rawProps, sourceProps.decorations)),
     selectionActions(nitro::ReactProp<std::optional<std::vector<SelectionAction>>>::fromRawValue("ReadiumView", "selectionActions", rawProps, sourceProps.selectionActions)),
     audiobookBookmarks(nitro::ReactProp<std::optional<std::vector<AudiobookBookmark>>>::fromRawValue("ReadiumView", "audiobookBookmarks", rawProps, sourceProps.audiobookBookmarks)),
+    comicBoundaryPages(nitro::ReactProp<std::optional<ComicBoundaryPages>>::fromRawValue("ReadiumView", "comicBoundaryPages", rawProps, sourceProps.comicBoundaryPages)),
     onLocationChange(nitro::ReactProp<std::optional<std::function<void(const Locator& /* locator */)>>>::fromRawValue("ReadiumView", "onLocationChange", rawProps, sourceProps.onLocationChange)),
     onTap(nitro::ReactProp<std::optional<std::function<void(const Point& /* point */)>>>::fromRawValue("ReadiumView", "onTap", rawProps, sourceProps.onTap)),
     onPublicationReady(nitro::ReactProp<std::optional<std::function<void(const PublicationReadyEvent& /* event */)>>>::fromRawValue("ReadiumView", "onPublicationReady", rawProps, sourceProps.onPublicationReady)),
@@ -35,6 +36,8 @@ namespace margelo::nitro::readium::views {
     onSelectionAction(nitro::ReactProp<std::optional<std::function<void(const SelectionActionEvent& /* event */)>>>::fromRawValue("ReadiumView", "onSelectionAction", rawProps, sourceProps.onSelectionAction)),
     onAudiobookPlaybackStateChange(nitro::ReactProp<std::optional<std::function<void(const AudiobookPlaybackState& /* state */)>>>::fromRawValue("ReadiumView", "onAudiobookPlaybackStateChange", rawProps, sourceProps.onAudiobookPlaybackStateChange)),
     onAudiobookBookmarkChange(nitro::ReactProp<std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>>::fromRawValue("ReadiumView", "onAudiobookBookmarkChange", rawProps, sourceProps.onAudiobookBookmarkChange)),
+    onComicBoundaryChange(nitro::ReactProp<std::optional<std::function<void(const ComicBoundaryChangeEvent& /* event */)>>>::fromRawValue("ReadiumView", "onComicBoundaryChange", rawProps, sourceProps.onComicBoundaryChange)),
+    onComicBoundaryAction(nitro::ReactProp<std::optional<std::function<void(const ComicBoundaryActionEvent& /* event */)>>>::fromRawValue("ReadiumView", "onComicBoundaryAction", rawProps, sourceProps.onComicBoundaryAction)),
     hybridRef(nitro::ReactProp<std::optional<std::function<void(const std::shared_ptr<HybridReadiumViewSpec>& /* ref */)>>>::fromRawValue("ReadiumView", "hybridRef", rawProps, sourceProps.hybridRef)) { }
 
   bool HybridReadiumViewProps::filterObjectKeys(const std::string& propName) {
@@ -46,6 +49,7 @@ namespace margelo::nitro::readium::views {
       case hashString("decorations"): return true;
       case hashString("selectionActions"): return true;
       case hashString("audiobookBookmarks"): return true;
+      case hashString("comicBoundaryPages"): return true;
       case hashString("onLocationChange"): return true;
       case hashString("onTap"): return true;
       case hashString("onPublicationReady"): return true;
@@ -54,6 +58,8 @@ namespace margelo::nitro::readium::views {
       case hashString("onSelectionAction"): return true;
       case hashString("onAudiobookPlaybackStateChange"): return true;
       case hashString("onAudiobookBookmarkChange"): return true;
+      case hashString("onComicBoundaryChange"): return true;
+      case hashString("onComicBoundaryAction"): return true;
       case hashString("hybridRef"): return true;
       default: return false;
     }

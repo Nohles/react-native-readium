@@ -13,6 +13,7 @@ data class ComicPreferences(
   val scaleType: String? = null,
   val readingProgression: String? = null,
   val backgroundColor: String? = null,
+  val textColor: String? = null,
   val pageMargins: Double? = null,
   val stretchSmallPages: Boolean? = null,
   val widthLimitEnabled: Boolean? = null,

@@ -17,6 +17,7 @@ public protocol HybridReadiumViewSpec_protocol: HybridObject, HybridView {
   var decorations: [DecorationGroup]? { get set }
   var selectionActions: [SelectionAction]? { get set }
   var audiobookBookmarks: [AudiobookBookmark]? { get set }
+  var comicBoundaryPages: ComicBoundaryPages? { get set }
   var onLocationChange: ((_ locator: Locator) -> Void)? { get set }
   var onTap: ((_ point: Point) -> Void)? { get set }
   var onPublicationReady: ((_ event: PublicationReadyEvent) -> Void)? { get set }
@@ -25,6 +26,8 @@ public protocol HybridReadiumViewSpec_protocol: HybridObject, HybridView {
   var onSelectionAction: ((_ event: SelectionActionEvent) -> Void)? { get set }
   var onAudiobookPlaybackStateChange: ((_ state: AudiobookPlaybackState) -> Void)? { get set }
   var onAudiobookBookmarkChange: ((_ event: AudiobookBookmarkChangeEvent) -> Void)? { get set }
+  var onComicBoundaryChange: ((_ event: ComicBoundaryChangeEvent) -> Void)? { get set }
+  var onComicBoundaryAction: ((_ event: ComicBoundaryActionEvent) -> Void)? { get set }
 
   // Methods
   func goTo(locator: Locator) throws -> Void

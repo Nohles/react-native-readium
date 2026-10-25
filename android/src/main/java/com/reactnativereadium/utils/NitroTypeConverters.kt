@@ -5,6 +5,7 @@ import com.margelo.nitro.reactnativereadium.*
 import com.reactnativereadium.audio.AudiobookSessionState as NativeAudioSessionState
 import com.reactnativereadium.audio.AudiobookStatus
 import com.reactnativereadium.audio.AudiobookBookmark as NativeAudiobookBookmark
+import com.reactnativereadium.reader.ComicBoundaryContent
 import com.reactnativereadium.reader.ComicPreferences
 import org.readium.r2.navigator.epub.EpubPreferences as ReadiumEpubPreferences
 import org.readium.r2.navigator.preferences.ColumnCount
@@ -81,6 +82,7 @@ internal fun nitroPreferencesToComic(prefs: Preferences): ComicPreferences {
     scaleType = prefs.comicScaleType,
     readingProgression = prefs.readingProgression,
     backgroundColor = prefs.backgroundColor,
+    textColor = prefs.textColor,
     pageMargins = prefs.pageMargins,
     stretchSmallPages = prefs.comicStretchSmallPages,
     widthLimitEnabled = prefs.comicWidthLimitEnabled,
@@ -88,6 +90,18 @@ internal fun nitroPreferencesToComic(prefs: Preferences): ComicPreferences {
     scrollAmountPercent = prefs.comicScrollAmountPercent
     // `comicImagePreloadAmount` is deprecated and ignored: pages load in
     // reading order (see ComicPagePlanner).
+  )
+}
+
+internal fun nitroComicBoundaryToContent(page: ComicBoundaryPage): ComicBoundaryContent {
+  return ComicBoundaryContent(
+    finishedLabel = page.finishedLabel,
+    finishedTitle = page.finishedTitle,
+    label = page.label,
+    title = page.title,
+    actions = page.actions.orEmpty().map {
+      ComicBoundaryContent.Action(id = it.id, label = it.label, secondary = it.secondary == true)
+    }
   )
 }
 

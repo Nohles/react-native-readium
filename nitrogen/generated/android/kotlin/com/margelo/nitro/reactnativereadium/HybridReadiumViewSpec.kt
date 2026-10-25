@@ -70,6 +70,12 @@ abstract class HybridReadiumViewSpec: HybridView() {
   @set:Keep
   abstract var audiobookBookmarks: Array<AudiobookBookmark>?
   
+  @get:DoNotStrip
+  @get:Keep
+  @set:DoNotStrip
+  @set:Keep
+  abstract var comicBoundaryPages: ComicBoundaryPages?
+  
   abstract var onLocationChange: ((locator: Locator) -> Unit)?
   
   private var onLocationChange_cxx: Func_void_Locator?
@@ -180,6 +186,34 @@ abstract class HybridReadiumViewSpec: HybridView() {
     @DoNotStrip
     set(value) {
       onAudiobookBookmarkChange = value?.let { it }
+    }
+  
+  abstract var onComicBoundaryChange: ((event: ComicBoundaryChangeEvent) -> Unit)?
+  
+  private var onComicBoundaryChange_cxx: Func_void_ComicBoundaryChangeEvent?
+    @Keep
+    @DoNotStrip
+    get() {
+      return onComicBoundaryChange?.let { Func_void_ComicBoundaryChangeEvent_java(it) }
+    }
+    @Keep
+    @DoNotStrip
+    set(value) {
+      onComicBoundaryChange = value?.let { it }
+    }
+  
+  abstract var onComicBoundaryAction: ((event: ComicBoundaryActionEvent) -> Unit)?
+  
+  private var onComicBoundaryAction_cxx: Func_void_ComicBoundaryActionEvent?
+    @Keep
+    @DoNotStrip
+    get() {
+      return onComicBoundaryAction?.let { Func_void_ComicBoundaryActionEvent_java(it) }
+    }
+    @Keep
+    @DoNotStrip
+    set(value) {
+      onComicBoundaryAction = value?.let { it }
     }
 
   // Methods

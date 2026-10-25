@@ -34,6 +34,12 @@ namespace margelo::nitro::readium { struct DecorationStyle; }
 namespace margelo::nitro::readium { struct SelectionAction; }
 // Forward declaration of `AudiobookBookmark` to properly resolve imports.
 namespace margelo::nitro::readium { struct AudiobookBookmark; }
+// Forward declaration of `ComicBoundaryPages` to properly resolve imports.
+namespace margelo::nitro::readium { struct ComicBoundaryPages; }
+// Forward declaration of `ComicBoundaryPage` to properly resolve imports.
+namespace margelo::nitro::readium { struct ComicBoundaryPage; }
+// Forward declaration of `ComicBoundaryAction` to properly resolve imports.
+namespace margelo::nitro::readium { struct ComicBoundaryAction; }
 // Forward declaration of `Point` to properly resolve imports.
 namespace margelo::nitro::readium { struct Point; }
 // Forward declaration of `PublicationReadyEvent` to properly resolve imports.
@@ -68,6 +74,10 @@ namespace margelo::nitro::readium { struct SelectionActionEvent; }
 namespace margelo::nitro::readium { struct AudiobookPlaybackState; }
 // Forward declaration of `AudiobookBookmarkChangeEvent` to properly resolve imports.
 namespace margelo::nitro::readium { struct AudiobookBookmarkChangeEvent; }
+// Forward declaration of `ComicBoundaryChangeEvent` to properly resolve imports.
+namespace margelo::nitro::readium { struct ComicBoundaryChangeEvent; }
+// Forward declaration of `ComicBoundaryActionEvent` to properly resolve imports.
+namespace margelo::nitro::readium { struct ComicBoundaryActionEvent; }
 // Forward declaration of `PublicationSearchPage` to properly resolve imports.
 namespace margelo::nitro::readium { struct PublicationSearchPage; }
 
@@ -86,6 +96,9 @@ namespace margelo::nitro::readium { struct PublicationSearchPage; }
 #include <unordered_map>
 #include "SelectionAction.hpp"
 #include "AudiobookBookmark.hpp"
+#include "ComicBoundaryPages.hpp"
+#include "ComicBoundaryPage.hpp"
+#include "ComicBoundaryAction.hpp"
 #include <functional>
 #include "Point.hpp"
 #include "PublicationReadyEvent.hpp"
@@ -104,6 +117,8 @@ namespace margelo::nitro::readium { struct PublicationSearchPage; }
 #include "SelectionActionEvent.hpp"
 #include "AudiobookPlaybackState.hpp"
 #include "AudiobookBookmarkChangeEvent.hpp"
+#include "ComicBoundaryChangeEvent.hpp"
+#include "ComicBoundaryActionEvent.hpp"
 #include "PublicationSearchPage.hpp"
 #include <NitroModules/Promise.hpp>
 
@@ -202,6 +217,13 @@ namespace margelo::nitro::readium {
     inline void setAudiobookBookmarks(const std::optional<std::vector<AudiobookBookmark>>& audiobookBookmarks) noexcept override {
       _swiftPart.setAudiobookBookmarks(audiobookBookmarks);
     }
+    inline std::optional<ComicBoundaryPages> getComicBoundaryPages() noexcept override {
+      auto __result = _swiftPart.getComicBoundaryPages();
+      return __result;
+    }
+    inline void setComicBoundaryPages(const std::optional<ComicBoundaryPages>& comicBoundaryPages) noexcept override {
+      _swiftPart.setComicBoundaryPages(comicBoundaryPages);
+    }
     inline std::optional<std::function<void(const Locator& /* locator */)>> getOnLocationChange() noexcept override {
       auto __result = _swiftPart.getOnLocationChange();
       return __result;
@@ -257,6 +279,20 @@ namespace margelo::nitro::readium {
     }
     inline void setOnAudiobookBookmarkChange(const std::optional<std::function<void(const AudiobookBookmarkChangeEvent& /* event */)>>& onAudiobookBookmarkChange) noexcept override {
       _swiftPart.setOnAudiobookBookmarkChange(onAudiobookBookmarkChange);
+    }
+    inline std::optional<std::function<void(const ComicBoundaryChangeEvent& /* event */)>> getOnComicBoundaryChange() noexcept override {
+      auto __result = _swiftPart.getOnComicBoundaryChange();
+      return __result;
+    }
+    inline void setOnComicBoundaryChange(const std::optional<std::function<void(const ComicBoundaryChangeEvent& /* event */)>>& onComicBoundaryChange) noexcept override {
+      _swiftPart.setOnComicBoundaryChange(onComicBoundaryChange);
+    }
+    inline std::optional<std::function<void(const ComicBoundaryActionEvent& /* event */)>> getOnComicBoundaryAction() noexcept override {
+      auto __result = _swiftPart.getOnComicBoundaryAction();
+      return __result;
+    }
+    inline void setOnComicBoundaryAction(const std::optional<std::function<void(const ComicBoundaryActionEvent& /* event */)>>& onComicBoundaryAction) noexcept override {
+      _swiftPart.setOnComicBoundaryAction(onComicBoundaryAction);
     }
 
   public:

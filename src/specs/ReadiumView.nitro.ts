@@ -263,6 +263,46 @@ export interface AudiobookBookmarkChangeEvent {
   bookmark: AudiobookBookmark;
 }
 
+// ── Comic chapter boundaries ─────────────────────────────────────────────────
+
+export interface ComicBoundaryAction {
+  id: string;
+  label: string;
+  /** Outlined style instead of the filled primary button. */
+  secondary?: boolean;
+}
+
+/**
+ * A full-viewport page the comic reader shows before the first or after the
+ * last page in scroll modes. Strings come from the host so they can be
+ * localized; the reader only lays them out.
+ */
+export interface ComicBoundaryPage {
+  /** Upper section, e.g. "Finished:" / "Chapter 12". */
+  finishedLabel?: string;
+  finishedTitle?: string;
+  /** Lower section, e.g. "Next:" / "Chapter 13", or "No chapters left". */
+  label?: string;
+  title?: string;
+  actions?: ComicBoundaryAction[];
+}
+
+export interface ComicBoundaryPages {
+  previous?: ComicBoundaryPage;
+  next?: ComicBoundaryPage;
+}
+
+export interface ComicBoundaryChangeEvent {
+  /** "previous", "next", or absent when no boundary page is active. */
+  kind?: string;
+}
+
+export interface ComicBoundaryActionEvent {
+  /** "previous" or "next". */
+  kind: string;
+  actionId: string;
+}
+
 // ── File ─────────────────────────────────────────────────────────────────────
 
 export interface ReadiumFile {
@@ -285,6 +325,7 @@ export interface ReadiumViewProps extends HybridViewProps {
   decorations?: DecorationGroup[];
   selectionActions?: SelectionAction[];
   audiobookBookmarks?: AudiobookBookmark[];
+  comicBoundaryPages?: ComicBoundaryPages;
   onLocationChange?: (locator: Locator) => void;
   onTap?: (point: Point) => void;
   onPublicationReady?: (event: PublicationReadyEvent) => void;
@@ -293,6 +334,8 @@ export interface ReadiumViewProps extends HybridViewProps {
   onSelectionAction?: (event: SelectionActionEvent) => void;
   onAudiobookPlaybackStateChange?: (state: AudiobookPlaybackState) => void;
   onAudiobookBookmarkChange?: (event: AudiobookBookmarkChangeEvent) => void;
+  onComicBoundaryChange?: (event: ComicBoundaryChangeEvent) => void;
+  onComicBoundaryAction?: (event: ComicBoundaryActionEvent) => void;
 }
 
 export interface ReadiumViewMethods extends HybridViewMethods {

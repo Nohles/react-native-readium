@@ -103,6 +103,22 @@ namespace margelo::nitro::readium::bridge::swift {
     };
   }
   
+  // pragma MARK: std::function<void(const ComicBoundaryChangeEvent& /* event */)>
+  Func_void_ComicBoundaryChangeEvent create_Func_void_ComicBoundaryChangeEvent(void* NON_NULL swiftClosureWrapper) noexcept {
+    auto swiftClosure = NitroReadium::Func_void_ComicBoundaryChangeEvent::fromUnsafe(swiftClosureWrapper);
+    return [swiftClosure = std::move(swiftClosure)](const ComicBoundaryChangeEvent& event) mutable -> void {
+      swiftClosure.call(event);
+    };
+  }
+  
+  // pragma MARK: std::function<void(const ComicBoundaryActionEvent& /* event */)>
+  Func_void_ComicBoundaryActionEvent create_Func_void_ComicBoundaryActionEvent(void* NON_NULL swiftClosureWrapper) noexcept {
+    auto swiftClosure = NitroReadium::Func_void_ComicBoundaryActionEvent::fromUnsafe(swiftClosureWrapper);
+    return [swiftClosure = std::move(swiftClosure)](const ComicBoundaryActionEvent& event) mutable -> void {
+      swiftClosure.call(event);
+    };
+  }
+  
   // pragma MARK: std::function<void(const PublicationSearchPage& /* result */)>
   Func_void_PublicationSearchPage create_Func_void_PublicationSearchPage(void* NON_NULL swiftClosureWrapper) noexcept {
     auto swiftClosure = NitroReadium::Func_void_PublicationSearchPage::fromUnsafe(swiftClosureWrapper);

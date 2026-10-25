@@ -37,9 +37,18 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
   private var pendingSizeIndices = Set<Int>()
   private var isSizeFlushScheduled = false
 
+  /// Chapter boundary pages; attached around the pages in scroll modes only.
+  private var boundaryContent: [ComicBoundaryKind: ComicBoundaryContent] = [:]
+  private var boundaryViews: [ComicBoundaryKind: ComicBoundaryPageView] = [:]
+  private var activeBoundary: ComicBoundaryKind?
+
   /// Taps on the page, in this reader's coordinate space. Android's
   /// ComicReaderFragment emits the same event from its own touch stream.
   var onTap: ((CGPoint) -> Void)?
+  /// The boundary page that fills the viewport, or nil when a comic page does.
+  var onBoundaryChange: ((ComicBoundaryKind?) -> Void)?
+  /// A boundary page button was pressed.
+  var onBoundaryAction: ((ComicBoundaryKind, String) -> Void)?
 
   init(
     publication: Publication,
@@ -86,6 +95,30 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     navigateToIndex(currentIndex, animated: false, emit: false)
   }
 
+  /// Sets the chapter boundary pages. Adding or removing one keeps the
+  /// current page where it is on screen.
+  func setBoundaryPages(previous: ComicBoundaryContent?, next: ComicBoundaryContent?) {
+    var content: [ComicBoundaryKind: ComicBoundaryContent] = [:]
+    content[.previous] = previous
+    content[.next] = next
+    guard content != boundaryContent else { return }
+    let presenceChanged = Set(content.keys) != Set(boundaryContent.keys)
+    boundaryContent = content
+    guard isViewLoaded, !imageViews.isEmpty else { return }
+    guard presenceChanged, !isPaginatedMode else {
+      configureBoundaryViews()
+      return
+    }
+    let anchor = scrollAnchor()
+    rebuildArrangedSubviews()
+    applyLayoutForCurrentPreferences()
+    scrollView.layoutIfNeeded()
+    if let anchor {
+      restoreScrollAnchor(anchor)
+    }
+    updateActiveBoundary()
+  }
+
   func positions() -> [ReadiumShared.Locator] {
     links.indices.map { locator(for: $0) }
   }
@@ -102,6 +135,10 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
       scrollWebtoon(forward: true)
       return
     }
+    if currentIndex >= links.count - 1, let boundary = attachedBoundaryView(.next) {
+      scrollToBoundary(boundary)
+      return
+    }
     let step = isDoublePageMode ? 2 : 1
     navigateToIndex(min(currentIndex + step, max(links.count - 1, 0)), animated: true)
   }
@@ -110,6 +147,10 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
   func goBackward() async {
     if isWebtoonMode {
       scrollWebtoon(forward: false)
+      return
+    }
+    if currentIndex <= 0, let boundary = attachedBoundaryView(.previous) {
+      scrollToBoundary(boundary)
       return
     }
     let step = isDoublePageMode ? 2 : 1
@@ -133,6 +174,7 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     // so the two readers reach the same behaviour by different means.
     let tapRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
     tapRecognizer.cancelsTouchesInView = false
+    tapRecognizer.delegate = self
     scrollView.addGestureRecognizer(tapRecognizer)
 
     stackView.translatesAutoresizingMaskIntoConstraints = false
@@ -398,8 +440,110 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     if isPaginatedMode {
       addPaginatedSubviews()
     } else {
+      addBoundarySubview(.previous)
       imageViews.forEach { stackView.addArrangedSubview($0) }
+      addBoundarySubview(.next)
     }
+  }
+
+  // MARK: - Chapter boundary pages
+
+  private func addBoundarySubview(_ kind: ComicBoundaryKind) {
+    guard let content = boundaryContent[kind] else { return }
+    let boundary: ComicBoundaryPageView
+    if let existing = boundaryViews[kind] {
+      boundary = existing
+    } else {
+      boundary = ComicBoundaryPageView()
+      boundary.onAction = { [weak self] actionId in
+        self?.onBoundaryAction?(kind, actionId)
+      }
+      boundaryViews[kind] = boundary
+    }
+    boundary.configure(content, textColor: readerTextColor, backgroundColor: readerBackgroundColor)
+    stackView.addArrangedSubview(boundary)
+    // A boundary page fills the viewport, like the web reader's.
+    NSLayoutConstraint.activate([
+      boundary.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
+      boundary.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor),
+    ])
+  }
+
+  private func attachedBoundaryView(_ kind: ComicBoundaryKind) -> ComicBoundaryPageView? {
+    guard !isPaginatedMode, let boundary = boundaryViews[kind], boundary.superview === stackView else {
+      return nil
+    }
+    return boundary
+  }
+
+  private func configureBoundaryViews() {
+    for (kind, boundary) in boundaryViews {
+      guard let content = boundaryContent[kind] else { continue }
+      boundary.configure(content, textColor: readerTextColor, backgroundColor: readerBackgroundColor)
+    }
+  }
+
+  private func scrollToBoundary(_ boundary: UIView) {
+    scrollView.layoutIfNeeded()
+    let frame = boundary.convert(boundary.bounds, to: scrollView)
+    let maxX = max(scrollView.contentSize.width - scrollView.bounds.width, 0)
+    let maxY = max(scrollView.contentSize.height - scrollView.bounds.height, 0)
+    let offset = isHorizontalScrollMode
+      ? CGPoint(x: min(max(frame.minX, 0), maxX), y: 0)
+      : CGPoint(x: 0, y: min(max(frame.minY, 0), maxY))
+    // An unchanged offset ends no animation, which would leave the flag set.
+    guard offset != scrollView.contentOffset else { return }
+    isApplyingProgrammaticScroll = true
+    scrollView.setContentOffset(offset, animated: true)
+  }
+
+  /// Offsets that keep boundary pages out of view, so programmatic page
+  /// navigation lands on comic pages and only an explicit move past the first
+  /// or last page reveals a boundary.
+  private func pageOffsetRange() -> ClosedRange<CGFloat> {
+    let horizontal = isHorizontalScrollMode
+    var lower: CGFloat = 0
+    var upper = CGFloat.greatestFiniteMagnitude
+    if attachedBoundaryView(.previous) != nil, let first = imageViews.first {
+      let frame = first.convert(first.bounds, to: scrollView)
+      lower = horizontal ? frame.minX : frame.minY
+    }
+    if attachedBoundaryView(.next) != nil, let last = imageViews.last {
+      let frame = last.convert(last.bounds, to: scrollView)
+      upper = horizontal
+        ? frame.maxX - scrollView.bounds.width
+        : frame.maxY - scrollView.bounds.height
+    }
+    return lower...max(upper, lower)
+  }
+
+  /// Same rule as the web reader: a boundary page is active when the scroll
+  /// sits at that end and the page covers the viewport center.
+  private func updateActiveBoundary() {
+    let active = currentActiveBoundary()
+    guard active != activeBoundary else { return }
+    activeBoundary = active
+    onBoundaryChange?(active)
+  }
+
+  private func currentActiveBoundary() -> ComicBoundaryKind? {
+    let horizontal = isHorizontalScrollMode
+    let offset = horizontal ? scrollView.contentOffset.x : scrollView.contentOffset.y
+    let viewportLength = horizontal ? scrollView.bounds.width : scrollView.bounds.height
+    let contentLength = horizontal ? scrollView.contentSize.width : scrollView.contentSize.height
+    guard viewportLength > 0 else { return nil }
+    let center = offset + viewportLength / 2
+    let edgeTolerance: CGFloat = 2
+    for kind in [ComicBoundaryKind.previous, .next] {
+      guard let boundary = attachedBoundaryView(kind) else { continue }
+      if kind == .previous && offset > edgeTolerance { continue }
+      if kind == .next && offset + viewportLength < contentLength - edgeTolerance { continue }
+      let frame = boundary.convert(boundary.bounds, to: scrollView)
+      let start = horizontal ? frame.minX : frame.minY
+      let end = horizontal ? frame.maxX : frame.maxY
+      if start <= center && end >= center { return kind }
+    }
+    return nil
   }
 
   private func addPaginatedSubviews() {
@@ -481,13 +625,17 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
       applyLayoutForCurrentPreferences()
       scrollView.setContentOffset(.zero, animated: false)
     } else if imageViews.indices.contains(currentIndex) {
+      scrollView.layoutIfNeeded()
       let targetView = imageViews[currentIndex]
       let rect = targetView.convert(targetView.bounds, to: scrollView)
+      let range = pageOffsetRange()
       let offset: CGPoint
       if isHorizontalScrollMode {
-        offset = CGPoint(x: max(rect.midX - scrollView.bounds.width / 2, 0), y: 0)
+        let x = max(rect.midX - scrollView.bounds.width / 2, 0)
+        offset = CGPoint(x: min(max(x, range.lowerBound), range.upperBound), y: 0)
       } else {
-        offset = CGPoint(x: 0, y: max(rect.midY - scrollView.bounds.height / 2, 0))
+        let y = max(rect.midY - scrollView.bounds.height / 2, 0)
+        offset = CGPoint(x: 0, y: min(max(y, range.lowerBound), range.upperBound))
       }
       isApplyingProgrammaticScroll = true
       scrollView.setContentOffset(offset, animated: animated)
@@ -498,6 +646,9 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
 
     if emit {
       subject.send(locator(for: currentIndex))
+    }
+    if isPaginatedMode || !animated {
+      updateActiveBoundary()
     }
   }
 
@@ -603,12 +754,17 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     UIColor(readerHex: preferences?.backgroundColor) ?? .black
   }
 
+  private var readerTextColor: UIColor {
+    UIColor(readerHex: preferences?.textColor) ?? .white
+  }
+
   private func applyTheme() {
     let color = readerBackgroundColor
     view.backgroundColor = color
     scrollView.backgroundColor = color
     stackView.backgroundColor = color
     imageViews.forEach { $0.backgroundColor = color }
+    configureBoundaryViews()
   }
 
   private func displayedImageSize(for naturalSize: CGSize, viewport: CGSize) -> CGSize {
@@ -722,6 +878,7 @@ private extension UIColor {
 extension ComicImageViewController: UIScrollViewDelegate {
   func scrollViewDidScroll(_ scrollView: UIScrollView) {
     clampContentOffsetForCurrentMode()
+    updateActiveBoundary()
     guard !isApplyingProgrammaticScroll else { return }
     updateCurrentIndexFromScrollPosition()
   }
@@ -733,5 +890,17 @@ extension ComicImageViewController: UIScrollViewDelegate {
 
   func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
     isApplyingProgrammaticScroll = false
+  }
+}
+
+extension ComicImageViewController: UIGestureRecognizerDelegate {
+  /// Boundary page buttons handle their own touches; they are not tap zones.
+  func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+    var view = touch.view
+    while let current = view, current !== scrollView {
+      if current is UIControl { return false }
+      view = current.superview
+    }
+    return true
   }
 }
