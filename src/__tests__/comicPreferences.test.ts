@@ -101,7 +101,6 @@ describe('comic preferences', () => {
         widthLimitEnabled: true,
         widthLimitPercent: 75,
         scrollAmountPercent: 90,
-        imagePreloadAmount: 3,
       })
     ).toMatchObject({
       theme: 'sepia',
@@ -111,7 +110,12 @@ describe('comic preferences', () => {
       comicWidthLimitEnabled: true,
       comicWidthLimitPercent: 75,
       comicScrollAmountPercent: 90,
-      comicImagePreloadAmount: 3,
     });
+  });
+
+  it('no longer forwards the retired image preload amount', () => {
+    expect(
+      createComicPreferences({ imagePreloadAmount: 3 })
+    ).not.toHaveProperty('comicImagePreloadAmount');
   });
 });

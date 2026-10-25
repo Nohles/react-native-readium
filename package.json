@@ -1,6 +1,6 @@
 {
   "name": "@nohles/react-native-readium",
-  "version": "5.0.0-rc.39",
+  "version": "5.0.0-rc.40",
   "description": "A react-native wrapper for https://readium.org/",
   "main": "lib/src/index",
   "types": "lib/src/index.d.ts",

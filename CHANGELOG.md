@@ -1,3 +1,28 @@
+# 5.0.0-rc.40
+
+### Fixes
+
+- Comics (iOS and Android): load streamed pages in reading order. The current
+  page and the next three download first, four at a time, then the rest of the
+  publication in order, two at a time, plus up to ten pages behind.
+- Comics: cache streamed pages on disk in the app's cache directory (512 MB,
+  oldest removed first), so scrolling back or reopening a chapter reads from
+  disk. Downloaded and local publications read straight from the publication.
+- Comics: size placeholders from each image's header as it downloads, so pages
+  no longer jump when images appear. Only the changed page is re-laid out, and
+  the current page stays in place.
+- Comics: keep only pages near the current one decoded (two behind and four
+  ahead in scroll mode, two either side when paging).
+- iOS: decode comic pages off the main thread at display size instead of on
+  the main thread at first draw, which removes scroll stutter.
+- Comics: track the current page from its neighbours instead of measuring
+  every page on each scroll event.
+
+### Deprecations
+
+- `imagePreloadAmount` is deprecated and ignored. The field stays in the API
+  and the generated bindings so existing apps keep compiling.
+
 # 5.0.0-rc.39
 
 ### Fixes

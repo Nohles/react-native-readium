@@ -481,7 +481,6 @@ const preferences = createComicPreferences({
   widthLimitEnabled: false,
   widthLimitPercent: 50,
   scrollAmountPercent: 95,
-  imagePreloadAmount: 5,
 });
 
 <ReadiumView

@@ -6,8 +6,13 @@
  * plain scroll views + linear layouts consuming only readium-shared/streamer
  * primitives, so every behavior of the iOS reader (five reading modes, scale
  * types with capping rules, spreads with RTL cover rule, page gap, theme,
- * preload windowing, webtoon %-of-viewport paging, locator contract) is
- * ported 1:1.
+ * page loading, webtoon %-of-viewport paging, locator contract) is ported 1:1.
+ *
+ * Page loading (mirrors iOS): every page is downloaded in reading order by
+ * [ComicPageWarmer] (streamed pages land in [ComicPageDiskCache]); each
+ * download reads the page's pixel size from its header so placeholders match
+ * the page before it is decoded; only pages inside
+ * [ComicPagePlanner.decodeWindow] hold a decoded bitmap.
  */
 
 package com.reactnativereadium.reader
@@ -26,6 +31,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
@@ -40,7 +46,11 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
+import java.io.File
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -63,6 +73,10 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
   /** Bitmap-filtered reading order — iOS init :35-36. */
   private lateinit var links: List<Link>
   private lateinit var bitmaps: Array<Bitmap?>
+
+  /** Intrinsic pixel size per page, known from the image header before decoding. */
+  private lateinit var naturalWidths: IntArray
+  private lateinit var naturalHeights: IntArray
   private lateinit var imageViews: List<ImageView>
 
   private lateinit var currentLocatorFlow: MutableStateFlow<Locator>
@@ -73,7 +87,15 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
 
   private var currentIndex = 0
 
-  private val loadingIndices = mutableSetOf<Int>()
+  /** Reading direction of the last page change, in index space (+1 forward). */
+  private var loadDirection = 1
+
+  private var warmer: ComicPageWarmer? = null
+  private val decodingIndices = mutableSetOf<Int>()
+  private val inFlightBytes = HashMap<Int, Deferred<ByteArray?>>()
+
+  /** Page whose on-screen position is held while page sizes above it change. */
+  private var pendingScrollAnchor: Pair<Int, Int>? = null
 
   // View hierarchy: root > scroll container (ScrollView | HorizontalScrollView)
   // > stack (LinearLayout) > image views.
@@ -110,6 +132,8 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
     val bitmapLinks = publication.readingOrder.filter { it.mediaType?.isBitmap == true }
     links = bitmapLinks.ifEmpty { publication.readingOrder }
     bitmaps = arrayOfNulls(links.size)
+    naturalWidths = IntArray(links.size)
+    naturalHeights = IntArray(links.size)
 
     currentIndex = initialIndex()
     currentLocatorFlow = MutableStateFlow(locatorAt(currentIndex))
@@ -138,10 +162,15 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
 
     applyTheme()
     rebuildContent()
-    loadImagesAround(initialIndex(), hidesLoadingIndicatorOnCompletion = true)
+    startPageLoading()
   }
 
   override fun onDestroyView() {
+    warmer?.dispose()
+    warmer = null
+    inFlightBytes.clear()
+    decodingIndices.clear()
+    pendingScrollAnchor = null
     programmaticScrollAnimator?.cancel()
     programmaticScrollAnimator = null
     rootView?.removeAllViews()
@@ -186,7 +215,7 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
         }
       }
     }
-    loadImagesAround(targetIndex)
+    refreshPageLoading()
   }
 
   override suspend fun computePositions(): List<Locator> =
@@ -271,10 +300,6 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
   /** [gap] converted to screen pixels. */
   private val gapPx: Int
     get() = (gap * resources.displayMetrics.density).roundToInt()
-
-  /** Preload amount clamped 0-10, default 5 — iOS :393-395. */
-  private val preloadAmount: Int
-    get() = ((preferences.imagePreloadAmount ?: 5.0).toInt()).coerceIn(0, 10)
 
   /** Webtoon paging % of viewport height, clamped 10-100, default 95 — iOS :454. */
   private val scrollAmountPercent: Double
@@ -560,15 +585,7 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
     for ((index, imageView) in imageViews.withIndex()) {
       if (imageView.parent !== stack) continue
 
-      val bitmap = bitmaps[index]
-      // Unloaded pages reserve the viewport — iOS :253 (`images[index]?.size ?? viewport`).
-      val naturalWidth = max(bitmap?.width?.toFloat() ?: viewport.width, 1f)
-      val naturalHeight = max(bitmap?.height?.toFloat() ?: viewport.height, 1f)
-      val displaySize = displayedImageSize(
-        naturalWidth = naturalWidth,
-        naturalHeight = naturalHeight,
-        viewport = viewport
-      )
+      val displaySize = displayedPageSize(index, viewport)
 
       val params = imageView.layoutParams as? LinearLayout.LayoutParams
         ?: LinearLayout.LayoutParams(0, 0)
@@ -589,6 +606,77 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
 
     clampContentOffsetForCurrentMode()
   }
+
+  /**
+   * Display size for page [index]. Pages whose size is not known yet reserve
+   * the viewport — iOS `pageSizes[index] ?? viewport`.
+   */
+  private fun displayedPageSize(index: Int, viewport: Size): Size {
+    val naturalWidth = naturalWidths[index].takeIf { it > 0 }?.toFloat() ?: viewport.width
+    val naturalHeight = naturalHeights[index].takeIf { it > 0 }?.toFloat() ?: viewport.height
+    return displayedImageSize(
+      naturalWidth = max(naturalWidth, 1f),
+      naturalHeight = max(naturalHeight, 1f),
+      viewport = viewport
+    )
+  }
+
+  /**
+   * Re-sizes a single attached page once its intrinsic size is known, holding
+   * the current page in place so content above it cannot shift the reader.
+   */
+  private fun applyPageSize(index: Int) {
+    val scrollView = scrollContainer ?: return
+    val imageView = imageViews.getOrNull(index) ?: return
+    if (imageView.parent !== stackView) return
+    if (scrollView.width <= 0 || scrollView.height <= 0) return
+    val displaySize = displayedPageSize(
+      index,
+      Size(scrollView.width.toFloat(), scrollView.height.toFloat())
+    )
+    val params = imageView.layoutParams as? LinearLayout.LayoutParams ?: return
+    val width = displaySize.width.roundToInt()
+    val height = displaySize.height.roundToInt()
+    if (params.width == width && params.height == height) return
+    captureScrollAnchor()
+    params.width = width
+    params.height = height
+    imageView.layoutParams = params
+  }
+
+  /** Records where the current page sits so [restoreScrollAnchor] can hold it there after layout. */
+  private fun captureScrollAnchor() {
+    if (pendingScrollAnchor != null || isPaginatedMode) return
+    if (programmaticScrollAnimator?.isRunning == true) return
+    val scrollView = scrollContainer ?: return
+    val anchor = imageViews.getOrNull(currentIndex)?.takeIf { it.parent === stackView } ?: return
+    if (anchor.width == 0 && anchor.height == 0) return
+    pendingScrollAnchor = currentIndex to anchorOffset(anchor, scrollView)
+    scrollView.viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
+      override fun onPreDraw(): Boolean {
+        if (scrollView.viewTreeObserver.isAlive) {
+          scrollView.viewTreeObserver.removeOnPreDrawListener(this)
+        }
+        restoreScrollAnchor()
+        return true
+      }
+    })
+  }
+
+  private fun restoreScrollAnchor() {
+    val (index, offset) = pendingScrollAnchor ?: return
+    pendingScrollAnchor = null
+    val scrollView = scrollContainer ?: return
+    val anchor = imageViews.getOrNull(index)?.takeIf { it.parent === stackView } ?: return
+    val drift = anchorOffset(anchor, scrollView) - offset
+    if (drift == 0) return
+    isApplyingProgrammaticScroll = true
+    if (isHorizontalScrollMode) scrollView.scrollBy(drift, 0) else scrollView.scrollBy(0, drift)
+    isApplyingProgrammaticScroll = false
+  }
+
+  private fun anchorOffset(view: View, scrollView: ViewGroup): Int =
+    if (isHorizontalScrollMode) view.left - scrollView.scrollX else view.top - scrollView.scrollY
 
   /**
    * Scale-type math — direct port of iOS `displayedImageSize(for:viewport:)`
@@ -650,8 +738,7 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
    */
   private fun navigateToIndex(index: Int, animated: Boolean, emit: Boolean = true) {
     if (links.isEmpty()) return
-    currentIndex = index.coerceIn(0, links.size - 1)
-    loadImagesAround(currentIndex)
+    setCurrentIndex(index.coerceIn(0, links.size - 1))
 
     if (isPaginatedMode) {
       // The container already exists and is the right class for paginated
@@ -741,42 +828,50 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
   }
 
   /**
-   * Port of iOS `updateCurrentIndexFromScrollPosition` (:303-328): probe point
-   * at the viewport center along the scroll axis; nearest image center wins;
-   * emits a locator and triggers preload on change.
+   * Port of iOS `updateCurrentIndexFromScrollPosition`: probe point at the
+   * viewport center along the scroll axis; nearest page center wins.
+   *
+   * Page centers are monotonic along the axis, so the distance to the probe is
+   * unimodal in the page index: walk from the current page toward the probe
+   * instead of measuring every page on every scroll event.
    */
   private fun updateCurrentIndexFromScrollPosition() {
     if (isApplyingProgrammaticScroll) return
     if (isPaginatedMode || links.isEmpty()) return
     val scrollView = scrollContainer ?: return
     val stack = stackView ?: return
-
-    val probeX = scrollView.scrollX + scrollView.width / 2
-    val probeY = scrollView.scrollY + scrollView.height / 2
     val horizontal = isHorizontalScrollMode
+    val probe = if (horizontal) {
+      scrollView.scrollX + scrollView.width / 2f
+    } else {
+      scrollView.scrollY + scrollView.height / 2f
+    }
 
-    var closestIndex = currentIndex
-    var closestDistance = Double.MAX_VALUE
-
-    for ((index, imageView) in imageViews.withIndex()) {
-      if (imageView.parent !== stack) continue
-
+    fun distance(index: Int): Float? {
+      val imageView = imageViews.getOrNull(index)?.takeIf { it.parent === stack } ?: return null
       val center = if (horizontal) {
         imageView.left + imageView.width / 2f
       } else {
         imageView.top + imageView.height / 2f
       }
-      val target = if (horizontal) probeX else probeY
-      val distance = abs(center - target).toDouble()
-      if (distance < closestDistance) {
-        closestDistance = distance
-        closestIndex = index
+      return abs(center - probe)
+    }
+
+    var closestIndex = currentIndex.coerceIn(0, links.size - 1)
+    var closestDistance = distance(closestIndex) ?: return
+    for (step in intArrayOf(1, -1)) {
+      var candidate = closestIndex + step
+      while (true) {
+        val candidateDistance = distance(candidate) ?: break
+        if (candidateDistance >= closestDistance) break
+        closestIndex = candidate
+        closestDistance = candidateDistance
+        candidate += step
       }
     }
 
     if (closestIndex == currentIndex) return
-    currentIndex = closestIndex.coerceIn(0, links.size - 1)
-    loadImagesAround(currentIndex)
+    setCurrentIndex(closestIndex)
     emitLocator(currentIndex)
   }
 
@@ -832,58 +927,141 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
 
   // MARK: - Image loading
 
-  /**
-   * Preload window ±N around [index] with dedup via [loadingIndices], decoding
-   * sequentially off the main thread — port of iOS `loadImages(around:)`
-   * (:162-189).
-   */
-  private fun loadImagesAround(index: Int, hidesLoadingIndicatorOnCompletion: Boolean = false) {
+  /** Moves the cursor and re-plans downloads and decoded pages around it. */
+  private fun setCurrentIndex(index: Int) {
+    if (index != currentIndex) loadDirection = if (index > currentIndex) 1 else -1
+    currentIndex = index
+    refreshPageLoading()
+  }
+
+  private fun startPageLoading() {
     if (links.isEmpty()) return
-    // iOS :165-167: paginated mode raises the window floor to the spread size.
-    val amount = if (isPaginatedMode) {
-      max(if (isDoublePageMode) 1 else 0, preloadAmount)
-    } else {
-      preloadAmount
-    }
-    val lowerBound = max(0, index - amount)
-    val upperBound = min(links.size - 1, index + amount + (if (isDoublePageMode) 1 else 0))
+    val scope = viewLifecycleOwner.lifecycleScope
+    warmer?.dispose()
+    warmer = ComicPageWarmer(scope) { index -> warmPage(index) }
+    diskCache?.let { cache -> scope.launch(Dispatchers.IO) { cache.trim() } }
+    refreshPageLoading()
+  }
 
-    lifecycleScope.launch {
-      for (i in lowerBound..upperBound) {
-        if (bitmaps[i] != null || loadingIndices.contains(i)) continue
-        loadingIndices.add(i)
-
-        val link = links[i]
-        val data = try {
-          publication.get(link)?.read()?.getOrNull()
-        } catch (e: Exception) {
-          null
-        }
-
-        val bitmap = withContext(Dispatchers.Default) {
-          data?.let { bytes -> decodeSampled(bytes) }
-        }
-
-        loadingIndices.remove(i)
-        if (bitmap == null) continue
-
-        bitmaps[i] = bitmap
-        withContext(Dispatchers.Main) {
-          imageViews.getOrNull(i)?.setImageBitmap(bitmap)
-          isLayoutDirty = true
-          applyLayoutIfNeeded()
-        }
-      }
-
-      if (hidesLoadingIndicatorOnCompletion) {
-        withContext(Dispatchers.Main) {
-          loadingIndicator?.let { indicator ->
-            (indicator.parent as? ViewGroup)?.removeView(indicator)
-          }
-          loadingIndicator = null
-        }
+  /**
+   * Downloads in reading order from the cursor and keeps only the pages near it
+   * decoded — replaces the old fixed ±N preload window.
+   */
+  private fun refreshPageLoading() {
+    if (links.isEmpty() || !isContentBuilt) return
+    warmer?.plan(ComicPagePlanner.warmupOrder(links.size, currentIndex, loadDirection))
+    val window = ComicPagePlanner.decodeWindow(
+      links.size,
+      currentIndex,
+      loadDirection,
+      paginated = isPaginatedMode,
+      doublePage = isDoublePageMode
+    )
+    for (index in bitmaps.indices) {
+      if (index !in window && bitmaps[index] != null) {
+        bitmaps[index] = null
+        imageViews.getOrNull(index)?.setImageDrawable(null)
       }
     }
+    // Decode nearest-first so the visible page never waits behind its neighbours.
+    window.sortedBy { abs(it - currentIndex) }.forEach { decodePage(it) }
+  }
+
+  /** Warmup task: fetch (and disk-cache) the page and learn its size from the header. */
+  private suspend fun warmPage(index: Int) {
+    val bytes = pageBytes(index) ?: throw IllegalStateException("Page $index is unavailable")
+    val bounds = withContext(Dispatchers.Default) { readBounds(bytes) } ?: return
+    setNaturalSize(index, bounds.first, bounds.second)
+  }
+
+  private fun decodePage(index: Int) {
+    if (bitmaps[index] != null || !decodingIndices.add(index)) return
+    viewLifecycleOwner.lifecycleScope.launch {
+      try {
+        val bytes = pageBytes(index) ?: return@launch
+        val decoded = withContext(Dispatchers.Default) {
+          readBounds(bytes) to decodeSampled(bytes)
+        }
+        decoded.first?.let { (width, height) -> setNaturalSize(index, width, height) }
+        val bitmap = decoded.second ?: return@launch
+        val stillWanted = index in ComicPagePlanner.decodeWindow(
+          links.size,
+          currentIndex,
+          loadDirection,
+          paginated = isPaginatedMode,
+          doublePage = isDoublePageMode
+        )
+        if (!stillWanted) return@launch
+        bitmaps[index] = bitmap
+        imageViews.getOrNull(index)?.setImageBitmap(bitmap)
+        if (index == currentIndex) hideLoadingIndicator()
+      } finally {
+        decodingIndices.remove(index)
+      }
+    }
+  }
+
+  private fun setNaturalSize(index: Int, width: Int, height: Int) {
+    if (width <= 0 || height <= 0) return
+    if (naturalWidths[index] == width && naturalHeights[index] == height) return
+    naturalWidths[index] = width
+    naturalHeights[index] = height
+    applyPageSize(index)
+  }
+
+  private fun hideLoadingIndicator() {
+    loadingIndicator?.let { indicator ->
+      (indicator.parent as? ViewGroup)?.removeView(indicator)
+    }
+    loadingIndicator = null
+  }
+
+  /**
+   * Page bytes, shared between the warmer and the decoder so a page is never
+   * fetched twice at once. Streamed pages are served from (and written to) the
+   * disk cache; local publications read straight from the publication.
+   */
+  private suspend fun pageBytes(index: Int): ByteArray? {
+    val pending = inFlightBytes[index] ?: viewLifecycleOwner.lifecycleScope.async(Dispatchers.IO) {
+      readPageBytes(links[index])
+    }.also { deferred ->
+      inFlightBytes[index] = deferred
+      deferred.invokeOnCompletion {
+        viewLifecycleOwner.lifecycleScope.launch {
+          if (inFlightBytes[index] === deferred) inFlightBytes.remove(index)
+        }
+      }
+    }
+    return pending.await()
+  }
+
+  private suspend fun readPageBytes(link: Link): ByteArray? {
+    val resource = publication.get(link) ?: return null
+    try {
+      val cacheKey = resource.sourceUrl?.takeIf { it.isHttp }?.toString()
+      val cache = diskCache?.takeIf { cacheKey != null }
+      cache?.read(cacheKey!!)?.let { return it }
+      val bytes = resource.read().getOrNull() ?: return null
+      cache?.write(cacheKey!!, bytes)
+      return bytes
+    } catch (cancelled: CancellationException) {
+      throw cancelled
+    } catch (_: Exception) {
+      return null
+    } finally {
+      resource.close()
+    }
+  }
+
+  private val diskCache: ComicPageDiskCache? by lazy {
+    context?.cacheDir?.let { ComicPageDiskCache(File(it, ComicPageDiskCache.DIRECTORY_NAME)) }
+  }
+
+  /** Pixel size from the image header without allocating pixels. */
+  private fun readBounds(bytes: ByteArray): Pair<Int, Int>? {
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+    return if (bounds.outWidth > 0 && bounds.outHeight > 0) bounds.outWidth to bounds.outHeight else null
   }
 
   /**
