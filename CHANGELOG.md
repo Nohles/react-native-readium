@@ -1,3 +1,14 @@
+# 5.0.0-rc.42
+
+### Fixes
+
+- Comics (iOS): pages decoded before the first layout, or in paginated mode
+  and then shown larger in a scroll mode, are re-decoded at their new display
+  size instead of staying blurry.
+- `comicBoundaryPages` can go from set to `undefined` (e.g. switching from a
+  scroll mode to paged). React cleared the prop with `null`, which the Nitro
+  view rejected with "Value is null, expected an Object".
+
 # 5.0.0-rc.41
 
 ### Features
