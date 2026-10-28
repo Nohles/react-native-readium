@@ -16,6 +16,8 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
   private let links: [RLink]
   /// Decoded images; only pages in `ComicPagePlanner.decodeWindow` hold one.
   private var images: [UIImage?]
+  /// Longest side, in pixels, each held image was decoded for.
+  private var decodedPixelSizes: [CGFloat]
   /// Intrinsic pixel size per page, known from the image header before decoding.
   private var pageSizes: [CGSize?]
   private var imageViews: [UIImageView] = []
@@ -61,6 +63,7 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     let bitmapLinks = publication.readingOrder.filter { $0.mediaType?.isBitmap == true }
     self.links = bitmapLinks.isEmpty ? publication.readingOrder : bitmapLinks
     self.images = Array(repeating: nil, count: links.count)
+    self.decodedPixelSizes = Array(repeating: 0, count: links.count)
     self.pageSizes = Array(repeating: nil, count: links.count)
     super.init(nibName: nil, bundle: nil)
   }
@@ -272,6 +275,7 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     let window = currentDecodeWindow
     for index in images.indices where images[index] != nil && !window.contains(index) {
       images[index] = nil
+      decodedPixelSizes[index] = 0
       imageViews[index].image = nil
     }
     // Decode nearest-first so the visible page never waits behind its neighbours.
@@ -302,9 +306,11 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     }
   }
 
+  /// Decodes a page, or re-decodes it when its image is now drawn larger than
+  /// it was decoded for. The old image stays on screen until the new one lands.
   @MainActor
   private func decodePage(_ index: Int) async {
-    guard images.indices.contains(index), images[index] == nil, !decodingIndices.contains(index) else { return }
+    guard images.indices.contains(index), needsDecode(index), !decodingIndices.contains(index) else { return }
     decodingIndices.insert(index)
     defer { decodingIndices.remove(index) }
 
@@ -313,18 +319,50 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
       let size = await Task.detached(priority: .userInitiated) { ComicPageImage.pixelSize(of: data) }.value
       if let size { setPageSize(size, at: index) }
     }
-    guard let naturalSize = pageSizes[index] else { return }
-
-    let viewport = scrollView.bounds.size.width > 0 ? scrollView.bounds.size : view.bounds.size
-    let displaySize = displayedImageSize(for: naturalSize, viewport: viewport)
-    let maxPixelSize = max(displaySize.width, displaySize.height) * traitCollection.displayScale
+    guard let maxPixelSize = targetPixelSize(index) else { return }
     let image = await Task.detached(priority: .userInitiated) {
       ComicPageImage.decode(data, maxPixelSize: maxPixelSize)
     }.value
 
     guard let image, currentDecodeWindow.contains(index) else { return }
     images[index] = image
+    decodedPixelSizes[index] = maxPixelSize
     imageViews[index].image = image
+    // The layout may have grown the page while it was decoding.
+    if needsDecode(index) {
+      Task { await decodePage(index) }
+    }
+  }
+
+  /// Longest side, in pixels, a page must be decoded at to stay sharp at its
+  /// current display size. Before the first layout the screen stands in for
+  /// the viewport; a later layout re-decodes the page if that was too small.
+  private func targetPixelSize(_ index: Int) -> CGFloat? {
+    guard let naturalSize = pageSizes[index] else { return nil }
+    let screen = view.window?.screen ?? UIScreen.main
+    let viewport = [scrollView.bounds.size, view.bounds.size, screen.bounds.size]
+      .first { $0.width > 0 && $0.height > 0 } ?? screen.bounds.size
+    let displaySize = displayedImageSize(for: naturalSize, viewport: viewport)
+    let scale = traitCollection.displayScale > 0 ? traitCollection.displayScale : screen.scale
+    return max(displaySize.width, displaySize.height) * scale
+  }
+
+  /// True when a page holds no image, or one decoded noticeably smaller than
+  /// it is drawn now: decoded before the first layout, or in a mode that drew
+  /// it smaller (a webtoon strip fit to the screen height in paginated mode).
+  private func needsDecode(_ index: Int) -> Bool {
+    guard images[index] != nil else { return true }
+    guard let target = targetPixelSize(index) else { return false }
+    return decodedPixelSizes[index] < target * 0.9
+  }
+
+  /// Re-decodes held pages that the current layout draws larger than they
+  /// were decoded for.
+  private func refreshDecodedResolution() {
+    for index in currentDecodeWindow
+    where images[index] != nil && !decodingIndices.contains(index) && needsDecode(index) {
+      Task { await decodePage(index) }
+    }
   }
 
   /// Page bytes, shared between the warmer and the decoder so a page is never
@@ -604,6 +642,7 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
       setPageConstraints(index, size: displayedImageSize(for: naturalSize, viewport: viewport))
     }
     clampContentOffsetForCurrentMode()
+    refreshDecodedResolution()
   }
 
   private func rebuildPaginatedSubviewsIfNeeded() {

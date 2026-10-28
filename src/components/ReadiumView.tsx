@@ -25,6 +25,11 @@ export type { ReadiumViewRef, ReadiumProps } from './ReadiumView.types';
 import type { ReadiumViewRef, ReadiumProps } from './ReadiumView.types';
 
 const noop = () => {};
+/**
+ * Sent instead of `undefined`: React clears a removed prop by sending `null`,
+ * which Nitro rejects for optional struct props. No pages is the same as none.
+ */
+const noComicBoundaryPages = {};
 
 export const ReadiumView = forwardRef<ReadiumViewRef, ReadiumProps>(
   (
@@ -202,7 +207,7 @@ export const ReadiumView = forwardRef<ReadiumViewRef, ReadiumProps>(
             decorations={decorations}
             selectionActions={selectionActions ?? []}
             audiobookBookmarks={audiobookBookmarks}
-            comicBoundaryPages={comicBoundaryPages}
+            comicBoundaryPages={comicBoundaryPages ?? noComicBoundaryPages}
             onLocationChange={callback(onLocationChange ?? noop)}
             onTap={callback(onTap ?? noop)}
             onPublicationReady={callback(handlePublicationReady)}
