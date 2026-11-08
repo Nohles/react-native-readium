@@ -1,3 +1,11 @@
+# 5.0.0-rc.43
+
+### Features
+
+- `evaluateJavaScript(script)` runs a script in the EPUB page on screen and
+  returns its result as a string (iOS and Android; web returns an empty
+  string).
+
 # 5.0.0-rc.42
 
 ### Fixes
