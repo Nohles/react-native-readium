@@ -264,6 +264,12 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
   override fun setVolume(volume: Double) = withAudiobook { it.setVolume(volume) }
   override fun setSleepTimer(seconds: Double?) = withAudiobook { it.setSleepTimer(seconds) }
 
+  override fun evaluateJavaScript(script: String): Promise<String> {
+    // Read the fragment on the calling thread, as search does.
+    val reader = fragment as? EpubReaderFragment ?: return Promise.resolved("")
+    return Promise.async(Dispatchers.Main) { reader.evaluateJavaScript(script) }
+  }
+
   override fun search(query: String): Promise<PublicationSearchPage> {
     // Read the fragment on the calling (main) thread: `fragment` is mutated by
     // the main-thread fragment lifecycle, so touching it from a worker is a data

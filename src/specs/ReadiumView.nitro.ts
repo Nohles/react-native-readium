@@ -342,6 +342,11 @@ export interface ReadiumViewMethods extends HybridViewMethods {
   goTo(locator: Locator): void;
   goForward(): void;
   goBackward(): void;
+  /**
+   * Runs a script in the EPUB page on screen and resolves with the string it
+   * returns, or "" when it returns something else or no page is showing.
+   */
+  evaluateJavaScript(script: string): Promise<string>;
   search(query: string): Promise<PublicationSearchPage>;
   searchNext(): Promise<PublicationSearchPage>;
   cancelSearch(): void;

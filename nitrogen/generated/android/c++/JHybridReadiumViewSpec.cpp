@@ -158,9 +158,9 @@ namespace margelo::nitro::readium { struct PublicationSearchPage; }
 #include "ComicBoundaryActionEvent.hpp"
 #include "JFunc_void_ComicBoundaryActionEvent.hpp"
 #include "JComicBoundaryActionEvent.hpp"
-#include "PublicationSearchPage.hpp"
 #include <NitroModules/Promise.hpp>
 #include <NitroModules/JPromise.hpp>
+#include "PublicationSearchPage.hpp"
 #include "JPublicationSearchPage.hpp"
 
 namespace margelo::nitro::readium {
@@ -520,6 +520,22 @@ namespace margelo::nitro::readium {
   void JHybridReadiumViewSpec::goBackward() {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void()>("goBackward");
     method(_javaPart);
+  }
+  std::shared_ptr<Promise<std::string>> JHybridReadiumViewSpec::evaluateJavaScript(const std::string& script) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<jni::JString> /* script */)>("evaluateJavaScript");
+    auto __result = method(_javaPart, jni::make_jstring(script));
+    return [&]() {
+      auto __promise = Promise<std::string>::create();
+      __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& __boxedResult) {
+        auto __result = jni::static_ref_cast<jni::JString>(__boxedResult);
+        __promise->resolve(__result->toStdString());
+      });
+      __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
+        jni::JniException __jniError(__throwable);
+        __promise->reject(std::make_exception_ptr(__jniError));
+      });
+      return __promise;
+    }();
   }
   std::shared_ptr<Promise<PublicationSearchPage>> JHybridReadiumViewSpec::search(const std::string& query) {
     static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<jni::JString> /* query */)>("search");

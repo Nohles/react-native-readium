@@ -92,6 +92,7 @@ namespace margelo::nitro::readium {
     void goTo(const Locator& locator) override;
     void goForward() override;
     void goBackward() override;
+    std::shared_ptr<Promise<std::string>> evaluateJavaScript(const std::string& script) override;
     std::shared_ptr<Promise<PublicationSearchPage>> search(const std::string& query) override;
     std::shared_ptr<Promise<PublicationSearchPage>> searchNext() override;
     void cancelSearch() override;

@@ -83,6 +83,12 @@ class EPUBViewController: ReaderViewController, SelectionActionHandlerDelegate {
       navigator.delegate = self
     }
 
+    @MainActor
+    func evaluateJavaScript(_ script: String) async -> String {
+      guard case .success(let value) = await epubNavigator.evaluateJavaScript(script) else { return "" }
+      return value as? String ?? ""
+    }
+
     var epubNavigator: EPUBNavigatorViewController {
       return navigator as! EPUBNavigatorViewController
     }

@@ -148,6 +148,8 @@ export const ReadiumView = forwardRef<ReadiumViewRef, ReadiumProps>(
         goTo: (locator) => hybridRef.current?.goTo(locator),
         goForward: () => hybridRef.current?.goForward(),
         goBackward: () => hybridRef.current?.goBackward(),
+        evaluateJavaScript: (script) =>
+          hybridRef.current?.evaluateJavaScript(script) ?? Promise.resolve(''),
         search: (query) =>
           remoteSearchHref.current
             ? remoteSearch(query)
