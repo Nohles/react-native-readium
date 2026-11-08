@@ -70,9 +70,9 @@ namespace margelo::nitro::readium { struct PublicationSearchPage; }
 #include "AudiobookBookmarkChangeEvent.hpp"
 #include "ComicBoundaryChangeEvent.hpp"
 #include "ComicBoundaryActionEvent.hpp"
-#include "PublicationSearchPage.hpp"
-#include <NitroModules/Promise.hpp>
 #include <string>
+#include <NitroModules/Promise.hpp>
+#include "PublicationSearchPage.hpp"
 
 namespace margelo::nitro::readium {
 
@@ -143,6 +143,7 @@ namespace margelo::nitro::readium {
       virtual void goTo(const Locator& locator) = 0;
       virtual void goForward() = 0;
       virtual void goBackward() = 0;
+      virtual std::shared_ptr<Promise<std::string>> evaluateJavaScript(const std::string& script) = 0;
       virtual std::shared_ptr<Promise<PublicationSearchPage>> search(const std::string& query) = 0;
       virtual std::shared_ptr<Promise<PublicationSearchPage>> searchNext() = 0;
       virtual void cancelSearch() = 0;

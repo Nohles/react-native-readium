@@ -119,8 +119,8 @@ namespace margelo::nitro::readium { struct PublicationSearchPage; }
 #include "AudiobookBookmarkChangeEvent.hpp"
 #include "ComicBoundaryChangeEvent.hpp"
 #include "ComicBoundaryActionEvent.hpp"
-#include "PublicationSearchPage.hpp"
 #include <NitroModules/Promise.hpp>
+#include "PublicationSearchPage.hpp"
 
 #include "NitroReadium-Swift-Cxx-Umbrella.hpp"
 
@@ -314,6 +314,14 @@ namespace margelo::nitro::readium {
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }
+    }
+    inline std::shared_ptr<Promise<std::string>> evaluateJavaScript(const std::string& script) override {
+      auto __result = _swiftPart.evaluateJavaScript(script);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
     }
     inline std::shared_ptr<Promise<PublicationSearchPage>> search(const std::string& query) override {
       auto __result = _swiftPart.search(query);

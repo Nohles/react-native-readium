@@ -33,6 +33,7 @@ public protocol HybridReadiumViewSpec_protocol: HybridObject, HybridView {
   func goTo(locator: Locator) throws -> Void
   func goForward() throws -> Void
   func goBackward() throws -> Void
+  func evaluateJavaScript(script: String) throws -> Promise<String>
   func search(query: String) throws -> Promise<PublicationSearchPage>
   func searchNext() throws -> Promise<PublicationSearchPage>
   func cancelSearch() throws -> Void

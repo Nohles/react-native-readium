@@ -231,6 +231,10 @@ abstract class HybridReadiumViewSpec: HybridView() {
   
   @DoNotStrip
   @Keep
+  abstract fun evaluateJavaScript(script: String): Promise<String>
+  
+  @DoNotStrip
+  @Keep
   abstract fun search(query: String): Promise<PublicationSearchPage>
   
   @DoNotStrip

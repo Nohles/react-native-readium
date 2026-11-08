@@ -547,6 +547,13 @@ class HybridReadiumView: HybridReadiumViewSpec {
     }
   }
 
+  func evaluateJavaScript(script: String) -> Promise<String> {
+    Promise.async { @MainActor [weak self] in
+      guard let reader = self?.readerHost as? EPUBViewController else { return "" }
+      return await reader.evaluateJavaScript(script)
+    }
+  }
+
   func search(query: String) -> Promise<PublicationSearchPage> {
     Promise.async { [weak self] in
       guard let self else {

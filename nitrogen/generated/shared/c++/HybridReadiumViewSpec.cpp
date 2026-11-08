@@ -53,6 +53,7 @@ namespace margelo::nitro::readium {
       prototype.registerHybridMethod("goTo", &HybridReadiumViewSpec::goTo);
       prototype.registerHybridMethod("goForward", &HybridReadiumViewSpec::goForward);
       prototype.registerHybridMethod("goBackward", &HybridReadiumViewSpec::goBackward);
+      prototype.registerHybridMethod("evaluateJavaScript", &HybridReadiumViewSpec::evaluateJavaScript);
       prototype.registerHybridMethod("search", &HybridReadiumViewSpec::search);
       prototype.registerHybridMethod("searchNext", &HybridReadiumViewSpec::searchNext);
       prototype.registerHybridMethod("cancelSearch", &HybridReadiumViewSpec::cancelSearch);

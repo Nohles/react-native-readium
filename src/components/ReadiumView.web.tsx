@@ -138,6 +138,7 @@ export const ReadiumView = React.forwardRef<ReadiumViewRef, ReadiumProps>(
         goBackward: () => {
           navigator?.goBackward(true, () => {});
         },
+        evaluateJavaScript: () => Promise.resolve(''),
         search: (query) => runSearch(query),
         searchNext: () => {
           const nextHref = searchNextHref.current;

@@ -6,6 +6,7 @@
 
 package com.reactnativereadium.reader
 
+import org.json.JSONTokener
 import android.os.Bundle
 import android.view.*
 import android.view.accessibility.AccessibilityManager
@@ -135,6 +136,12 @@ class EpubReaderFragment : VisualReaderFragment() {
         setHasOptionsMenu(true)
 
         super.onCreate(savedInstanceState)
+    }
+
+    /** The script's string result, or "" for anything else. */
+    suspend fun evaluateJavaScript(script: String): String {
+        val raw = navigatorFragment.evaluateJavascript(script) ?: return ""
+        return JSONTokener(raw).nextValue() as? String ?: ""
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
