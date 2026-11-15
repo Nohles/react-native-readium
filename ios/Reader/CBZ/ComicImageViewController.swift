@@ -29,6 +29,10 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
   private var initialLocator: ReadiumShared.Locator?
   private var currentIndex = 0
   private var preferences: Preferences?
+  /// Double-page pairing, rebuilt when the spread preferences change.
+  private var spreadLayout: ComicSpreadLayout?
+  /// Viewport the layout was last applied for while zoomed; a new size resets zoom.
+  private var zoomedViewport: CGSize?
   private var isApplyingProgrammaticScroll = false
   private var isClampingContentOffset = false
   /// Reading direction of the last page change, in index space (+1 forward).
@@ -88,8 +92,13 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
 
   func updatePreferences(_ preferences: Preferences) {
     let changedPagination = self.preferences?.scroll != preferences.scroll
+    if self.preferences?.comicSpreadCoverAlone != preferences.comicSpreadCoverAlone
+      || self.preferences?.comicSpreadShift != preferences.comicSpreadShift {
+      spreadLayout = nil
+    }
     self.preferences = preferences
     guard isViewLoaded else { return }
+    resetZoom()
     applyTheme()
     if changedPagination {
       rebuildArrangedSubviews()
@@ -138,12 +147,16 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
       scrollWebtoon(forward: true)
       return
     }
-    if currentIndex >= links.count - 1, let boundary = attachedBoundaryView(.next) {
-      scrollToBoundary(boundary)
+    let target = isDoublePageMode && isPaginatedMode
+      ? spreads().nextSpreadStart(from: currentIndex)
+      : (currentIndex + 1 <= links.count - 1 ? currentIndex + 1 : nil)
+    guard let target else {
+      if let boundary = attachedBoundaryView(.next) {
+        scrollToBoundary(boundary)
+      }
       return
     }
-    let step = isDoublePageMode ? 2 : 1
-    navigateToIndex(min(currentIndex + step, max(links.count - 1, 0)), animated: true)
+    navigateToIndex(target, animated: true)
   }
 
   @MainActor
@@ -152,12 +165,34 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
       scrollWebtoon(forward: false)
       return
     }
-    if currentIndex <= 0, let boundary = attachedBoundaryView(.previous) {
-      scrollToBoundary(boundary)
+    let target = isDoublePageMode && isPaginatedMode
+      ? spreads().previousSpreadStart(from: currentIndex)
+      : (currentIndex - 1 >= 0 ? currentIndex - 1 : nil)
+    guard let target else {
+      if let boundary = attachedBoundaryView(.previous) {
+        scrollToBoundary(boundary)
+      }
       return
     }
-    let step = isDoublePageMode ? 2 : 1
-    navigateToIndex(max(currentIndex - step, 0), animated: true)
+    navigateToIndex(target, animated: true)
+  }
+
+  /// The double-page pairing for the current preferences.
+  private func spreads() -> ComicSpreadLayout {
+    if let spreadLayout { return spreadLayout }
+    let layout = ComicSpreadLayout(
+      standalone: links.map { link in
+        ComicSpreadLayout.isStandalone(
+          width: link.width,
+          height: link.height,
+          page: link.properties.otherProperties["page"] as? String
+        )
+      },
+      coverAlone: preferences?.comicSpreadCoverAlone ?? true,
+      shift: preferences?.comicSpreadShift ?? false
+    )
+    spreadLayout = layout
+    return layout
   }
 
   private func configureScrollView() {
@@ -165,6 +200,10 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     scrollView.delegate = self
     scrollView.contentInsetAdjustmentBehavior = .never
     scrollView.isDirectionalLockEnabled = true
+    // Pinch to zoom the page (or the whole strip in scroll modes).
+    scrollView.minimumZoomScale = 1
+    scrollView.maximumZoomScale = 4
+    scrollView.bouncesZoom = true
     scrollView.showsVerticalScrollIndicator = false
     scrollView.showsHorizontalScrollIndicator = false
     view.addSubview(scrollView)
@@ -200,7 +239,20 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
   /// `ReadiumView.onTap` receives from a VisualNavigator tap.
   @objc private func handleTap(_ recognizer: UITapGestureRecognizer) {
     guard recognizer.state == .ended else { return }
-    onTap?(recognizer.location(in: scrollView))
+    // While zoomed the content is scaled and offset; report where the finger
+    // is on screen so tap zones still match what the reader sees.
+    onTap?(recognizer.location(in: isZoomed ? view : scrollView))
+  }
+
+  private var isZoomed: Bool {
+    scrollView.zoomScale > 1.01
+  }
+
+  private func resetZoom() {
+    zoomedViewport = nil
+    guard scrollView.zoomScale != 1 else { return }
+    scrollView.setZoomScale(1, animated: false)
+    scrollView.isPagingEnabled = isPaginatedMode
   }
 
   private func configureLoadingIndicator() {
@@ -608,13 +660,19 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
 
   private func applyLayoutForCurrentPreferences() {
     guard isViewLoaded else { return }
+    if isZoomed {
+      // Re-laying out under a zoom transform would fight it; keep the zoomed
+      // layout until the viewport itself changes (e.g. rotation).
+      if zoomedViewport == nil || zoomedViewport == scrollView.bounds.size { return }
+      resetZoom()
+    }
 
     clearImageSizeConstraints()
 
     stackView.spacing = gap
     stackView.axis = isPaginatedMode || isHorizontalScrollMode ? .horizontal : .vertical
     stackView.distribution = isPaginatedMode ? .equalCentering : .fill
-    scrollView.isPagingEnabled = isPaginatedMode
+    scrollView.isPagingEnabled = isPaginatedMode && !isZoomed
     applyTheme()
     applyScrollAxisPolicy()
 
@@ -660,6 +718,8 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     setCurrentIndex(min(max(index, 0), links.count - 1))
 
     if isPaginatedMode {
+      // A new page starts unzoomed.
+      resetZoom()
       rebuildArrangedSubviews()
       applyLayoutForCurrentPreferences()
       scrollView.setContentOffset(.zero, animated: false)
@@ -674,7 +734,9 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
         offset = CGPoint(x: min(max(x, range.lowerBound), range.upperBound), y: 0)
       } else {
         let y = max(rect.midY - scrollView.bounds.height / 2, 0)
-        offset = CGPoint(x: 0, y: min(max(y, range.lowerBound), range.upperBound))
+        // Keep a zoomed reader's horizontal pan.
+        let x = isZoomed ? scrollView.contentOffset.x : 0
+        offset = CGPoint(x: x, y: min(max(y, range.lowerBound), range.upperBound))
       }
       isApplyingProgrammaticScroll = true
       scrollView.setContentOffset(offset, animated: animated)
@@ -774,15 +836,14 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     preferences?.readingProgression == "rtl"
   }
 
+  /// Pages shown for the current page, left to right on screen.
   private var visiblePageIndices: [Int] {
     guard imageViews.indices.contains(currentIndex) else { return [] }
     guard isDoublePageMode else { return [currentIndex] }
-    if isRTL {
-      return currentIndex > 0 ? [currentIndex, currentIndex - 1] : [currentIndex]
-    }
-    return currentIndex + 1 < imageViews.count
-      ? [currentIndex, currentIndex + 1]
-      : [currentIndex]
+    let spread = spreads().spread(containing: currentIndex)
+      .filter { imageViews.indices.contains($0) }
+    // RTL books put the first page of a spread on the right.
+    return isRTL ? spread.reversed() : spread
   }
 
   private var gap: CGFloat {
@@ -809,7 +870,8 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
   private func displayedImageSize(for naturalSize: CGSize, viewport: CGSize) -> CGSize {
     let naturalWidth = max(naturalSize.width, 1)
     let naturalHeight = max(naturalSize.height, 1)
-    let pageWidth = isDoublePageMode && isPaginatedMode
+    // A cover or a stored two-page spread shows alone at full width.
+    let pageWidth = isDoublePageMode && isPaginatedMode && visiblePageIndices.count > 1
       ? max((viewport.width - gap) / 2, 1)
       : viewport.width
     let scaleType = preferences?.comicScaleType ?? "originalSize"
@@ -856,7 +918,8 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     let maxY = max(scrollView.contentSize.height - scrollView.bounds.height, 0)
     let targetY = min(max(scrollView.contentOffset.y + delta, 0), maxY)
     isApplyingProgrammaticScroll = true
-    scrollView.setContentOffset(CGPoint(x: 0, y: targetY), animated: true)
+    let x = isZoomed ? scrollView.contentOffset.x : 0
+    scrollView.setContentOffset(CGPoint(x: x, y: targetY), animated: true)
   }
 
   private func applyScrollAxisPolicy() {
@@ -878,7 +941,8 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
   }
 
   private func clampContentOffsetForCurrentMode() {
-    guard !isClampingContentOffset else { return }
+    // A zoomed reader pans freely within the zoomed content.
+    guard !isClampingContentOffset, !isZoomed else { return }
 
     let maxX = max(scrollView.contentSize.width - scrollView.bounds.width, 0)
     let maxY = max(scrollView.contentSize.height - scrollView.bounds.height, 0)
@@ -929,6 +993,29 @@ extension ComicImageViewController: UIScrollViewDelegate {
 
   func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
     isApplyingProgrammaticScroll = false
+  }
+
+  func viewForZooming(in scrollView: UIScrollView) -> UIView? {
+    stackView
+  }
+
+  func scrollViewDidZoom(_ scrollView: UIScrollView) {
+    // Paging snaps to viewport-sized pages, which would fight panning a
+    // zoomed spread; restore it once the reader zooms back out.
+    if isZoomed {
+      if zoomedViewport == nil { zoomedViewport = scrollView.bounds.size }
+      scrollView.isPagingEnabled = false
+    } else {
+      zoomedViewport = nil
+      scrollView.isPagingEnabled = isPaginatedMode
+    }
+  }
+
+  func scrollViewDidEndZooming(_ scrollView: UIScrollView, with view: UIView?, atScale scale: CGFloat) {
+    if scale <= 1.01 {
+      scrollView.setZoomScale(1, animated: true)
+      clampContentOffsetForCurrentMode()
+    }
   }
 }
 

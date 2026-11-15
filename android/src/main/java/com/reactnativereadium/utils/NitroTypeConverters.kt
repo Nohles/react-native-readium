@@ -87,7 +87,9 @@ internal fun nitroPreferencesToComic(prefs: Preferences): ComicPreferences {
     stretchSmallPages = prefs.comicStretchSmallPages,
     widthLimitEnabled = prefs.comicWidthLimitEnabled,
     widthLimitPercent = prefs.comicWidthLimitPercent,
-    scrollAmountPercent = prefs.comicScrollAmountPercent
+    scrollAmountPercent = prefs.comicScrollAmountPercent,
+    spreadCoverAlone = prefs.comicSpreadCoverAlone,
+    spreadShift = prefs.comicSpreadShift
     // `comicImagePreloadAmount` is deprecated and ignored: pages load in
     // reading order (see ComicPagePlanner).
   )

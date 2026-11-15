@@ -77,6 +77,10 @@ export interface Preferences {
   comicWidthLimitEnabled?: boolean;
   comicWidthLimitPercent?: number;
   comicScrollAmountPercent?: number;
+  /** Double page: show the first page alone (default true). */
+  comicSpreadCoverAlone?: boolean;
+  /** Double page: flip the first-page choice when pairs come out wrong (default false). */
+  comicSpreadShift?: boolean;
   /** @deprecated Ignored by the native comic readers; kept for binary compatibility. */
   comicImagePreloadAmount?: number;
 }
