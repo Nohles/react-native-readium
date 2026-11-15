@@ -113,6 +113,19 @@ describe('comic preferences', () => {
     });
   });
 
+  it('maps spread pairing settings with their defaults', () => {
+    expect(createComicPreferences({})).toMatchObject({
+      comicSpreadCoverAlone: true,
+      comicSpreadShift: false,
+    });
+    expect(
+      createComicPreferences({ spreadCoverAlone: false, spreadShift: true })
+    ).toMatchObject({
+      comicSpreadCoverAlone: false,
+      comicSpreadShift: true,
+    });
+  });
+
   it('no longer forwards the retired image preload amount', () => {
     expect(
       createComicPreferences({ imagePreloadAmount: 3 })
