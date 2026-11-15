@@ -267,7 +267,7 @@ class HybridReadiumView(private val context: android.content.Context) : HybridRe
   override fun evaluateJavaScript(script: String): Promise<String> {
     // Read the fragment on the calling thread, as search does.
     val reader = fragment as? EpubReaderFragment ?: return Promise.resolved("")
-    return Promise.async(Dispatchers.Main) { reader.evaluateJavaScript(script) }
+    return Promise.async(CoroutineScope(Dispatchers.Main)) { reader.evaluateJavaScript(script) }
   }
 
   override fun search(query: String): Promise<PublicationSearchPage> {
