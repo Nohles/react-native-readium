@@ -1,3 +1,11 @@
+# 5.0.0-rc.44
+
+### Fixes
+
+- EPUB (iOS): page taps (`onTap`) keep working after a touch loses its end
+  event. Previously one such touch stopped every later tap from being
+  recognized until the reader was reopened.
+
 # 5.0.0-rc.43
 
 ### Features
