@@ -223,11 +223,8 @@ class ReaderViewController: UIViewController, Loggable {
       animatedTransition: true
     ).bind(to: visualNavigator)
 
-    let toggleToken = visualNavigator.addObserver(.tap { [weak self] event in
-      guard
-        let self,
-        event.phase != .cancel
-      else {
+    let toggleToken = visualNavigator.addObserver(ReaderTapObserver { [weak self] event in
+      guard let self else {
         return false
       }
 
