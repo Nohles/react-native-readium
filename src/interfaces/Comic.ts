@@ -57,6 +57,10 @@ export interface ComicReaderSettings {
    */
   imagePreloadAmount?: number;
   comicChapterBoundaries?: boolean;
+  /** Double page: show the first page alone. */
+  spreadCoverAlone?: boolean;
+  /** Double page: flip the first-page choice when pairs come out wrong. */
+  spreadShift?: boolean;
   /** @deprecated Use readingMode. Kept for existing callers. */
   canvasMode?: ComicCanvasMode;
   /** @deprecated Use direction. Kept for existing callers. */
@@ -216,6 +220,8 @@ export function createComicPreferences(
       10,
       100
     ),
+    comicSpreadCoverAlone: settings.spreadCoverAlone ?? true,
+    comicSpreadShift: settings.spreadShift ?? false,
   };
 }
 

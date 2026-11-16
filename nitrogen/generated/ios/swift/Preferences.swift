@@ -18,7 +18,7 @@ public extension Preferences {
   /**
    * Create a new instance of `Preferences`.
    */
-  init(backgroundColor: String?, columnCount: String?, fit: String?, fontFamily: String?, fontSize: Double?, fontWeight: Double?, hyphens: Bool?, imageFilter: String?, language: String?, letterSpacing: Double?, ligatures: Bool?, linkColor: String?, lineHeight: Double?, pageMargins: Double?, paragraphIndent: Double?, paragraphSpacing: Double?, publisherStyles: Bool?, readingProgression: String?, scroll: Bool?, spread: String?, textAlign: String?, textColor: String?, textNormalization: Bool?, theme: String?, typeScale: Double?, verticalText: Bool?, wordSpacing: Double?, merging: Bool?, comicReadingMode: String?, comicScaleType: String?, comicStretchSmallPages: Bool?, comicWidthLimitEnabled: Bool?, comicWidthLimitPercent: Double?, comicScrollAmountPercent: Double?, comicImagePreloadAmount: Double?) {
+  init(backgroundColor: String?, columnCount: String?, fit: String?, fontFamily: String?, fontSize: Double?, fontWeight: Double?, hyphens: Bool?, imageFilter: String?, language: String?, letterSpacing: Double?, ligatures: Bool?, linkColor: String?, lineHeight: Double?, pageMargins: Double?, paragraphIndent: Double?, paragraphSpacing: Double?, publisherStyles: Bool?, readingProgression: String?, scroll: Bool?, spread: String?, textAlign: String?, textColor: String?, textNormalization: Bool?, theme: String?, typeScale: Double?, verticalText: Bool?, wordSpacing: Double?, merging: Bool?, comicReadingMode: String?, comicScaleType: String?, comicStretchSmallPages: Bool?, comicWidthLimitEnabled: Bool?, comicWidthLimitPercent: Double?, comicScrollAmountPercent: Double?, comicSpreadCoverAlone: Bool?, comicSpreadShift: Bool?, comicImagePreloadAmount: Double?) {
     self.init({ () -> bridge.std__optional_std__string_ in
       if let __unwrappedValue = backgroundColor {
         return bridge.create_std__optional_std__string_(std.string(__unwrappedValue))
@@ -220,6 +220,18 @@ public extension Preferences {
     }(), { () -> bridge.std__optional_double_ in
       if let __unwrappedValue = comicScrollAmountPercent {
         return bridge.create_std__optional_double_(__unwrappedValue)
+      } else {
+        return .init()
+      }
+    }(), { () -> bridge.std__optional_bool_ in
+      if let __unwrappedValue = comicSpreadCoverAlone {
+        return bridge.create_std__optional_bool_(__unwrappedValue)
+      } else {
+        return .init()
+      }
+    }(), { () -> bridge.std__optional_bool_ in
+      if let __unwrappedValue = comicSpreadShift {
+        return bridge.create_std__optional_bool_(__unwrappedValue)
       } else {
         return .init()
       }
@@ -633,6 +645,30 @@ public extension Preferences {
     return { () -> Double? in
       if bridge.has_value_std__optional_double_(self.__comicScrollAmountPercent) {
         let __unwrapped = bridge.get_std__optional_double_(self.__comicScrollAmountPercent)
+        return __unwrapped
+      } else {
+        return nil
+      }
+    }()
+  }
+  
+  @inline(__always)
+  var comicSpreadCoverAlone: Bool? {
+    return { () -> Bool? in
+      if bridge.has_value_std__optional_bool_(self.__comicSpreadCoverAlone) {
+        let __unwrapped = bridge.get_std__optional_bool_(self.__comicSpreadCoverAlone)
+        return __unwrapped
+      } else {
+        return nil
+      }
+    }()
+  }
+  
+  @inline(__always)
+  var comicSpreadShift: Bool? {
+    return { () -> Bool? in
+      if bridge.has_value_std__optional_bool_(self.__comicSpreadShift) {
+        let __unwrapped = bridge.get_std__optional_bool_(self.__comicSpreadShift)
         return __unwrapped
       } else {
         return nil

@@ -85,6 +85,9 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
 
   private var preferences = ComicPreferences()
 
+  /** Double-page pairing, rebuilt when the spread preferences change. */
+  private var spreadLayout: ComicSpreadLayout? = null
+
   private var currentIndex = 0
 
   /** Reading direction of the last page change, in index space (+1 forward). */
@@ -97,9 +100,11 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
   /** Page whose on-screen position is held while page sizes above it change. */
   private var pendingScrollAnchor: Pair<Int, Int>? = null
 
-  // View hierarchy: root > scroll container (ScrollView | HorizontalScrollView)
+  // View hierarchy: root > zoom layout > scroll container (ScrollView | HorizontalScrollView)
   // > stack (LinearLayout) > image views.
   private var rootView: FrameLayout? = null
+  /** Pinch-to-zoom host; the scroll container is its only child. */
+  private var zoomLayout: ComicZoomLayout? = null
   private var scrollContainer: ViewGroup? = null
   private var stackView: LinearLayout? = null
   private var loadingIndicator: ProgressBar? = null
@@ -188,6 +193,7 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
     activeBoundary = null
     rootView?.removeAllViews()
     rootView = null
+    zoomLayout = null
     scrollContainer = null
     stackView = null
     loadingIndicator = null
@@ -202,7 +208,13 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
    */
   fun updatePreferences(preferences: ComicPreferences) {
     val changedPagination = this.preferences.scroll != preferences.scroll && isContentBuilt
+    if (this.preferences.spreadCoverAlone != preferences.spreadCoverAlone ||
+      this.preferences.spreadShift != preferences.spreadShift
+    ) {
+      spreadLayout = null
+    }
     this.preferences = preferences
+    resetZoom()
 
     if (!isContentBuilt) return
 
@@ -272,21 +284,26 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
     return go(locator, animated)
   }
 
-  /** Port of iOS `goForward` (:83-90): webtoon fractional scroll; step 2 in spreads. */
+  /** Port of iOS `goForward`: webtoon fractional scroll; next spread in double page. */
   override fun goForward(): Boolean {
     if (!isContentBuilt || links.isEmpty()) return false
     if (isWebtoonMode) {
       scrollWebtoon(forward = true)
       return true
     }
-    if (currentIndex >= links.size - 1) {
+    val target = if (isDoublePageMode && isPaginatedMode) {
+      spreads().nextSpreadStart(currentIndex)
+    } else {
+      (currentIndex + 1).takeIf { it <= links.size - 1 }
+    }
+    if (target == null) {
       attachedBoundaryView(ComicBoundaryKind.NEXT)?.let {
         scrollToBoundary(it)
         return true
       }
+      return true
     }
-    val step = if (isDoublePageMode) 2 else 1
-    navigateToIndex(min(currentIndex + step, max(links.size - 1, 0)), animated = true)
+    navigateToIndex(target, animated = true)
     return true
   }
 
@@ -296,16 +313,40 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
       scrollWebtoon(forward = false)
       return true
     }
-    if (currentIndex <= 0) {
+    val target = if (isDoublePageMode && isPaginatedMode) {
+      spreads().previousSpreadStart(currentIndex)
+    } else {
+      (currentIndex - 1).takeIf { it >= 0 }
+    }
+    if (target == null) {
       attachedBoundaryView(ComicBoundaryKind.PREVIOUS)?.let {
         scrollToBoundary(it)
         return true
       }
+      return true
     }
-    val step = if (isDoublePageMode) 2 else 1
-    navigateToIndex(max(currentIndex - step, 0), animated = true)
+    navigateToIndex(target, animated = true)
     return true
   }
+
+  private fun resetZoom() {
+    zoomLayout?.resetZoom()
+  }
+
+  /** The double-page pairing for the current preferences. */
+  private fun spreads(): ComicSpreadLayout =
+    spreadLayout ?: ComicSpreadLayout.build(
+      links.map { link ->
+        ComicSpreadLayout.isStandalone(
+          link.width,
+          link.height,
+          link.properties.otherProperties["page"] as? String
+        )
+      },
+      coverAlone = preferences.spreadCoverAlone ?: true,
+      shift = preferences.spreadShift ?: false,
+      hints = links.map { it.properties.otherProperties["readerSpread"] as? String }
+    ).also { spreadLayout = it }
 
   // MARK: - Mode predicates (iOS :358-376)
 
@@ -314,6 +355,10 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
 
   private val isDoublePageMode: Boolean
     get() = preferences.spread == "always"
+
+  /** Paginated double-page mode, where the cursor moves a spread at a time. */
+  private val isSpreadPaging: Boolean
+    get() = isDoublePageMode && isPaginatedMode
 
   private val isHorizontalScrollMode: Boolean
     get() = preferences.readingMode == "continuousHorizontal"
@@ -327,19 +372,15 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
   private val isRTL: Boolean
     get() = preferences.readingProgression == "rtl"
 
-  /** Spread halves shown for the current page — iOS `visiblePageIndices` :378-387. */
+  /**
+   * Pages shown for the current page, in reading order. The stack's layout
+   * direction puts the first one on the right for RTL.
+   */
   private val visiblePageIndices: List<Int>
     get() {
       if (links.isEmpty()) return emptyList()
       if (!isDoublePageMode) return listOf(currentIndex)
-      if (isRTL) {
-        return if (currentIndex > 0) listOf(currentIndex, currentIndex - 1) else listOf(currentIndex)
-      }
-      return if (currentIndex + 1 < imageViews.size) {
-        listOf(currentIndex, currentIndex + 1)
-      } else {
-        listOf(currentIndex)
-      }
+      return spreads().spreadFor(currentIndex)
     }
 
   /** Page gap in dp — iOS `gap` :389-391 (`pageMargins * 16`). */
@@ -374,6 +415,15 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
       )
     }
     root.setBackgroundColor(readerBackgroundColor())
+
+    val zoom = ComicZoomLayout(context).apply {
+      layoutParams = FrameLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.MATCH_PARENT
+      )
+    }
+    root.addView(zoom)
+    zoomLayout = zoom
 
     val indicator = ProgressBar(context).apply {
       isIndeterminate = true
@@ -420,6 +470,16 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
     val stack = stackView ?: return
     val paginated = isPaginatedMode
     val attached = if (paginated) visiblePageIndices else links.indices.toList()
+    if (paginated) {
+      // A spread's order decides which page sits on which side, so re-add the
+      // one or two pages in reading order rather than keeping stale children.
+      val attachedTags = (0 until stack.childCount).mapNotNull { stack.getChildAt(it).tag as? Int }
+      if (attachedTags != attached) {
+        for (i in stack.childCount - 1 downTo 0) {
+          if (stack.getChildAt(i).tag is Int) stack.removeViewAt(i)
+        }
+      }
+    }
     attached.forEach { index ->
       imageViews.getOrNull(index)?.let { imageView ->
         if (imageView.parent !== stack) {
@@ -561,8 +621,10 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
   @SuppressLint("ClickableViewAccessibility")
   private fun rebuildContent() {
     val root = rootView ?: return
+    val zoom = zoomLayout ?: return
     val context = root.context
 
+    zoom.resetZoom()
     programmaticScrollAnimator?.cancel()
     programmaticScrollAnimator = null
     isApplyingProgrammaticScroll = false
@@ -574,7 +636,7 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
         stack.removeViewAt(i)
       }
     }
-    scrollContainer?.let { root.removeView(it) }
+    scrollContainer?.let { zoom.removeView(it) }
 
     val paginated = isPaginatedMode
     val horizontalAxis = isPaginatedMode || isHorizontalScrollMode
@@ -602,14 +664,12 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
       // Reading direction as a preference (iOS isRTL :374-376).
       //
       // This is a deliberate divergence from iOS, which only mirrors which pages
-      // a spread shows (`visiblePageIndices` :378-387) and leaves the physical
-      // order alone. In a continuous horizontal RTL book the *scroll* has to run
-      // right-to-left for the gesture to match the reading direction, and the
-      // only way to express that with a `LinearLayout` is to reverse its
-      // children — which is what `layoutDirection` does. In paginated mode the
-      // attached pair is already ordered [current, previous] for RTL, so
-      // reversing the container puts the current page on the right, which is
-      // also correct.
+      // a spread shows and leaves the physical order alone. In a continuous
+      // horizontal RTL book the *scroll* has to run right-to-left for the
+      // gesture to match the reading direction, and the only way to express
+      // that with a `LinearLayout` is to reverse its children — which is what
+      // `layoutDirection` does. In paginated mode a spread is attached in
+      // reading order, so this puts its first page on the right, as in print.
       stack.layoutDirection =
         if (isRTL) View.LAYOUT_DIRECTION_RTL else View.LAYOUT_DIRECTION_LTR
     }
@@ -631,7 +691,7 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
       }
     )
 
-    root.addView(scrollView, 0)
+    zoom.addView(scrollView)
 
     scrollContainer = scrollView
     stackView = stack
@@ -669,7 +729,10 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
             // equivalent, so they are classified here from the same touch
             // stream. A tap in a tap zone is distinct from a swipe: only the
             // swipe has already turned the page above.
-            emitTap(android.graphics.PointF(event.x, event.y))
+            // While zoomed the container is scaled; report where the finger
+            // is on screen so tap zones still match what the reader sees.
+            val (x, y) = zoomLayout?.toLayoutPoint(event.x, event.y) ?: (event.x to event.y)
+            emitTap(android.graphics.PointF(x, y))
           }
 
           v.performClick()
@@ -865,7 +928,8 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
     naturalHeight: Float,
     viewport: Size
   ): Size {
-    val pageWidth = if (isDoublePageMode && isPaginatedMode) {
+    // A cover or a stored two-page spread shows alone at full width.
+    val pageWidth = if (isDoublePageMode && isPaginatedMode && visiblePageIndices.size > 1) {
       max((viewport.width - gapPx.toFloat()) / 2f, 1f)
     } else {
       viewport.width
@@ -915,9 +979,13 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
    */
   private fun navigateToIndex(index: Int, animated: Boolean, emit: Boolean = true) {
     if (links.isEmpty()) return
-    setCurrentIndex(index.coerceIn(0, links.size - 1))
+    // A saved locator names a spread's last page; the cursor sits on its first.
+    val clamped = index.coerceIn(0, links.size - 1)
+    setCurrentIndex(if (isSpreadPaging) spreads().spreadFor(clamped).first() else clamped)
 
     if (isPaginatedMode) {
+      // A new page starts unzoomed.
+      resetZoom()
       // The container already exists and is the right class for paginated
       // mode; only the attached page(s) change, so re-parent instead of
       // rebuilding. `rebuildContent` is reserved for a genuine mode switch.
@@ -1007,8 +1075,15 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
 
   /** Emits a locator for [index] through the navigator contract. */
   private fun emitLocator(index: Int) {
-    currentLocatorFlow.value = locatorAt(index)
+    currentLocatorFlow.value = locatorAt(progressIndex(index))
   }
+
+  /**
+   * The page saved progress records for [index]: the last page of its spread
+   * in double-page mode, so finishing the final spread reaches the end.
+   */
+  private fun progressIndex(index: Int): Int =
+    if (isSpreadPaging && index in links.indices) spreads().spreadFor(index).last() else index
 
   /**
    * Port of iOS `updateCurrentIndexFromScrollPosition`: probe point at the

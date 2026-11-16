@@ -1,3 +1,23 @@
+# 5.0.0-rc.45
+
+### Features
+
+- Comics: double page pairs pages once for the whole publication, on iOS
+  and Android. Wide pages (or `page: center`) show alone, the first page
+  shows alone by default (`comicSpreadCoverAlone`), and `comicSpreadShift`
+  flips that choice. Pages marked `readerSpread: "alone" | "pair"` follow
+  those marks instead.
+- Comics: pinch to zoom up to 4x in every mode. Taps still reach the host
+  while zoomed; turning the page resets zoom.
+
+### Fixes
+
+- Comics: in double page, the locator names the last page of the visible
+  spread, so finishing the final spread reaches 100%. Opening that locator
+  shows the whole spread.
+- Comics (Android): after a pinch, the finger left down keeps panning.
+- Android: the library compiles again with Nitro 0.37.1 (`evaluateJavaScript`).
+
 # 5.0.0-rc.44
 
 ### Fixes

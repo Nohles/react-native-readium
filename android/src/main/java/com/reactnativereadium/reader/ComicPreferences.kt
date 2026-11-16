@@ -18,5 +18,7 @@ data class ComicPreferences(
   val stretchSmallPages: Boolean? = null,
   val widthLimitEnabled: Boolean? = null,
   val widthLimitPercent: Double? = null,
-  val scrollAmountPercent: Double? = null
+  val scrollAmountPercent: Double? = null,
+  val spreadCoverAlone: Boolean? = null,
+  val spreadShift: Boolean? = null
 )

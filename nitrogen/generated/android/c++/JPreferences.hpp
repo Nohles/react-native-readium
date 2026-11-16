@@ -100,6 +100,10 @@ namespace margelo::nitro::readium {
       jni::local_ref<jni::JDouble> comicWidthLimitPercent = this->getFieldValue(fieldComicWidthLimitPercent);
       static const auto fieldComicScrollAmountPercent = clazz->getField<jni::JDouble>("comicScrollAmountPercent");
       jni::local_ref<jni::JDouble> comicScrollAmountPercent = this->getFieldValue(fieldComicScrollAmountPercent);
+      static const auto fieldComicSpreadCoverAlone = clazz->getField<jni::JBoolean>("comicSpreadCoverAlone");
+      jni::local_ref<jni::JBoolean> comicSpreadCoverAlone = this->getFieldValue(fieldComicSpreadCoverAlone);
+      static const auto fieldComicSpreadShift = clazz->getField<jni::JBoolean>("comicSpreadShift");
+      jni::local_ref<jni::JBoolean> comicSpreadShift = this->getFieldValue(fieldComicSpreadShift);
       static const auto fieldComicImagePreloadAmount = clazz->getField<jni::JDouble>("comicImagePreloadAmount");
       jni::local_ref<jni::JDouble> comicImagePreloadAmount = this->getFieldValue(fieldComicImagePreloadAmount);
       return Preferences(
@@ -137,6 +141,8 @@ namespace margelo::nitro::readium {
         comicWidthLimitEnabled != nullptr ? std::make_optional(static_cast<bool>(comicWidthLimitEnabled->value())) : std::nullopt,
         comicWidthLimitPercent != nullptr ? std::make_optional(comicWidthLimitPercent->value()) : std::nullopt,
         comicScrollAmountPercent != nullptr ? std::make_optional(comicScrollAmountPercent->value()) : std::nullopt,
+        comicSpreadCoverAlone != nullptr ? std::make_optional(static_cast<bool>(comicSpreadCoverAlone->value())) : std::nullopt,
+        comicSpreadShift != nullptr ? std::make_optional(static_cast<bool>(comicSpreadShift->value())) : std::nullopt,
         comicImagePreloadAmount != nullptr ? std::make_optional(comicImagePreloadAmount->value()) : std::nullopt
       );
     }
@@ -147,7 +153,7 @@ namespace margelo::nitro::readium {
      */
     [[maybe_unused]]
     static jni::local_ref<JPreferences::javaobject> fromCpp(const Preferences& value) {
-      using JSignature = JPreferences(jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>);
+      using JSignature = JPreferences(jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JDouble>);
       static const auto clazz = javaClassStatic();
       static const auto create = clazz->getStaticMethod<JSignature>("fromCpp");
       return create(
@@ -186,6 +192,8 @@ namespace margelo::nitro::readium {
         value.comicWidthLimitEnabled.has_value() ? jni::JBoolean::valueOf(value.comicWidthLimitEnabled.value()) : nullptr,
         value.comicWidthLimitPercent.has_value() ? jni::JDouble::valueOf(value.comicWidthLimitPercent.value()) : nullptr,
         value.comicScrollAmountPercent.has_value() ? jni::JDouble::valueOf(value.comicScrollAmountPercent.value()) : nullptr,
+        value.comicSpreadCoverAlone.has_value() ? jni::JBoolean::valueOf(value.comicSpreadCoverAlone.value()) : nullptr,
+        value.comicSpreadShift.has_value() ? jni::JBoolean::valueOf(value.comicSpreadShift.value()) : nullptr,
         value.comicImagePreloadAmount.has_value() ? jni::JDouble::valueOf(value.comicImagePreloadAmount.value()) : nullptr
       );
     }
