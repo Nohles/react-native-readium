@@ -344,7 +344,8 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
         )
       },
       coverAlone = preferences.spreadCoverAlone ?: true,
-      shift = preferences.spreadShift ?: false
+      shift = preferences.spreadShift ?: false,
+      hints = links.map { it.properties.otherProperties["readerSpread"] as? String }
     ).also { spreadLayout = it }
 
   // MARK: - Mode predicates (iOS :358-376)

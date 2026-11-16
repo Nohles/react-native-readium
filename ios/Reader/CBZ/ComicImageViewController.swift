@@ -189,7 +189,8 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
         )
       },
       coverAlone: preferences?.comicSpreadCoverAlone ?? true,
-      shift: preferences?.comicSpreadShift ?? false
+      shift: preferences?.comicSpreadShift ?? false,
+      hints: links.map { $0.properties.otherProperties["readerSpread"] as? String }
     )
     spreadLayout = layout
     return layout

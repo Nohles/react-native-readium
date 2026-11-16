@@ -60,4 +60,30 @@ class ComicSpreadLayoutTest {
     assertEquals(listOf(4, 5), layout.spreadFor(5))
     assertEquals(listOf(99), layout.spreadFor(99))
   }
+
+  /** "p" = marked pair, "a" = marked alone, "W" = stored two-page spread. */
+  private fun hinted(pattern: String, shift: Boolean = false) =
+    ComicSpreadLayout.build(
+      pattern.map { it == 'W' },
+      coverAlone = true,
+      shift = shift,
+      hints = pattern.map { if (it == 'a') "alone" else if (it == 'p') "pair" else null }
+    ).spreads
+
+  @Test
+  fun serverMarksReplaceTheCoverRule() {
+    assertEquals(listOf(listOf(0, 1), listOf(2, 3)), hinted("pppp"))
+  }
+
+  @Test
+  fun serverMarksRestartPairingAndKeepWidePagesAlone() {
+    assertEquals(listOf(listOf(0), listOf(1, 2), listOf(3), listOf(4, 5)), hinted("appapp"))
+    assertEquals(listOf(listOf(0, 1), listOf(2), listOf(3), listOf(4, 5)), hinted("pppWpp"))
+  }
+
+  @Test
+  fun shiftFlipsAMarkedFirstPage() {
+    assertEquals(listOf(listOf(0), listOf(1, 2), listOf(3)), hinted("pppp", shift = true))
+    assertEquals(listOf(listOf(0, 1), listOf(2, 3)), hinted("appp", shift = true))
+  }
 }

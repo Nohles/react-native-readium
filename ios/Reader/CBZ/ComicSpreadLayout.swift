@@ -12,6 +12,11 @@ import Foundation
 ///   on a left/right pair, so the pages before it must pair evenly.
 /// - `shift` flips that first-page choice for books the rules get wrong.
 ///
+/// A server can mark each page `readerSpread: "alone"` or `"pair"` from its own
+/// page analysis. With marks, they replace the cover and wide-page rules: a
+/// page marked alone shows alone and pairing restarts after it. `shift` still
+/// flips the first page.
+///
 /// Spreads hold page indices in reading order.
 struct ComicSpreadLayout {
   let spreads: [[Int]]
@@ -26,9 +31,24 @@ struct ComicSpreadLayout {
     return Double(width) / Double(height) > widePageMinRatio
   }
 
-  init(standalone: [Bool], coverAlone: Bool, shift: Bool) {
+  init(standalone: [Bool], coverAlone: Bool, shift: Bool, hints: [String?] = []) {
+    var standalone = standalone
+    let leadAlone: Bool
+    if hints.contains(where: { $0 == "alone" || $0 == "pair" }) {
+      let firstHintedAlone = !(standalone.first ?? true) && hints.first == "alone"
+      for (index, hint) in hints.enumerated() where index < standalone.count && hint == "alone" {
+        standalone[index] = true
+      }
+      if shift && firstHintedAlone {
+        standalone[0] = false
+        leadAlone = false
+      } else {
+        leadAlone = shift && !(standalone.first ?? true)
+      }
+    } else {
+      leadAlone = Self.leadsAlone(standalone, coverAlone: coverAlone) != shift
+    }
     var spreads: [[Int]] = []
-    let leadAlone = Self.leadsAlone(standalone, coverAlone: coverAlone) != shift
     var pending: Int?
     for (index, isStandalone) in standalone.enumerated() {
       if isStandalone {

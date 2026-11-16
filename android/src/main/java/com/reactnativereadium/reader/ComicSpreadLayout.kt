@@ -13,6 +13,11 @@ package com.reactnativereadium.reader
  *   on a left/right pair, so the pages before it must pair evenly.
  * - [shift] flips that first-page choice for books the rules get wrong.
  *
+ * A server can mark each page `readerSpread: "alone"` or `"pair"` from its own
+ * page analysis. With marks, they replace the cover and wide-page rules: a
+ * page marked alone shows alone and pairing restarts after it. [shift] still
+ * flips the first page.
+ *
  * Spreads hold page indices in reading order.
  */
 class ComicSpreadLayout private constructor(
@@ -51,9 +56,29 @@ class ComicSpreadLayout private constructor(
       return width.toDouble() / height.toDouble() > WIDE_PAGE_MIN_RATIO
     }
 
-    fun build(standalone: List<Boolean>, coverAlone: Boolean, shift: Boolean): ComicSpreadLayout {
+    fun build(
+      pages: List<Boolean>,
+      coverAlone: Boolean,
+      shift: Boolean,
+      hints: List<String?> = emptyList()
+    ): ComicSpreadLayout {
+      val standalone = pages.toMutableList()
+      val leadAlone: Boolean
+      if (hints.any { it == "alone" || it == "pair" }) {
+        val firstHintedAlone = standalone.firstOrNull() == false && hints.firstOrNull() == "alone"
+        hints.forEachIndexed { index, hint ->
+          if (index < standalone.size && hint == "alone") standalone[index] = true
+        }
+        if (shift && firstHintedAlone) {
+          standalone[0] = false
+          leadAlone = false
+        } else {
+          leadAlone = shift && standalone.firstOrNull() == false
+        }
+      } else {
+        leadAlone = leadsAlone(standalone, coverAlone) != shift
+      }
       val spreads = mutableListOf<List<Int>>()
-      val leadAlone = leadsAlone(standalone, coverAlone) != shift
       var pending: Int? = null
       fun flush() {
         pending?.let { spreads.add(listOf(it)) }
