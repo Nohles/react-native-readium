@@ -716,7 +716,9 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
 
   private func navigateToIndex(_ index: Int, animated: Bool, emit: Bool = true) {
     guard !links.isEmpty else { return }
-    setCurrentIndex(min(max(index, 0), links.count - 1))
+    // A saved locator names a spread's last page; the cursor sits on its first.
+    let clamped = min(max(index, 0), links.count - 1)
+    setCurrentIndex(isSpreadPaging ? spreads().spread(containing: clamped).first ?? clamped : clamped)
 
     if isPaginatedMode {
       // A new page starts unzoomed.
@@ -747,7 +749,7 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
     }
 
     if emit {
-      subject.send(locator(for: currentIndex))
+      subject.send(locator(for: progressIndex(currentIndex)))
     }
     if isPaginatedMode || !animated {
       updateActiveBoundary()
@@ -823,6 +825,18 @@ final class ComicImageViewController: UIViewController, ReadiumReaderHosting {
 
   private var isDoublePageMode: Bool {
     preferences?.spread == "always"
+  }
+
+  /// Paginated double-page mode, where the cursor moves a spread at a time.
+  private var isSpreadPaging: Bool {
+    isDoublePageMode && isPaginatedMode
+  }
+
+  /// The page saved progress records for `index`: the last page of its spread
+  /// in double-page mode, so finishing the final spread reaches the end.
+  private func progressIndex(_ index: Int) -> Int {
+    guard isSpreadPaging, links.indices.contains(index) else { return index }
+    return spreads().spread(containing: index).last ?? index
   }
 
   private var isHorizontalScrollMode: Bool {

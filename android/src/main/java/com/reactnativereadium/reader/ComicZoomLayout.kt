@@ -58,6 +58,12 @@ class ComicZoomLayout(context: Context) : FrameLayout(context) {
         zoomTo(scale * detector.scaleFactor, detector.focusX, detector.focusY)
         return true
       }
+
+      // Lifting one finger ends the pinch; the finger left down pans from here.
+      override fun onScaleEnd(detector: ScaleGestureDetector) {
+        isScaling = false
+        if (!isZoomed) resetZoom()
+      }
     }
   ).apply {
     // Quick-scale (double-tap-and-drag) would delay every tap's delivery.
@@ -114,9 +120,6 @@ class ComicZoomLayout(context: Context) : FrameLayout(context) {
   override fun dispatchTouchEvent(event: MotionEvent): Boolean {
     // The scale detector must see every event, including those a child takes.
     scaleDetector.onTouchEvent(event)
-    if (event.actionMasked == MotionEvent.ACTION_UP || event.actionMasked == MotionEvent.ACTION_CANCEL) {
-      if (isScaling && !isZoomed) resetZoom()
-    }
     return super.dispatchTouchEvent(event)
   }
 
@@ -170,7 +173,7 @@ class ComicZoomLayout(context: Context) : FrameLayout(context) {
         lastY = event.getY(remaining)
       }
       MotionEvent.ACTION_UP -> {
-        if (isPanning && !isScaling) fling()
+        if (isPanning) fling()
         recycleVelocity()
         isPanning = false
         isScaling = false

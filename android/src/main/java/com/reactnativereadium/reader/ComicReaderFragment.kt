@@ -356,6 +356,10 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
   private val isDoublePageMode: Boolean
     get() = preferences.spread == "always"
 
+  /** Paginated double-page mode, where the cursor moves a spread at a time. */
+  private val isSpreadPaging: Boolean
+    get() = isDoublePageMode && isPaginatedMode
+
   private val isHorizontalScrollMode: Boolean
     get() = preferences.readingMode == "continuousHorizontal"
 
@@ -975,7 +979,9 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
    */
   private fun navigateToIndex(index: Int, animated: Boolean, emit: Boolean = true) {
     if (links.isEmpty()) return
-    setCurrentIndex(index.coerceIn(0, links.size - 1))
+    // A saved locator names a spread's last page; the cursor sits on its first.
+    val clamped = index.coerceIn(0, links.size - 1)
+    setCurrentIndex(if (isSpreadPaging) spreads().spreadFor(clamped).first() else clamped)
 
     if (isPaginatedMode) {
       // A new page starts unzoomed.
@@ -1069,8 +1075,15 @@ class ComicReaderFragment : VisualReaderFragment(), Navigator {
 
   /** Emits a locator for [index] through the navigator contract. */
   private fun emitLocator(index: Int) {
-    currentLocatorFlow.value = locatorAt(index)
+    currentLocatorFlow.value = locatorAt(progressIndex(index))
   }
+
+  /**
+   * The page saved progress records for [index]: the last page of its spread
+   * in double-page mode, so finishing the final spread reaches the end.
+   */
+  private fun progressIndex(index: Int): Int =
+    if (isSpreadPaging && index in links.indices) spreads().spreadFor(index).last() else index
 
   /**
    * Port of iOS `updateCurrentIndexFromScrollPosition`: probe point at the
