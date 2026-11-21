@@ -73,7 +73,7 @@ func nitroLocatorToReadium(_ loc: Locator) -> RLocator? {
     type: loc.type,
     title: loc.title,
     locations: loc.locations.map {
-      LocationsData(progression: $0.progression, position: $0.position.map { Int($0) }, totalProgression: $0.totalProgression)
+      LocationsData(progression: $0.progression, position: $0.position.map { Int($0) }, totalProgression: $0.totalProgression, cssSelector: $0.cssSelector)
     },
     text: loc.text.map {
       TextData(before: $0.before, highlight: $0.highlight, after: $0.after)
@@ -146,7 +146,9 @@ func readiumLocatorToNitro(_ loc: RLocator) -> Locator {
   let locations = LocatorLocations(
     progression: loc.locations.progression ?? 0,
     position: loc.locations.position.map { Double($0) },
-    totalProgression: loc.locations.totalProgression
+    totalProgression: loc.locations.totalProgression,
+    // Only honoured inbound; reported locators stay as before.
+    cssSelector: nil
   )
 
   let text: LocatorText? = {

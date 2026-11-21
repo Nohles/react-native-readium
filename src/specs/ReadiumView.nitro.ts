@@ -10,6 +10,12 @@ export interface LocatorLocations {
   progression: number;
   position?: number;
   totalProgression?: number;
+  /**
+   * The element to search for `text` in, so a passage that appears more than
+   * once resolves to the copy inside this element. Honoured on locators sent
+   * to the reader (decorations and navigation); never reported back.
+   */
+  cssSelector?: string;
 }
 
 export interface LocatorText {

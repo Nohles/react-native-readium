@@ -26,7 +26,10 @@ data class LocatorLocations(
   val position: Double?,
   @DoNotStrip
   @Keep
-  val totalProgression: Double?
+  val totalProgression: Double?,
+  @DoNotStrip
+  @Keep
+  val cssSelector: String?
 ) {
   /* primary constructor */
 
@@ -36,13 +39,15 @@ data class LocatorLocations(
     return Objects.deepEquals(this.progression, other.progression)
       && Objects.deepEquals(this.position, other.position)
       && Objects.deepEquals(this.totalProgression, other.totalProgression)
+      && Objects.deepEquals(this.cssSelector, other.cssSelector)
   }
 
   override fun hashCode(): Int {
     return arrayOf<Any?>(
       progression,
       position,
-      totalProgression
+      totalProgression,
+      cssSelector
     ).contentDeepHashCode()
   }
 
@@ -54,8 +59,8 @@ data class LocatorLocations(
     @Keep
     @Suppress("unused")
     @JvmStatic
-    private fun fromCpp(progression: Double, position: Double?, totalProgression: Double?): LocatorLocations {
-      return LocatorLocations(progression, position, totalProgression)
+    private fun fromCpp(progression: Double, position: Double?, totalProgression: Double?, cssSelector: String?): LocatorLocations {
+      return LocatorLocations(progression, position, totalProgression, cssSelector)
     }
   }
 }
