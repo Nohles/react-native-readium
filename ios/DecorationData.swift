@@ -27,7 +27,10 @@ struct LocatorData: Codable {
       fragments: fragments,
       progression: locations?.progression,
       totalProgression: locations?.totalProgression,
-      position: locations?.position
+      position: locations?.position,
+      // Scopes the text search to one element, so a repeated passage
+      // resolves to the copy inside it.
+      otherLocations: locations?.cssSelector.map { ["cssSelector": .string($0)] } ?? [:]
     )
 
     // Convert text data to Locator.Text if present
@@ -57,6 +60,7 @@ struct LocationsData: Codable {
   let progression: Double?
   let position: Int?
   let totalProgression: Double?
+  let cssSelector: String?
 }
 
 /// Helper struct for deserializing text locator data

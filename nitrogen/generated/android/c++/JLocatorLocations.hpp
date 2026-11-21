@@ -11,6 +11,7 @@
 #include "LocatorLocations.hpp"
 
 #include <optional>
+#include <string>
 
 namespace margelo::nitro::readium {
 
@@ -37,10 +38,13 @@ namespace margelo::nitro::readium {
       jni::local_ref<jni::JDouble> position = this->getFieldValue(fieldPosition);
       static const auto fieldTotalProgression = clazz->getField<jni::JDouble>("totalProgression");
       jni::local_ref<jni::JDouble> totalProgression = this->getFieldValue(fieldTotalProgression);
+      static const auto fieldCssSelector = clazz->getField<jni::JString>("cssSelector");
+      jni::local_ref<jni::JString> cssSelector = this->getFieldValue(fieldCssSelector);
       return LocatorLocations(
         progression,
         position != nullptr ? std::make_optional(position->value()) : std::nullopt,
-        totalProgression != nullptr ? std::make_optional(totalProgression->value()) : std::nullopt
+        totalProgression != nullptr ? std::make_optional(totalProgression->value()) : std::nullopt,
+        cssSelector != nullptr ? std::make_optional(cssSelector->toStdString()) : std::nullopt
       );
     }
 
@@ -50,14 +54,15 @@ namespace margelo::nitro::readium {
      */
     [[maybe_unused]]
     static jni::local_ref<JLocatorLocations::javaobject> fromCpp(const LocatorLocations& value) {
-      using JSignature = JLocatorLocations(double, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>);
+      using JSignature = JLocatorLocations(double, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JString>);
       static const auto clazz = javaClassStatic();
       static const auto create = clazz->getStaticMethod<JSignature>("fromCpp");
       return create(
         clazz,
         value.progression,
         value.position.has_value() ? jni::JDouble::valueOf(value.position.value()) : nullptr,
-        value.totalProgression.has_value() ? jni::JDouble::valueOf(value.totalProgression.value()) : nullptr
+        value.totalProgression.has_value() ? jni::JDouble::valueOf(value.totalProgression.value()) : nullptr,
+        value.cssSelector.has_value() ? jni::make_jstring(value.cssSelector.value()) : nullptr
       );
     }
   };

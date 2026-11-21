@@ -31,6 +31,7 @@
 
 
 #include <optional>
+#include <string>
 
 namespace margelo::nitro::readium {
 
@@ -42,10 +43,11 @@ namespace margelo::nitro::readium {
     double progression     SWIFT_PRIVATE;
     std::optional<double> position     SWIFT_PRIVATE;
     std::optional<double> totalProgression     SWIFT_PRIVATE;
+    std::optional<std::string> cssSelector     SWIFT_PRIVATE;
 
   public:
     LocatorLocations() = default;
-    explicit LocatorLocations(double progression, std::optional<double> position, std::optional<double> totalProgression): progression(progression), position(position), totalProgression(totalProgression) {}
+    explicit LocatorLocations(double progression, std::optional<double> position, std::optional<double> totalProgression, std::optional<std::string> cssSelector): progression(progression), position(position), totalProgression(totalProgression), cssSelector(cssSelector) {}
 
   public:
     friend bool operator==(const LocatorLocations& lhs, const LocatorLocations& rhs) = default;
@@ -63,7 +65,8 @@ namespace margelo::nitro {
       return margelo::nitro::readium::LocatorLocations(
         JSIConverter<double>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "progression"))),
         JSIConverter<std::optional<double>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "position"))),
-        JSIConverter<std::optional<double>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "totalProgression")))
+        JSIConverter<std::optional<double>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "totalProgression"))),
+        JSIConverter<std::optional<std::string>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "cssSelector")))
       );
     }
     static inline jsi::Value toJSI(jsi::Runtime& runtime, const margelo::nitro::readium::LocatorLocations& arg) {
@@ -71,6 +74,7 @@ namespace margelo::nitro {
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "progression"), JSIConverter<double>::toJSI(runtime, arg.progression));
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "position"), JSIConverter<std::optional<double>>::toJSI(runtime, arg.position));
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "totalProgression"), JSIConverter<std::optional<double>>::toJSI(runtime, arg.totalProgression));
+      obj.setProperty(runtime, PropNameIDCache::get(runtime, "cssSelector"), JSIConverter<std::optional<std::string>>::toJSI(runtime, arg.cssSelector));
       return obj;
     }
     static inline bool canConvert(jsi::Runtime& runtime, const jsi::Value& value) {
@@ -84,6 +88,7 @@ namespace margelo::nitro {
       if (!JSIConverter<double>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "progression")))) return false;
       if (!JSIConverter<std::optional<double>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "position")))) return false;
       if (!JSIConverter<std::optional<double>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "totalProgression")))) return false;
+      if (!JSIConverter<std::optional<std::string>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "cssSelector")))) return false;
       return true;
     }
   };

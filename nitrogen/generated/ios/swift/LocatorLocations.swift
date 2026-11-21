@@ -18,7 +18,7 @@ public extension LocatorLocations {
   /**
    * Create a new instance of `LocatorLocations`.
    */
-  init(progression: Double, position: Double?, totalProgression: Double?) {
+  init(progression: Double, position: Double?, totalProgression: Double?, cssSelector: String?) {
     self.init(progression, { () -> bridge.std__optional_double_ in
       if let __unwrappedValue = position {
         return bridge.create_std__optional_double_(__unwrappedValue)
@@ -28,6 +28,12 @@ public extension LocatorLocations {
     }(), { () -> bridge.std__optional_double_ in
       if let __unwrappedValue = totalProgression {
         return bridge.create_std__optional_double_(__unwrappedValue)
+      } else {
+        return .init()
+      }
+    }(), { () -> bridge.std__optional_std__string_ in
+      if let __unwrappedValue = cssSelector {
+        return bridge.create_std__optional_std__string_(std.string(__unwrappedValue))
       } else {
         return .init()
       }
@@ -57,6 +63,18 @@ public extension LocatorLocations {
       if bridge.has_value_std__optional_double_(self.__totalProgression) {
         let __unwrapped = bridge.get_std__optional_double_(self.__totalProgression)
         return __unwrapped
+      } else {
+        return nil
+      }
+    }()
+  }
+  
+  @inline(__always)
+  var cssSelector: String? {
+    return { () -> String? in
+      if bridge.has_value_std__optional_std__string_(self.__cssSelector) {
+        let __unwrapped = bridge.get_std__optional_std__string_(self.__cssSelector)
+        return String(__unwrapped)
       } else {
         return nil
       }

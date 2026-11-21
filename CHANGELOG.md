@@ -1,3 +1,13 @@
+# 5.0.0-rc.47
+
+### Features
+
+- Locators: `locations.cssSelector` on locators sent to the reader
+  (decorations and `goTo`) now reaches the Swift and Kotlin toolkits, which
+  search for the locator's text inside that element. A passage that appears
+  more than once resolves to the intended copy. Locators the reader reports
+  are unchanged.
+
 # 5.0.0-rc.46
 
 ### Fixes

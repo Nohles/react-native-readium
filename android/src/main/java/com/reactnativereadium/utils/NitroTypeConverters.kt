@@ -176,7 +176,10 @@ internal fun nitroLocatorToReadium(loc: Locator): ReadiumLocator? {
       fragments = fragments,
       progression = loc.locations?.progression,
       position = loc.locations?.position?.toInt(),
-      totalProgression = loc.locations?.totalProgression
+      totalProgression = loc.locations?.totalProgression,
+      // Scopes the text search to one element, so a repeated passage
+      // resolves to the copy inside it.
+      otherLocations = loc.locations?.cssSelector?.let { mapOf("cssSelector" to it) } ?: emptyMap()
     ),
     text = ReadiumLocator.Text(
       before = loc.text?.before,
@@ -238,7 +241,9 @@ internal fun readiumLocatorToNitro(loc: ReadiumLocator): Locator {
   val locations = LocatorLocations(
     progression = loc.locations.progression ?: 0.0,
     position = loc.locations.position?.toDouble(),
-    totalProgression = loc.locations.totalProgression
+    totalProgression = loc.locations.totalProgression,
+    // Only honoured inbound; reported locators stay as before.
+    cssSelector = null
   )
 
   val text = if (loc.text.highlight != null || loc.text.before != null || loc.text.after != null) {
