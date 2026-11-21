@@ -173,13 +173,79 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     _ = await audioNavigator.go(to: locator, options: .animated)
   }
 
+  /// Loads the opening resource and seeks to the initial location.
+  ///
+  /// Returns false when an initial location was given but could not be
+  /// reached, so the caller does not report it as restored. Readium rejects a
+  /// locator whose href is not in the reading order; the locator's
+  /// whole-book progression is tried before falling back to the beginning.
   @MainActor
-  func preparePlayback() async {
-    if let initialLocation {
-      _ = await audioNavigator.go(to: initialLocation, options: .animated)
-    } else if let firstLink = publication.readingOrder.first {
+  @discardableResult
+  func preparePlayback() async -> Bool {
+    guard let initialLocation else {
+      if let firstLink = publication.readingOrder.first {
+        _ = await audioNavigator.go(to: firstLink, options: .animated)
+      }
+      return true
+    }
+
+    if await audioNavigator.go(to: initialLocation, options: .animated) {
+      if let index = publication.readingOrder.firstIndexWithHREF(initialLocation.href) {
+        syncPosition(resourceIndex: index, time: initialLocationTime(initialLocation, resourceIndex: index))
+      }
+      return true
+    }
+
+    log(.warning, "Audiobook initial location rejected: \(initialLocation.href)")
+    if let totalProgression = initialLocation.locations.totalProgression,
+       duration > 0,
+       let (resourceIndex, localTime) = resourceIndexAndLocalTime(
+         forAbsoluteTime: min(max(totalProgression, 0), 1) * duration
+       ),
+       readingOrderLinks.indices.contains(resourceIndex)
+    {
+      let link = readingOrderLinks[resourceIndex]
+      let locator = ReadiumShared.Locator(
+        href: link.url(),
+        mediaType: link.mediaType ?? MediaType("audio/*")!,
+        title: link.title,
+        locations: .init(fragments: ["t=\(localTime)"])
+      )
+      if await audioNavigator.go(to: locator, options: .animated) {
+        syncPosition(resourceIndex: resourceIndex, time: localTime)
+        return true
+      }
+    }
+
+    if let firstLink = publication.readingOrder.first {
       _ = await audioNavigator.go(to: firstLink, options: .animated)
     }
+    return false
+  }
+
+  /// The time inside its resource that the navigator seeks to for `locator`.
+  private func initialLocationTime(_ locator: ReadiumShared.Locator, resourceIndex: Int) -> Double {
+    if let time = locator.locations.time?.begin { return time }
+    guard let progression = locator.locations.progression,
+          readingOrderLinks.indices.contains(resourceIndex),
+          let resourceDuration = readingOrderLinks[resourceIndex].duration
+    else { return 0 }
+    return progression * resourceDuration
+  }
+
+  /// Records a position the navigator has seeked to.
+  ///
+  /// The navigator reports its new position asynchronously, so without this
+  /// the state emitted right after a restore still carries the position from
+  /// before it (0:00 on open).
+  private func syncPosition(resourceIndex: Int, time: Double) {
+    guard readingOrderLinks.indices.contains(resourceIndex) else { return }
+    currentResourceIndex = resourceIndex
+    currentResourceTime = max(0, time)
+    currentPosition = absoluteTime(resourceIndex: resourceIndex, time: currentResourceTime)
+    updatePlaybackUI()
+    updateNowPlayingInfo()
+    emitPlaybackState()
   }
 
   @MainActor

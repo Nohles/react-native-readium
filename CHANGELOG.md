@@ -1,3 +1,16 @@
+# 5.0.0-rc.46
+
+### Fixes
+
+- Audiobooks (iOS): `ReadiumAudio.open` no longer reports the session as
+  `paused` at 0:00 before the saved place is applied. The session stays
+  `loading` until the opening seek finishes, and the first settled state
+  carries the restored position.
+- Audiobooks (iOS): an initial location whose href is not in the reading
+  order falls back to its `totalProgression` instead of the beginning.
+- Audiobooks (iOS): a publication that fails to open emits `error` instead
+  of leaving `open` to time out.
+
 # 5.0.0-rc.45
 
 ### Features

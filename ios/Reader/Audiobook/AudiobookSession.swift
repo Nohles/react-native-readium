@@ -22,6 +22,11 @@ final class AudiobookSession {
   private var isNowPlayingInfoEnabled = true
   private var isNowPlayingMetadataEnabled = true
   private var hostNowPlayingMetadata: NowPlayingMetadata?
+  /// True from `open` until the opening seek has finished. Playback events
+  /// arrive before then (at 0:00, before the initial location is applied), and
+  /// reporting them as `paused` would tell the host the book is ready at the
+  /// wrong place.
+  private var isOpening = false
   private var lastState = AudiobookSessionState(
     status: .idle,
     publication: nil,
@@ -45,6 +50,7 @@ final class AudiobookSession {
 
     close()
     fileURL = file.url
+    isOpening = true
     emit(status: .loading)
 
     let initialLocation = file.initialLocation.flatMap { nitroLocatorToReadium($0) }
@@ -59,6 +65,7 @@ final class AudiobookSession {
       completion: { [weak self] host in
         guard let self else { return }
         guard let audiobook = host as? AudiobookViewController else {
+          self.isOpening = false
           self.emit(status: .error, error: "The publication is not an audiobook.")
           return
         }
@@ -66,10 +73,21 @@ final class AudiobookSession {
         audiobook.loadViewIfNeeded()
         Task { @MainActor [weak self, weak audiobook] in
           guard let self, let audiobook else { return }
-          await audiobook.preparePlayback()
+          let restored = await audiobook.preparePlayback()
           guard self.controller === audiobook, self.fileURL == file.url else { return }
+          if !restored {
+            // The host compares the reported position with the place it asked
+            // for and decides what to do; it is not an open failure.
+            NSLog("[ReadiumAudio] initial location could not be restored for \(file.url)")
+          }
+          self.isOpening = false
           self.emit(status: .ready)
         }
+      },
+      onFailure: { [weak self] error in
+        guard let self, self.fileURL == file.url else { return }
+        self.isOpening = false
+        self.emit(status: .error, error: error.localizedDescription)
       }
     )
   }
@@ -99,6 +117,7 @@ final class AudiobookSession {
       self?.onBookmarkChange?(event)
     }
     if emitReady && (lastState.status == .idle || lastState.status == .loading) {
+      isOpening = false
       emit(status: .ready)
     }
   }
@@ -147,6 +166,7 @@ final class AudiobookSession {
   }
 
   func close() {
+    isOpening = false
     controller?.pause()
     controller = nil
     fileURL = nil
@@ -156,7 +176,7 @@ final class AudiobookSession {
 
   func receivePlayback(_ playback: AudiobookPlaybackState) {
     lastState = AudiobookSessionState(
-      status: playback.isPlaying ? .playing : .paused,
+      status: isOpening ? .loading : (playback.isPlaying ? .playing : .paused),
       publication: metadata,
       position: playback.position,
       duration: playback.duration,
