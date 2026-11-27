@@ -344,6 +344,21 @@ namespace margelo::nitro::readium::bridge::swift {
     return optional.value();
   }
   
+  // pragma MARK: std::optional<bool>
+  /**
+   * Specialized version of `std::optional<bool>`.
+   */
+  using std__optional_bool_ = std::optional<bool>;
+  inline std::optional<bool> create_std__optional_bool_(const bool& value) noexcept {
+    return std::optional<bool>(value);
+  }
+  inline bool has_value_std__optional_bool_(const std::optional<bool>& optional) noexcept {
+    return optional.has_value();
+  }
+  inline bool get_std__optional_bool_(const std::optional<bool>& optional) noexcept {
+    return optional.value();
+  }
+  
   // pragma MARK: std::function<void(const AudiobookSessionState& /* state */)>
   /**
    * Specialized version of `std::function<void(const AudiobookSessionState&)>`.
@@ -508,21 +523,6 @@ namespace margelo::nitro::readium::bridge::swift {
   }
   inline Result_void_ create_Result_void_(const std::exception_ptr& error) noexcept {
     return Result<void>::withError(error);
-  }
-  
-  // pragma MARK: std::optional<bool>
-  /**
-   * Specialized version of `std::optional<bool>`.
-   */
-  using std__optional_bool_ = std::optional<bool>;
-  inline std::optional<bool> create_std__optional_bool_(const bool& value) noexcept {
-    return std::optional<bool>(value);
-  }
-  inline bool has_value_std__optional_bool_(const std::optional<bool>& optional) noexcept {
-    return optional.has_value();
-  }
-  inline bool get_std__optional_bool_(const std::optional<bool>& optional) noexcept {
-    return optional.value();
   }
   
   // pragma MARK: std::optional<ReadiumFile>

@@ -80,6 +80,12 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
   private var currentResourceTime: Double = 0
   private var isPlaying = false
   private var isPlaybackLoading = false
+  /// Where the clock stood when playback was last requested. AVPlayer reports
+  /// `.playing` as soon as Play is pressed, because the navigator turns off
+  /// `automaticallyWaitsToMinimizeStalling`, even when no audio has arrived
+  /// yet. Playback only counts as started once the clock moves past this point.
+  private var playbackStartAnchor: (resourceIndex: Int, time: Double)?
+  private var wasPlaybackRequested = false
   private var playbackRate = 1.0
   private var volume = 1.0
   private var skipBackwardInterval = 15.0
@@ -898,12 +904,30 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     currentResourceTime = info.time
     currentPosition = absoluteTime(resourceIndex: info.resourceIndex, time: info.time)
     isPlaying = info.state == .playing
-    isPlaybackLoading = info.state == .loading
+    updatePlaybackStartAnchor(info)
+    isPlaybackLoading = info.state == .loading || playbackStartAnchor != nil
     duration = publication.metadata.duration ?? audioNavigator.totalDuration ?? max(duration, currentPosition + (info.duration ?? 0))
     updatePlaybackUI()
     updateNowPlayingInfo()
     evaluateSleepTimer()
     emitPlaybackState()
+  }
+
+  private func updatePlaybackStartAnchor(_ info: MediaPlaybackInfo) {
+    let requested = info.state != .paused
+    defer { wasPlaybackRequested = requested }
+    guard requested else {
+      playbackStartAnchor = nil
+      return
+    }
+    guard wasPlaybackRequested else {
+      playbackStartAnchor = (info.resourceIndex, info.time)
+      return
+    }
+    if let anchor = playbackStartAnchor,
+       info.resourceIndex != anchor.resourceIndex || info.time > anchor.time + 0.05 {
+      playbackStartAnchor = nil
+    }
   }
 
   private func updatePlaybackUI() {
@@ -932,7 +956,8 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
     }
     if isPlaybackLoading {
       playButton.setImage(nil, for: .normal)
-      playButton.isEnabled = false
+      // Still tappable while a requested start waits for audio, so it can be cancelled.
+      playButton.isEnabled = isPlaying
       playLoadingIndicator.startAnimating()
     } else {
       let imageName = isPlaying ? "pause.fill" : "play.fill"
@@ -973,7 +998,8 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
 
     info[MPMediaItemPropertyPlaybackDuration] = chapterWindow?.duration ?? duration
     info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = chapterWindow?.position ?? currentPosition
-    info[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? playbackRate : 0
+    // Rate 0 while buffering keeps the lock-screen clock from running ahead of the audio.
+    info[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying && !isPlaybackLoading ? playbackRate : 0
     info[MPNowPlayingInfoPropertyDefaultPlaybackRate] =
       hostNowPlayingMetadata?.defaultPlaybackRate ?? playbackRate
     info[MPNowPlayingInfoPropertyMediaType] = MPNowPlayingInfoMediaType.audio.rawValue
@@ -1022,7 +1048,8 @@ final class AudiobookViewController: UIViewController, PublicationReaderViewCont
       volume: volume,
       currentHref: currentLink?.href,
       currentTitle: currentChapter()?.title ?? currentLink?.title,
-      sleepTimerRemaining: remaining
+      sleepTimerRemaining: remaining,
+      isBuffering: isPlaybackLoading
     )
     onPlaybackStateChange?(state)
   }

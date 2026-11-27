@@ -48,6 +48,8 @@ namespace margelo::nitro::readium {
       jni::local_ref<jni::JString> currentTitle = this->getFieldValue(fieldCurrentTitle);
       static const auto fieldSleepTimerRemaining = clazz->getField<jni::JDouble>("sleepTimerRemaining");
       jni::local_ref<jni::JDouble> sleepTimerRemaining = this->getFieldValue(fieldSleepTimerRemaining);
+      static const auto fieldIsBuffering = clazz->getField<jni::JBoolean>("isBuffering");
+      jni::local_ref<jni::JBoolean> isBuffering = this->getFieldValue(fieldIsBuffering);
       return AudiobookPlaybackState(
         static_cast<bool>(isPlaying),
         position,
@@ -56,7 +58,8 @@ namespace margelo::nitro::readium {
         volume,
         currentHref != nullptr ? std::make_optional(currentHref->toStdString()) : std::nullopt,
         currentTitle != nullptr ? std::make_optional(currentTitle->toStdString()) : std::nullopt,
-        sleepTimerRemaining != nullptr ? std::make_optional(sleepTimerRemaining->value()) : std::nullopt
+        sleepTimerRemaining != nullptr ? std::make_optional(sleepTimerRemaining->value()) : std::nullopt,
+        isBuffering != nullptr ? std::make_optional(static_cast<bool>(isBuffering->value())) : std::nullopt
       );
     }
 
@@ -66,7 +69,7 @@ namespace margelo::nitro::readium {
      */
     [[maybe_unused]]
     static jni::local_ref<JAudiobookPlaybackState::javaobject> fromCpp(const AudiobookPlaybackState& value) {
-      using JSignature = JAudiobookPlaybackState(jboolean, double, double, double, double, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>);
+      using JSignature = JAudiobookPlaybackState(jboolean, double, double, double, double, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>);
       static const auto clazz = javaClassStatic();
       static const auto create = clazz->getStaticMethod<JSignature>("fromCpp");
       return create(
@@ -78,7 +81,8 @@ namespace margelo::nitro::readium {
         value.volume,
         value.currentHref.has_value() ? jni::make_jstring(value.currentHref.value()) : nullptr,
         value.currentTitle.has_value() ? jni::make_jstring(value.currentTitle.value()) : nullptr,
-        value.sleepTimerRemaining.has_value() ? jni::JDouble::valueOf(value.sleepTimerRemaining.value()) : nullptr
+        value.sleepTimerRemaining.has_value() ? jni::JDouble::valueOf(value.sleepTimerRemaining.value()) : nullptr,
+        value.isBuffering.has_value() ? jni::JBoolean::valueOf(value.isBuffering.value()) : nullptr
       );
     }
   };

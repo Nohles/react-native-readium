@@ -67,6 +67,8 @@ namespace margelo::nitro::readium {
       jni::local_ref<jni::JString> currentTitle = this->getFieldValue(fieldCurrentTitle);
       static const auto fieldSleepTimerRemaining = clazz->getField<jni::JDouble>("sleepTimerRemaining");
       jni::local_ref<jni::JDouble> sleepTimerRemaining = this->getFieldValue(fieldSleepTimerRemaining);
+      static const auto fieldIsBuffering = clazz->getField<jni::JBoolean>("isBuffering");
+      jni::local_ref<jni::JBoolean> isBuffering = this->getFieldValue(fieldIsBuffering);
       static const auto fieldError = clazz->getField<jni::JString>("error");
       jni::local_ref<jni::JString> error = this->getFieldValue(fieldError);
       return AudiobookSessionState(
@@ -79,6 +81,7 @@ namespace margelo::nitro::readium {
         currentHref != nullptr ? std::make_optional(currentHref->toStdString()) : std::nullopt,
         currentTitle != nullptr ? std::make_optional(currentTitle->toStdString()) : std::nullopt,
         sleepTimerRemaining != nullptr ? std::make_optional(sleepTimerRemaining->value()) : std::nullopt,
+        isBuffering != nullptr ? std::make_optional(static_cast<bool>(isBuffering->value())) : std::nullopt,
         error != nullptr ? std::make_optional(error->toStdString()) : std::nullopt
       );
     }
@@ -89,7 +92,7 @@ namespace margelo::nitro::readium {
      */
     [[maybe_unused]]
     static jni::local_ref<JAudiobookSessionState::javaobject> fromCpp(const AudiobookSessionState& value) {
-      using JSignature = JAudiobookSessionState(jni::alias_ref<JAudiobookSessionStatus>, jni::alias_ref<JPublicationMetadata>, double, double, double, double, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JString>);
+      using JSignature = JAudiobookSessionState(jni::alias_ref<JAudiobookSessionStatus>, jni::alias_ref<JPublicationMetadata>, double, double, double, double, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JDouble>, jni::alias_ref<jni::JBoolean>, jni::alias_ref<jni::JString>);
       static const auto clazz = javaClassStatic();
       static const auto create = clazz->getStaticMethod<JSignature>("fromCpp");
       return create(
@@ -103,6 +106,7 @@ namespace margelo::nitro::readium {
         value.currentHref.has_value() ? jni::make_jstring(value.currentHref.value()) : nullptr,
         value.currentTitle.has_value() ? jni::make_jstring(value.currentTitle.value()) : nullptr,
         value.sleepTimerRemaining.has_value() ? jni::JDouble::valueOf(value.sleepTimerRemaining.value()) : nullptr,
+        value.isBuffering.has_value() ? jni::JBoolean::valueOf(value.isBuffering.value()) : nullptr,
         value.error.has_value() ? jni::make_jstring(value.error.value()) : nullptr
       );
     }

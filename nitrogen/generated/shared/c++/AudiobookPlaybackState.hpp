@@ -48,10 +48,11 @@ namespace margelo::nitro::readium {
     std::optional<std::string> currentHref     SWIFT_PRIVATE;
     std::optional<std::string> currentTitle     SWIFT_PRIVATE;
     std::optional<double> sleepTimerRemaining     SWIFT_PRIVATE;
+    std::optional<bool> isBuffering     SWIFT_PRIVATE;
 
   public:
     AudiobookPlaybackState() = default;
-    explicit AudiobookPlaybackState(bool isPlaying, double position, double duration, double rate, double volume, std::optional<std::string> currentHref, std::optional<std::string> currentTitle, std::optional<double> sleepTimerRemaining): isPlaying(isPlaying), position(position), duration(duration), rate(rate), volume(volume), currentHref(currentHref), currentTitle(currentTitle), sleepTimerRemaining(sleepTimerRemaining) {}
+    explicit AudiobookPlaybackState(bool isPlaying, double position, double duration, double rate, double volume, std::optional<std::string> currentHref, std::optional<std::string> currentTitle, std::optional<double> sleepTimerRemaining, std::optional<bool> isBuffering): isPlaying(isPlaying), position(position), duration(duration), rate(rate), volume(volume), currentHref(currentHref), currentTitle(currentTitle), sleepTimerRemaining(sleepTimerRemaining), isBuffering(isBuffering) {}
 
   public:
     friend bool operator==(const AudiobookPlaybackState& lhs, const AudiobookPlaybackState& rhs) = default;
@@ -74,7 +75,8 @@ namespace margelo::nitro {
         JSIConverter<double>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "volume"))),
         JSIConverter<std::optional<std::string>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "currentHref"))),
         JSIConverter<std::optional<std::string>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "currentTitle"))),
-        JSIConverter<std::optional<double>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "sleepTimerRemaining")))
+        JSIConverter<std::optional<double>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "sleepTimerRemaining"))),
+        JSIConverter<std::optional<bool>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "isBuffering")))
       );
     }
     static inline jsi::Value toJSI(jsi::Runtime& runtime, const margelo::nitro::readium::AudiobookPlaybackState& arg) {
@@ -87,6 +89,7 @@ namespace margelo::nitro {
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "currentHref"), JSIConverter<std::optional<std::string>>::toJSI(runtime, arg.currentHref));
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "currentTitle"), JSIConverter<std::optional<std::string>>::toJSI(runtime, arg.currentTitle));
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "sleepTimerRemaining"), JSIConverter<std::optional<double>>::toJSI(runtime, arg.sleepTimerRemaining));
+      obj.setProperty(runtime, PropNameIDCache::get(runtime, "isBuffering"), JSIConverter<std::optional<bool>>::toJSI(runtime, arg.isBuffering));
       return obj;
     }
     static inline bool canConvert(jsi::Runtime& runtime, const jsi::Value& value) {
@@ -105,6 +108,7 @@ namespace margelo::nitro {
       if (!JSIConverter<std::optional<std::string>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "currentHref")))) return false;
       if (!JSIConverter<std::optional<std::string>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "currentTitle")))) return false;
       if (!JSIConverter<std::optional<double>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "sleepTimerRemaining")))) return false;
+      if (!JSIConverter<std::optional<bool>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "isBuffering")))) return false;
       return true;
     }
   };

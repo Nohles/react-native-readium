@@ -18,6 +18,8 @@ export interface AudiobookPlayerState {
   currentHref?: string;
   currentTitle?: string;
   sleepTimerRemaining?: number;
+  /** Playback was requested but the clock has not started moving yet. */
+  isBuffering: boolean;
   error?: string;
   source?: AudiobookPlayerStateSource;
 }
@@ -31,6 +33,7 @@ export interface NormalizeAudiobookPlayerStateOptions {
 export const initialAudiobookPlayerState: AudiobookPlayerState = {
   status: 'idle',
   isPlaying: false,
+  isBuffering: false,
   position: 0,
   duration: 0,
   rate: 1,
@@ -54,6 +57,7 @@ export function normalizeAudiobookPlayerState({
       currentHref: sessionState.currentHref,
       currentTitle: sessionState.currentTitle,
       sleepTimerRemaining: sessionState.sleepTimerRemaining,
+      isBuffering: sessionState.isBuffering === true,
       error: sessionState.error,
       source: 'session',
     };
@@ -71,6 +75,7 @@ export function normalizeAudiobookPlayerState({
       currentHref: playbackState.currentHref,
       currentTitle: playbackState.currentTitle,
       sleepTimerRemaining: playbackState.sleepTimerRemaining,
+      isBuffering: playbackState.isBuffering === true,
       source: 'view',
     };
   }
@@ -87,6 +92,7 @@ export function normalizeAudiobookPlayerState({
       currentHref: sessionState.currentHref,
       currentTitle: sessionState.currentTitle,
       sleepTimerRemaining: sessionState.sleepTimerRemaining,
+      isBuffering: false,
       error: sessionState.error,
       source: 'session',
     };
