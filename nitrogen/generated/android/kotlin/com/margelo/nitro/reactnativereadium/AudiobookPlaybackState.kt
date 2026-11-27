@@ -41,7 +41,10 @@ data class AudiobookPlaybackState(
   val currentTitle: String?,
   @DoNotStrip
   @Keep
-  val sleepTimerRemaining: Double?
+  val sleepTimerRemaining: Double?,
+  @DoNotStrip
+  @Keep
+  val isBuffering: Boolean?
 ) {
   /* primary constructor */
 
@@ -56,6 +59,7 @@ data class AudiobookPlaybackState(
       && Objects.deepEquals(this.currentHref, other.currentHref)
       && Objects.deepEquals(this.currentTitle, other.currentTitle)
       && Objects.deepEquals(this.sleepTimerRemaining, other.sleepTimerRemaining)
+      && Objects.deepEquals(this.isBuffering, other.isBuffering)
   }
 
   override fun hashCode(): Int {
@@ -67,7 +71,8 @@ data class AudiobookPlaybackState(
       volume,
       currentHref,
       currentTitle,
-      sleepTimerRemaining
+      sleepTimerRemaining,
+      isBuffering
     ).contentDeepHashCode()
   }
 
@@ -79,8 +84,8 @@ data class AudiobookPlaybackState(
     @Keep
     @Suppress("unused")
     @JvmStatic
-    private fun fromCpp(isPlaying: Boolean, position: Double, duration: Double, rate: Double, volume: Double, currentHref: String?, currentTitle: String?, sleepTimerRemaining: Double?): AudiobookPlaybackState {
-      return AudiobookPlaybackState(isPlaying, position, duration, rate, volume, currentHref, currentTitle, sleepTimerRemaining)
+    private fun fromCpp(isPlaying: Boolean, position: Double, duration: Double, rate: Double, volume: Double, currentHref: String?, currentTitle: String?, sleepTimerRemaining: Double?, isBuffering: Boolean?): AudiobookPlaybackState {
+      return AudiobookPlaybackState(isPlaying, position, duration, rate, volume, currentHref, currentTitle, sleepTimerRemaining, isBuffering)
     }
   }
 }

@@ -42,6 +42,12 @@ export interface AudiobookSessionState {
   currentHref?: string;
   currentTitle?: string;
   sleepTimerRemaining?: number;
+  /**
+   * Playback was requested but the clock has not started moving yet, usually
+   * because audio data is still arriving. `isPlaying` (or the `playing` status)
+   * can already be true while this is set. Not reported on Android.
+   */
+  isBuffering?: boolean;
   error?: string;
 }
 

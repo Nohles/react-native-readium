@@ -421,6 +421,7 @@ internal fun NativeAudioSessionState.toNitroSessionState(): AudiobookSessionStat
     currentHref = currentHref,
     currentTitle = currentTitle,
     sleepTimerRemaining = sleepTimerRemaining,
+    isBuffering = null,
     error = error
   )
 
@@ -433,7 +434,8 @@ internal fun NativeAudioSessionState.toNitroPlaybackState(): AudiobookPlaybackSt
     volume = volume,
     currentHref = currentHref,
     currentTitle = currentTitle,
-    sleepTimerRemaining = sleepTimerRemaining
+    sleepTimerRemaining = sleepTimerRemaining,
+    isBuffering = null
   )
 
 internal fun readiumBookmarkToNitro(bookmark: NativeAudiobookBookmark): AudiobookBookmark =

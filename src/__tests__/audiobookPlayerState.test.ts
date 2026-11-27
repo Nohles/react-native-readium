@@ -36,10 +36,31 @@ it('normalizes idle session state', () => {
     currentHref: undefined,
     currentTitle: undefined,
     sleepTimerRemaining: undefined,
+    isBuffering: false,
     error: undefined,
     publication: undefined,
     source: 'session',
   });
+});
+
+it('reports buffering while a requested start waits for audio', () => {
+  expect(
+    normalizeAudiobookPlayerState({
+      sessionState: { ...idleSession, status: 'playing', isBuffering: true },
+    })
+  ).toMatchObject({ status: 'playing', isPlaying: true, isBuffering: true });
+
+  expect(
+    normalizeAudiobookPlayerState({
+      playbackState: { ...playbackState, isBuffering: true },
+    })
+  ).toMatchObject({ isPlaying: true, isBuffering: true, source: 'view' });
+
+  expect(
+    normalizeAudiobookPlayerState({
+      sessionState: { ...idleSession, status: 'playing' },
+    })
+  ).toMatchObject({ isBuffering: false });
 });
 
 it('normalizes loading and error session states', () => {

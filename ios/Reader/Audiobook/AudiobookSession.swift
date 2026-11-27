@@ -37,6 +37,7 @@ final class AudiobookSession {
     currentHref: nil,
     currentTitle: nil,
     sleepTimerRemaining: nil,
+    isBuffering: nil,
     error: nil
   )
 
@@ -185,6 +186,7 @@ final class AudiobookSession {
       currentHref: playback.currentHref,
       currentTitle: playback.currentTitle,
       sleepTimerRemaining: playback.sleepTimerRemaining,
+      isBuffering: isOpening ? false : playback.isBuffering,
       error: nil
     )
     onStateChange?(lastState)
@@ -201,6 +203,7 @@ final class AudiobookSession {
       currentHref: status == .idle ? nil : lastState.currentHref,
       currentTitle: status == .idle ? nil : lastState.currentTitle,
       sleepTimerRemaining: status == .idle ? nil : lastState.sleepTimerRemaining,
+      isBuffering: false,
       error: error
     )
     onStateChange?(lastState)

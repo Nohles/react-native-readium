@@ -1,3 +1,19 @@
+# 5.0.0-rc.48
+
+### Fixes
+
+- iOS audiobooks: uses Readium `3.9.1-nohles.3`, where cancelled loading
+  requests stop downloading. Superseded byte ranges used to keep streaming,
+  which slowed the start of playback on slow connections and could download a
+  large file twice.
+
+### Features
+
+- Audiobook playback and session state carry an optional `isBuffering` flag.
+  On iOS it is true from the moment playback is requested until the playback
+  clock moves, so apps can show a buffering state instead of a Pause button at
+  a frozen clock. Android leaves it unset.
+
 # 5.0.0-rc.47
 
 ### Features

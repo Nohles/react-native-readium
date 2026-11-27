@@ -54,11 +54,12 @@ namespace margelo::nitro::readium {
     std::optional<std::string> currentHref     SWIFT_PRIVATE;
     std::optional<std::string> currentTitle     SWIFT_PRIVATE;
     std::optional<double> sleepTimerRemaining     SWIFT_PRIVATE;
+    std::optional<bool> isBuffering     SWIFT_PRIVATE;
     std::optional<std::string> error     SWIFT_PRIVATE;
 
   public:
     AudiobookSessionState() = default;
-    explicit AudiobookSessionState(AudiobookSessionStatus status, std::optional<PublicationMetadata> publication, double position, double duration, double rate, double volume, std::optional<std::string> currentHref, std::optional<std::string> currentTitle, std::optional<double> sleepTimerRemaining, std::optional<std::string> error): status(status), publication(publication), position(position), duration(duration), rate(rate), volume(volume), currentHref(currentHref), currentTitle(currentTitle), sleepTimerRemaining(sleepTimerRemaining), error(error) {}
+    explicit AudiobookSessionState(AudiobookSessionStatus status, std::optional<PublicationMetadata> publication, double position, double duration, double rate, double volume, std::optional<std::string> currentHref, std::optional<std::string> currentTitle, std::optional<double> sleepTimerRemaining, std::optional<bool> isBuffering, std::optional<std::string> error): status(status), publication(publication), position(position), duration(duration), rate(rate), volume(volume), currentHref(currentHref), currentTitle(currentTitle), sleepTimerRemaining(sleepTimerRemaining), isBuffering(isBuffering), error(error) {}
 
   public:
     friend bool operator==(const AudiobookSessionState& lhs, const AudiobookSessionState& rhs) = default;
@@ -83,6 +84,7 @@ namespace margelo::nitro {
         JSIConverter<std::optional<std::string>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "currentHref"))),
         JSIConverter<std::optional<std::string>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "currentTitle"))),
         JSIConverter<std::optional<double>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "sleepTimerRemaining"))),
+        JSIConverter<std::optional<bool>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "isBuffering"))),
         JSIConverter<std::optional<std::string>>::fromJSI(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "error")))
       );
     }
@@ -97,6 +99,7 @@ namespace margelo::nitro {
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "currentHref"), JSIConverter<std::optional<std::string>>::toJSI(runtime, arg.currentHref));
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "currentTitle"), JSIConverter<std::optional<std::string>>::toJSI(runtime, arg.currentTitle));
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "sleepTimerRemaining"), JSIConverter<std::optional<double>>::toJSI(runtime, arg.sleepTimerRemaining));
+      obj.setProperty(runtime, PropNameIDCache::get(runtime, "isBuffering"), JSIConverter<std::optional<bool>>::toJSI(runtime, arg.isBuffering));
       obj.setProperty(runtime, PropNameIDCache::get(runtime, "error"), JSIConverter<std::optional<std::string>>::toJSI(runtime, arg.error));
       return obj;
     }
@@ -117,6 +120,7 @@ namespace margelo::nitro {
       if (!JSIConverter<std::optional<std::string>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "currentHref")))) return false;
       if (!JSIConverter<std::optional<std::string>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "currentTitle")))) return false;
       if (!JSIConverter<std::optional<double>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "sleepTimerRemaining")))) return false;
+      if (!JSIConverter<std::optional<bool>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "isBuffering")))) return false;
       if (!JSIConverter<std::optional<std::string>>::canConvert(runtime, obj.getProperty(runtime, PropNameIDCache::get(runtime, "error")))) return false;
       return true;
     }

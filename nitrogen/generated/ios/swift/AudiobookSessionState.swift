@@ -18,7 +18,7 @@ public extension AudiobookSessionState {
   /**
    * Create a new instance of `AudiobookSessionState`.
    */
-  init(status: AudiobookSessionStatus, publication: PublicationMetadata?, position: Double, duration: Double, rate: Double, volume: Double, currentHref: String?, currentTitle: String?, sleepTimerRemaining: Double?, error: String?) {
+  init(status: AudiobookSessionStatus, publication: PublicationMetadata?, position: Double, duration: Double, rate: Double, volume: Double, currentHref: String?, currentTitle: String?, sleepTimerRemaining: Double?, isBuffering: Bool?, error: String?) {
     self.init(status, { () -> bridge.std__optional_PublicationMetadata_ in
       if let __unwrappedValue = publication {
         return bridge.create_std__optional_PublicationMetadata_(__unwrappedValue)
@@ -40,6 +40,12 @@ public extension AudiobookSessionState {
     }(), { () -> bridge.std__optional_double_ in
       if let __unwrappedValue = sleepTimerRemaining {
         return bridge.create_std__optional_double_(__unwrappedValue)
+      } else {
+        return .init()
+      }
+    }(), { () -> bridge.std__optional_bool_ in
+      if let __unwrappedValue = isBuffering {
+        return bridge.create_std__optional_bool_(__unwrappedValue)
       } else {
         return .init()
       }
@@ -111,6 +117,18 @@ public extension AudiobookSessionState {
     return { () -> Double? in
       if bridge.has_value_std__optional_double_(self.__sleepTimerRemaining) {
         let __unwrapped = bridge.get_std__optional_double_(self.__sleepTimerRemaining)
+        return __unwrapped
+      } else {
+        return nil
+      }
+    }()
+  }
+  
+  @inline(__always)
+  var isBuffering: Bool? {
+    return { () -> Bool? in
+      if bridge.has_value_std__optional_bool_(self.__isBuffering) {
+        let __unwrapped = bridge.get_std__optional_bool_(self.__isBuffering)
         return __unwrapped
       } else {
         return nil

@@ -47,6 +47,9 @@ data class AudiobookSessionState(
   val sleepTimerRemaining: Double?,
   @DoNotStrip
   @Keep
+  val isBuffering: Boolean?,
+  @DoNotStrip
+  @Keep
   val error: String?
 ) {
   /* primary constructor */
@@ -63,6 +66,7 @@ data class AudiobookSessionState(
       && Objects.deepEquals(this.currentHref, other.currentHref)
       && Objects.deepEquals(this.currentTitle, other.currentTitle)
       && Objects.deepEquals(this.sleepTimerRemaining, other.sleepTimerRemaining)
+      && Objects.deepEquals(this.isBuffering, other.isBuffering)
       && Objects.deepEquals(this.error, other.error)
   }
 
@@ -77,6 +81,7 @@ data class AudiobookSessionState(
       currentHref,
       currentTitle,
       sleepTimerRemaining,
+      isBuffering,
       error
     ).contentDeepHashCode()
   }
@@ -89,8 +94,8 @@ data class AudiobookSessionState(
     @Keep
     @Suppress("unused")
     @JvmStatic
-    private fun fromCpp(status: AudiobookSessionStatus, publication: PublicationMetadata?, position: Double, duration: Double, rate: Double, volume: Double, currentHref: String?, currentTitle: String?, sleepTimerRemaining: Double?, error: String?): AudiobookSessionState {
-      return AudiobookSessionState(status, publication, position, duration, rate, volume, currentHref, currentTitle, sleepTimerRemaining, error)
+    private fun fromCpp(status: AudiobookSessionStatus, publication: PublicationMetadata?, position: Double, duration: Double, rate: Double, volume: Double, currentHref: String?, currentTitle: String?, sleepTimerRemaining: Double?, isBuffering: Boolean?, error: String?): AudiobookSessionState {
+      return AudiobookSessionState(status, publication, position, duration, rate, volume, currentHref, currentTitle, sleepTimerRemaining, isBuffering, error)
     }
   }
 }
